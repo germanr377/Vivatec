@@ -3,49 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vivatec Control</title>
+    <title>Vivatec Control - Inspección de Extintores</title>
     <link rel="stylesheet" href="estilos.css">
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
-    <header>Vivatec Control</header>
-
-    <!-- PANTALLA 1: MENÚ DE INICIO -->
+    <!-- PANTALLA 1: MENÚ PRINCIPAL -->
     <div id="pantalla-inicio" class="pantalla activa">
-        <button class="btn btn-verde" onclick="abrirCamara()">ESCANEAR CON CÁMARA</button>
-        <button class="btn btn-gris" onclick="ingresoManual()">CARGA MANUAL</button>
-        <button class="btn btn-azul" onclick="window.location.href='consultas.html'">VER CONSULTAS / VENCIMIENTOS</button>
+        <header>Vivatec Control</header>
+        <div class="menu-contenedor">
+            <button class="btn btn-azul" onclick="abrirCamara()">ESCANEAR CÓDIGO QR</button>
+            <button class="btn btn-gris" onclick="ingresoManual()">INGRESO MANUAL</button>
+            <button class="btn btn-azul" onclick="window.location.href='consultas.html'">VER CONSULTAS / VENCIMIENTOS</button>
+        </div>
     </div>
 
-    <!-- PANTALLA 2: LA CÁMARA -->
+    <!-- PANTALLA 2: LECTOR DE CÁMARA -->
     <div id="pantalla-camara" class="pantalla">
         <div id="lector-contenedor"></div>
-        <button class="btn btn-rojo" onclick="cancelarCamara()">VOLVER AL INICIO</button>
+        <button class="btn btn-rojo" onclick="cancelarCamara()">CANCELAR</button>
     </div>
 
-    <!-- PANTALLA 3: EL FORMULARIO -->
+    <!-- PANTALLA 3: FORMULARIO DE DATOS -->
     <div id="pantalla-formulario" class="pantalla">
-        <div class="grupo-input">
-            <label for="codigo-oblea">Nº de Oblea / Tarjeta:</label>
-            <input type="text" id="codigo-oblea" placeholder="Ej: 3B 00489297">
-        </div>
+        <header>Registrar Recarga</header>
+        <div class="form-contenedor">
+            <div class="input-grupo">
+                <label for="codigo-oblea">Nº de Oblea:</label>
+                <input type="text" id="codigo-oblea" placeholder="Escaneado o manual">
+            </div>
 
-        <div class="grupo-input">
-            <label for="extintor-num">Nº de Extintor Físico:</label>
-            <input type="number" id="extintor-num" placeholder="Ej: 555">
+            <div class="input-grupo">
+                <label for="fecha-recarga">Fecha de Recarga:</label>
+                <input type="date" id="fecha-recarga" class="input-estilo">
+            </div>
+
+            <div class="input-grupo">
+                <label for="extintor-num">Nº de Extintor / Matafuego:</label>
+                <input type="number" id="extintor-num" placeholder="Ej: 1024">
+            </div>
+
+            <button class="btn btn-azul" onclick="simularGuardado()">GUARDAR RECARGA</button>
+            <button class="btn btn-gris" onclick="volverAlInicio()">VOLVER</button>
         </div>
-        
-        <button class="btn btn-azul" onclick="simularGuardado()">GUARDAR RECARGA</button>
-        <button class="btn btn-rojo" onclick="volverAlInicio()">VOLVER AL INICIO</button>
     </div>
 
     <!-- PANTALLA 4: ÉXITO -->
     <div id="pantalla-exito" class="pantalla">
-        <div class="icono-exito">✔️</div>
-        <div class="texto-exito">Recarga guardada<br>correctamente.</div>
+        <div class="exito-contenedor">
+            <div class="icono-tilde">✓</div>
+            <h2>¡Guardado Exitoso!</h2>
+            <p>El registro se envió correctamente a la base de datos.</p>
+        </div>
     </div>
 
+    <!-- Librería de QR y Script principal -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="escaner.js"></script>
 </body>
 </html>
