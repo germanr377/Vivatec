@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vivatec - Consultas</title>
+    <link rel="stylesheet" href="estilos.css">
+    <style>
+        /* Estilos específicos para la tabla de consultas */
+        .contenedor-consultas { padding: 15px; width: 100%; max-width: 600px; margin: 0 auto; }
+        .filtro-grupo { margin-bottom: 15px; }
+        .filtro-grupo label { display: block; color: #aaa; margin-bottom: 5px; font-size: 16px; }
+        .filtro-grupo input { width: 100%; padding: 12px; background-color: #2a2a2a; border: 2px solid #444; color: white; border-radius: 8px; font-size: 16px; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #1e1e1e; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; font-size: 14px; }
+        th { background-color: #d32f2f; color: white; }
+        tr:hover { background-color: #252525; }
+        .sin-resultados { text-align: center; color: #888; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <header>Consultas de Vencimientos</header>
+
+    <div class="contenedor-consultas">
+        <div class="filtro-grupo">
+            <label for="fecha-desde">Desde:</label>
+            <input type="date" id="fecha-desde">
+        </div>
+
+        <div class="filtro-grupo">
+            <label for="fecha-hasta">Hasta:</label>
+            <input type="date" id="fecha-hasta">
+        </div>
+
+        <button class="btn btn-azul" onclick="consultarFechas()">BUSCAR VENCIMIENTOS</button>
+        <button class="btn btn-gris" onclick="window.location.href='index.html'">VOLVER AL INICIO</button>
+
+        <!-- Tabla donde se cargarán los resultados -->
+        <div style="overflow-x: auto;">
+            <table id="tabla-resultados">
+                <thead>
+                    <tr>
+                        <th>Oblea</th>
+                        <th>Extintor</th>
+                        <th>Recarga</th>
+                        <th>Vencimiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4" class="sin-resultados">Seleccioná un rango y buscá.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script de consultas -->
+    <script src="consultas.js"></script>
+</body>
+</html>
