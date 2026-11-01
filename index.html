@@ -25,31 +25,17 @@
         <button class="btn btn-rojo" onclick="cancelarCamara()">CANCELAR</button>
     </div>
 
-    <!-- PANTALLA 3: FORMULARIO DE DATOS -->
+    <!-- PANTALLA 3: FORMULARIO DE DATOS (Oculto o sólo para almacenar temporalmente) -->
     <div id="pantalla-formulario" class="pantalla">
-        <header>Registrar Recarga</header>
-        <div class="form-contenedor">
-            <div class="input-grupo">
-                <label for="codigo-oblea">Nº de Oblea</label>
-                <input type="text" id="codigo-oblea" placeholder="Escaneado o manual">
-            </div>
-
-            <div class="input-grupo">
-                <label for="extintor-num">Nº de Extintor / Matafuego</label>
-                <input type="number" id="extintor-num" placeholder="Ej: 1024">
-            </div>
-
-            <button class="btn btn-azul" onclick="irAConfirmacion()">REVISAR DATOS</button>
-            <button class="btn btn-gris" onclick="volverAlInicio()">VOLVER</button>
-        </div>
+        <!-- Ya no se muestra al usuario, salta directo a confirmación -->
     </div>
 
-    <!-- PANTALLA 4: CONFIRMACIÓN Y EDICIÓN PREVIA (NUEVA) -->
+    <!-- PANTALLA 4: PANTALLA ÚNICA DE EDICIÓN Y GUARDADO -->
     <div id="pantalla-confirmacion" class="pantalla">
-        <header>Confirmar Datos</header>
+        <header>Registrar y Verificar</header>
         <div class="form-contenedor">
             <div class="input-grupo">
-                <label for="conf-oblea">Nº de Oblea (Editable):</label>
+                <label for="conf-oblea">Nº de Oblea:</label>
                 <input type="text" id="conf-oblea">
             </div>
 
@@ -59,17 +45,17 @@
             </div>
 
             <div class="input-grupo">
-                <label for="conf-extintor">Nº de Extintor (Editable):</label>
-                <input type="number" id="conf-extintor">
+                <label for="conf-extintor">Nº de Extintor / Matafuego:</label>
+                <input type="number" id="conf-extintor" placeholder="Ej: 1024">
             </div>
 
             <div class="input-grupo">
-                <label for="conf-vencimiento">Fecha de Vencimiento (Calculada / Editable):</label>
+                <label for="conf-vencimiento">Fecha de Vencimiento (Calculada):</label>
                 <input type="date" id="conf-vencimiento">
             </div>
 
-            <button class="btn btn-azul" onclick="guardarDefinitivo()">CONFIRMAR Y GUARDAR</button>
-            <button class="btn btn-gris" onclick="mostrarPantalla('pantalla-formulario')">VOLVER A EDITAR</button>
+            <button class="btn btn-azul" onclick="guardarDefinitivo()">GUARDAR RECARGA</button>
+            <button class="btn btn-gris" onclick="volverAlInicio()">CANCELAR</button>
         </div>
     </div>
 
