@@ -87,9 +87,9 @@ function simularGuardado() {
     botonGuardar.disabled = true;
 
     // =========================================================================
-    // ⚠️ ACÁ TENÉS QUE PEGAR LA URL QUE TE DIO GOOGLE APPS SCRIPT AL IMPLEMENTAR
+    // URL DE TU GOOGLE APPS SCRIPT (Ya configurada)
     // =========================================================================
-    const URL_DE_GOOGLE = "https://script.google.com/macros/s/TU_LINK_LARGUISIMO_AQUI/exec";
+    const URL_DE_GOOGLE = "https://script.google.com/macros/s/AKfycbwDi-mtRlx3GGvXnqKeyGqpspiiJzhc_qMWad9oD2Hi4Y0CgZ50qRsDWonlk0lPtL2p/exec";
 
     // 3. Preparamos el paquete de datos (Formato seguro para Google)
     let datos = new URLSearchParams();
