@@ -91,8 +91,8 @@ function simularGuardado() {
     // =========================================================================
     const URL_DE_GOOGLE = "https://script.google.com/macros/s/TU_LINK_LARGUISIMO_AQUI/exec";
 
-    // 3. Preparamos el paquete de datos
-    let datos = new FormData();
+    // 3. Preparamos el paquete de datos (Formato seguro para Google)
+    let datos = new URLSearchParams();
     datos.append("oblea", inputOblea);
     datos.append("extintor", inputExtintor);
 
@@ -100,7 +100,10 @@ function simularGuardado() {
     fetch(URL_DE_GOOGLE, {
         method: 'POST',
         body: datos,
-        mode: 'no-cors' // Fundamental para que no haya bloqueos de seguridad cruzada
+        mode: 'no-cors', // Fundamental para que no haya bloqueos de seguridad cruzada
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
     })
     .then(() => {
         // ÉXITO: El dato llegó a Google. Volvemos el botón a la normalidad
