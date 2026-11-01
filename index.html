@@ -1,202 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-     <meta charset="UTF-8">
-     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vivatec Control</title>
-    <style>
-        /* === ESTILOS BASE (Modo Oscuro PWA) === */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            user-select: none; /* Evita que el texto se seleccione al tocar rápido */
-        }
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden; /* Evita el scroll indeseado */
-        }
-
-        /* === ENCABEZADO === */
-        header {
-            background-color: #d32f2f; /* Rojo industrial */
-            color: white;
-            text-align: center;
-            padding: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            z-index: 10;
-        }
-
-        /* === CONTENEDORES DE PANTALLAS (SPA) === */
-        .pantalla {
-            display: none; /* Ocultas por defecto */
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex-grow: 1;
-            padding: 20px;
-        }
-        .pantalla.activa {
-            display: flex; /* Solo se muestra la que tiene la clase 'activa' */
-        }
-
-        /* === PANTALLA 1: ESCÁNER === */
-        #contenedor-camara {
-            width: 100%;
-            max-width: 400px;
-            height: 300px;
-            background-color: #000;
-            border: 2px dashed #4CAF50;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        .texto-camara {
-            color: #888;
-            font-size: 18px;
-        }
-
-        /* === PANTALLA 2: FORMULARIO === */
-        .tarjeta-info {
-            background-color: #1e1e1e;
-            padding: 15px 20px;
-            border-radius: 8px;
-            border-left: 5px solid #4CAF50;
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 30px;
-            font-size: 18px;
-        }
-        .grupo-input {
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 30px;
-        }
-        .grupo-input label {
-            display: block;
-            font-size: 20px;
-            margin-bottom: 10px;
-            color: #aaa;
-        }
-        .grupo-input input {
-            width: 100%;
-            padding: 20px;
-            font-size: 28px;
-            background-color: #2a2a2a;
-            border: 2px solid #444;
-            color: white;
-            border-radius: 10px;
-            text-align: center;
-            outline: none;
-        }
-        .grupo-input input:focus {
-            border-color: #2196F3;
-        }
-
-        /* === PANTALLA 3: ÉXITO === */
-        .icono-exito {
-            font-size: 100px;
-            color: #4CAF50;
-            margin-bottom: 20px;
-        }
-        .texto-exito {
-            font-size: 24px;
-            text-align: center;
-        }
-
-        /* === BOTONES GIGANTES === */
-        .btn {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            color: white;
-            margin-bottom: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        .btn:active {
-            transform: scale(0.98); /* Efecto de hundimiento al tocar */
-        }
-        .btn-verde { background-color: #4CAF50; }
-        .btn-azul { background-color: #2196F3; }
-        .btn-gris { background-color: #555555; }
-    </style>
+    
+    <!-- 1. Llamamos a tu archivo de diseño (CSS) -->
+    <link rel="stylesheet" href="estilos.css">
+    
+    <!-- 2. Llamamos a la librería del lector QR de internet -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
     <header>Vivatec Control</header>
 
-    <!-- PANTALLA 1: ESCÁNER -->
+    <!-- PANTALLA 1: LA CÁMARA -->
     <div id="pantalla-escaner" class="pantalla activa">
-        <div id="contenedor-camara">
-            <span class="texto-camara">(Video en vivo aquí)</span>
-        </div>
-        <button class="btn btn-verde" onclick="simularLectura()">ESCANEAR OBLEA</button>
+        <div id="lector-contenedor"></div>
+        <button class="btn btn-verde" id="btn-iniciar-camara" onclick="iniciarCamara()">PRENDER CÁMARA</button>
     </div>
 
-    <!-- PANTALLA 2: VINCULACIÓN -->
+    <!-- PANTALLA 2: EL FORMULARIO -->
     <div id="pantalla-formulario" class="pantalla">
         <div class="tarjeta-info">
             <span style="color: #4CAF50;">✅ Oblea Leída:</span><br>
-            <strong id="codigo-leido" style="font-size: 24px;">3B 00489297</strong>
+            <strong id="codigo-leido">Esperando código...</strong>
         </div>
-        
         <div class="grupo-input">
             <label for="extintor-num">Nº de Extintor Físico:</label>
-            <!-- type="number" abre el teclado numérico gigante del celular -->
             <input type="number" id="extintor-num" placeholder="Ej: 555">
         </div>
-
         <button class="btn btn-azul" onclick="simularGuardado()">GUARDAR RECARGA</button>
-        <button class="btn btn-gris" onclick="mostrarPantalla('pantalla-escaner')">CANCELAR</button>
+        <button class="btn btn-gris" onclick="volverAEscanear()">CANCELAR</button>
     </div>
 
     <!-- PANTALLA 3: ÉXITO -->
     <div id="pantalla-exito" class="pantalla">
         <div class="icono-exito">✔️</div>
-        <div class="texto-exito">
-            Recarga guardada<br>correctamente.
-        </div>
+        <div class="texto-exito">Recarga guardada<br>correctamente.</div>
     </div>
 
-    <script>
-        // Lógica súper básica para cambiar de pantallas (SPA)
-        function mostrarPantalla(idPantalla) {
-            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-            document.getElementById(idPantalla).classList.add('activa');
-        }
-
-        function simularLectura() {
-            // El operario toca "Escanear" y pasamos al formulario
-            mostrarPantalla('pantalla-formulario');
-            document.getElementById('extintor-num').focus(); // Abre el teclado automáticamente
-        }
-
-        function simularGuardado() {
-            // El operario toca "Guardar" y pasamos a la pantalla de éxito
-            mostrarPantalla('pantalla-exito');
-            
-            // A los 2 segundos, vuelve solo a la cámara para el siguiente matafuego
-            setTimeout(() => {
-                document.getElementById('extintor-num').value = ''; // Limpiamos el input
-                mostrarPantalla('pantalla-escaner');
-            }, 2000);
-        }
-    </script>
+    <!-- 3. Llamamos a tu archivo con la lógica de la cámara (JS) al final -->
+    <script src="escaner.js"></script>
 </body>
 </html>
-  
