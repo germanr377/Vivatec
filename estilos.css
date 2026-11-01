@@ -64,7 +64,7 @@ header {
     width: 100%;
 }
 
-/* Grupos de Inputs (Casilleros más cómodos) */
+/* Grupos de Inputs */
 .input-grupo {
     display: flex;
     flex-direction: column;
@@ -121,17 +121,18 @@ header {
     color: #ffffff;
 }
 
+/* Botón de cancelar más arriba y cómodo */
 .btn-rojo {
     background-color: #d32f2f;
     color: white;
-    margin: 20px auto;
+    margin: 15px auto;
     max-width: 90%;
 }
 
-/* Contenedor de la Cámara */
+/* Contenedor de la Cámara ajustado */
 #lector-contenedor {
     width: 100%;
-    flex-grow: 1;
+    height: 60vh;
     background-color: black;
 }
 
