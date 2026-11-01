@@ -11,19 +11,20 @@
 
     <header>Vivatec Control</header>
 
-    <!-- PANTALLA 1: LA CÁMARA -->
-    <div id="pantalla-escaner" class="pantalla activa">
-        <div id="lector-contenedor"></div>
-        <button class="btn btn-verde" id="btn-iniciar-camara" onclick="iniciarCamara()">PRENDER CÁMARA</button>
-        
-        <!-- NUEVO BOTÓN PARA CARGA MANUAL -->
-        <button class="btn btn-gris" onclick="ingresoManual()">CARGA MANUAL (Sin cámara)</button>
+    <!-- PANTALLA 1: MENÚ DE INICIO -->
+    <div id="pantalla-inicio" class="pantalla activa">
+        <button class="btn btn-verde" onclick="abrirCamara()">ESCANEAR CON CÁMARA</button>
+        <button class="btn btn-gris" onclick="ingresoManual()">CARGA MANUAL</button>
     </div>
 
-    <!-- PANTALLA 2: EL FORMULARIO -->
+    <!-- PANTALLA 2: LA CÁMARA -->
+    <div id="pantalla-camara" class="pantalla">
+        <div id="lector-contenedor"></div>
+        <button class="btn btn-rojo" onclick="cancelarCamara()">VOLVER AL INICIO</button>
+    </div>
+
+    <!-- PANTALLA 3: EL FORMULARIO -->
     <div id="pantalla-formulario" class="pantalla">
-        
-        <!-- AHORA LA OBLEA ES UN CASILLERO EDITABLE -->
         <div class="grupo-input">
             <label for="codigo-oblea">Nº de Oblea / Tarjeta:</label>
             <input type="text" id="codigo-oblea" placeholder="Ej: 3B 00489297">
@@ -35,10 +36,10 @@
         </div>
         
         <button class="btn btn-azul" onclick="simularGuardado()">GUARDAR RECARGA</button>
-        <button class="btn btn-gris" onclick="volverAEscanear()">CANCELAR</button>
+        <button class="btn btn-rojo" onclick="volverAlInicio()">VOLVER AL INICIO</button>
     </div>
 
-    <!-- PANTALLA 3: ÉXITO -->
+    <!-- PANTALLA 4: ÉXITO -->
     <div id="pantalla-exito" class="pantalla">
         <div class="icono-exito">✔️</div>
         <div class="texto-exito">Recarga guardada<br>correctamente.</div>
