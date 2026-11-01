@@ -9,7 +9,6 @@ function volverAlInicio() {
     mostrarPantalla('pantalla-inicio');
 }
 
-// Función auxiliar para obtener la fecha de hoy en formato YYYY-MM-DD
 function obtenerFechaHoy() {
     let hoy = new Date();
     let anio = hoy.getFullYear();
@@ -33,12 +32,8 @@ function abrirCamara() {
             html5QrCode.stop().then(() => {
                 if(navigator.vibrate) navigator.vibrate(200);
                 
-                let inputOblea = document.getElementById('codigo-oblea');
-                inputOblea.value = textoDecodificado;
-                inputOblea.setAttribute('readonly', true); 
-                
-                mostrarPantalla('pantalla-formulario');
-                document.getElementById('extintor-num').focus();
+                // Abrimos directo la pantalla de edición con la oblea ya cargada
+                abrirPantallaEdicion(textoDecodificado);
             });
         },
         (mensajeError) => {}
@@ -57,40 +52,34 @@ function cancelarCamara() {
 }
 
 function ingresoManual() {
-    let inputOblea = document.getElementById('codigo-oblea');
-    inputOblea.value = ''; 
-    inputOblea.removeAttribute('readonly'); 
-    
-    mostrarPantalla('pantalla-formulario');
-    inputOblea.focus(); 
+    // Abrimos directo la pantalla de edición con la oblea vacía para tipear
+    abrirPantallaEdicion('');
 }
 
-// PASO INTERMEDIO: LLEVA LOS DATOS A LA PANTALLA DE CONFIRMACIÓN
-function irAConfirmacion() {
-    let oblea = document.getElementById('codigo-oblea').value;
-    let extintor = document.getElementById('extintor-num').value;
-
-    if (oblea === "" || extintor === "") {
-        alert("Por favor, completá ambos campos antes de continuar.");
-        return;
-    }
-
-    // Pasamos los valores a los inputs de la pantalla de confirmación
-    document.getElementById('conf-oblea').value = oblea;
-    document.getElementById('conf-extintor').value = extintor;
+// PREPARA LA PANTALLA DE EDICIÓN DIRECTA
+function abrirPantallaEdicion(obleaValor) {
+    document.getElementById('conf-oblea').value = obleaValor;
+    document.getElementById('conf-extintor').value = '';
     
-    // Asignamos la fecha de hoy como fecha de recarga por defecto
+    // Seteamos la fecha de hoy por defecto
     let fechaHoy = obtenerFechaHoy();
     document.getElementById('conf-recarga').value = fechaHoy;
-
-    // Calculamos el vencimiento (exactamente 1 año después)
+    
+    // Calculamos el vencimiento inicial
     calcularVencimientoPrevio();
-
-    // Mostramos la pantalla de confirmación
+    
+    // Mostramos la pantalla única de edición
     mostrarPantalla('pantalla-confirmacion');
+    
+    // Si entró manual, le damos foco a la oblea; si escaneó, al extintor
+    if(obleaValor === "") {
+        document.getElementById('conf-oblea').focus();
+    } else {
+        document.getElementById('conf-extintor').focus();
+    }
 }
 
-// CALCULA AUTOMÁTICAMENTE EL VENCIMIENTO SEGÚN LA FECHA DE RECARGA SELECCIONADA
+// CALCULA AUTOMÁTICAMENTE EL VENCIMIENTO SEGÚN LA FECHA DE RECARGA
 function calcularVencimientoPrevio() {
     let fechaRecargaStr = document.getElementById('conf-recarga').value;
     if (!fechaRecargaStr) return;
@@ -111,7 +100,7 @@ function guardarDefinitivo() {
     let fechaRecarga = document.getElementById('conf-recarga').value;
 
     if (oblea === "" || extintor === "" || fechaRecarga === "") {
-        alert("Todos los campos de confirmación deben estar completos.");
+        alert("Por favor, completá todos los campos antes de guardar.");
         return;
     }
 
@@ -124,7 +113,7 @@ function guardarDefinitivo() {
     let datos = new URLSearchParams();
     datos.append("oblea", oblea);
     datos.append("extintor", extintor);
-    datos.append("fechaRecarga", fechaRecarga); // Mandamos la fecha elegida
+    datos.append("fechaRecarga", fechaRecarga);
 
     fetch(URL_DE_GOOGLE, {
         method: 'POST',
@@ -135,20 +124,18 @@ function guardarDefinitivo() {
         }
     })
     .then(() => {
-        botonGuardar.innerText = "CONFIRMAR Y GUARDAR";
+        botonGuardar.innerText = "GUARDAR RECARGA";
         botonGuardar.disabled = false;
         
         mostrarPantalla('pantalla-exito');
         
         setTimeout(() => {
-            document.getElementById('codigo-oblea').value = ''; 
-            document.getElementById('extintor-num').value = ''; 
             volverAlInicio();
         }, 2000);
     })
     .catch(error => {
         alert("Hubo un error de conexión. Revisá el WiFi o tus datos móviles.");
-        botonGuardar.innerText = "CONFIRMAR Y GUARDAR";
+        botonGuardar.innerText = "GUARDAR RECARGA";
         botonGuardar.disabled = false;
     });
 }
