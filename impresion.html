@@ -1,82 +1,213 @@
-// URL de tu Web App desplegada en Google Apps Script
-const URL_API = "AQUÍ_PEGAS_LA_URL_DE_TU_WEB_APP_DE_APPS_SCRIPT";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión e Impresión de Obleas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .card { max-width: 600px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        input:read-only { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
+        
+        .btn { padding: 12px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
+        .btn-buscar { background-color: #007bff; color: white; width: auto; flex-shrink: 0; padding: 10px 20px; margin-top: 0; }
+        .btn-buscar:hover { background-color: #0056b3; }
+        .btn-guardar { background-color: #28a745; color: white; }
+        .btn-guardar:hover { background-color: #218838; }
+        .btn-imprimir { background-color: #17a2b8; color: white; display: none; }
+        .btn-imprimir:hover { background-color: #138496; }
+        
+        .flex-row { display: flex; gap: 10px; align-items: center; }
+        
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; text-align: center; display: none; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-async function buscarExtintor() {
-    const nro = document.getElementById('inputBuscador').value.trim();
-    const alerta = document.getElementById('alertaEstado');
-    const formulario = document.getElementById('seccionFormulario');
-    const btnImprimir = document.getElementById('btnImprimir');
-
-    if (!nro) {
-        alert("Por favor, ingrese un número de extintor.");
-        return;
-    }
-
-    // Mostrar estado de carga
-    alerta.className = "alert alert-info";
-    alerta.innerText = "Buscando en Google Sheets...";
-    alerta.style.display = "block";
-
-    try {
-        // Consultar a Google Sheets vía Apps Script (Método GET)
-        let respuesta = await fetch(`${URL_API}?accion=buscar&extintor=${nro}`);
-        let resultado = await respuesta.json();
-
-        formulario.style.display = 'block';
-        document.getElementById('nroExtintorFijo').value = nro;
-        btnImprimir.style.display = 'none';
-
-        if (resultado.encontrado) {
-            // CASO A: Ya existe en Google Sheets
-            esRegistroNuevo = false;
-            document.getElementById('tipoOblea').value = resultado.tipo || "A";
-            document.getElementById('fechaRecarga').value = resultado.recarga || "";
-            document.getElementById('vencimiento').value = resultado.vencimiento || "";
-            document.getElementById('taller').value = resultado.taller || "VIVATEC 382";
-
-            alerta.innerText = "Extintor encontrado en la base de datos. Modifique lo que necesite y guarde.";
-        } else {
-            // CASO B: No existe (Nuevo registro)
-            esRegistroNuevo = true;
-            document.getElementById('tipoOblea').value = "A";
-            document.getElementById('fechaRecarga').value = "";
-            document.getElementById('vencimiento').value = "";
-
-            alerta.innerText = "Extintor nuevo. Complete los datos para registrarlo por primera vez.";
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; top: 0; left: 0; width: 100%; }
+            .no-print { display: none; }
+            @page { margin: 0; } 
         }
-    } catch (error) {
-        console.error("Error al buscar:", error);
-        alert("Hubo un error al conectar con la base de datos.");
-        alerta.style.display = "none";
-    }
-}
+        
+        #printable-area { display: none; position: relative; width: 210mm; height: 100mm; }
+        .campo-impreso { position: absolute; font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; color: #000; }
+    </style>
+</head>
+<body>
 
-async function guardarDatos() {
-    const datosEnvio = {
-        accion: "guardar",
-        extintor: document.getElementById('nroExtintorFijo').value,
-        tipo: document.getElementById('tipoOblea').value,
-        recarga: document.getElementById('fechaRecarga').value,
-        vencimiento: document.getElementById('vencimiento').value,
-        taller: document.getElementById('taller').value
-    };
+<div class="card no-print">
+    <h2>Módulo de Impresión de Obleas</h2>
+    <div class="form-group">
+        <label for="inputBuscador">Número de Extintor (Buscar):</label>
+        <div class="flex-row">
+            <input type="text" id="inputBuscador" placeholder="Ej: 136864">
+            <button class="btn btn-buscar" onclick="buscarExtintor()">Buscar</button>
+        </div>
+    </div>
 
-    try {
-        // Enviar datos actualizados o nuevos a Google Sheets (Método POST)
-        let respuesta = await fetch(URL_API, {
-            method: "POST",
-            body: JSON.stringify(datosEnvio)
-        });
-        let resultado = await respuesta.json();
+    <div id="alertaEstado" class="alert"></div>
 
-        if(resultado.exito) {
-            alert(esRegistroNuevo ? "¡Extintor registrado con éxito en Google Sheets!" : "¡Datos actualizados con éxito!");
-            document.getElementById('btnImprimir').style.display = 'block';
-        } else {
-            alert("Error al guardar los datos.");
+    <div id="seccionFormulario" style="display: none;">
+        <div class="form-group">
+            <label for="tipoOblea">Tipo de Oblea:</label>
+            <select id="tipoOblea">
+                <option value="A">Oblea A (Estándar PBA)</option>
+                <option value="B">Oblea B (Alternativa)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="nroExtintorFijo">Número de Extintor (Bloqueado):</label>
+            <input type="text" id="nroExtintorFijo" readonly>
+        </div>
+        <div class="form-group">
+            <label for="fechaRecarga">Fecha de Recarga:</label>
+            <input type="text" id="fechaRecarga" placeholder="Ej: 11/28">
+        </div>
+        <div class="form-group">
+            <label for="vencimiento">Vencimiento:</label>
+            <input type="text" id="vencimiento" placeholder="Ej: 27">
+        </div>
+        <div class="form-group">
+            <label for="taller">Taller / Responsable:</label>
+            <input type="text" id="taller" value="VIVATEC 382">
+        </div>
+
+        <button class="btn btn-guardar" onclick="guardarDatos()">Guardar Cambios / Registrar</button>
+        <button id="btnImprimir" class="btn btn-imprimir" onclick="lanzarImpresion()">🖨️ Imprimir Tarjeta Oficial</button>
+    </div>
+</div>
+
+<div id="printable-area">
+    <div id="out-extintor" class="campo-impreso" style="top: 45mm; left: 35mm;"></div>
+    <div id="out-recarga" class="campo-impreso" style="top: 45mm; left: 75mm;"></div>
+    <div id="out-vencimiento" class="campo-impreso" style="top: 65mm; left: 35mm;"></div>
+    <div id="out-taller" class="campo-impreso" style="top: 55mm; left: 75mm;"></div>
+</div>
+
+<script>
+    // PEGAR TU URL DE GOOGLE APPS SCRIPT ACÁ ADENTRO DE LAS COMILLAS
+    const URL_API = "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT";
+
+    let esRegistroNuevo = false;
+
+    async function buscarExtintor() {
+        const nro = document.getElementById('inputBuscador').value.trim();
+        const alerta = document.getElementById('alertaEstado');
+        const formulario = document.getElementById('seccionFormulario');
+        const btnImprimir = document.getElementById('btnImprimir');
+
+        if (!nro) { mostrarAlerta("Por favor, ingrese un número de extintor.", "danger"); return; }
+        mostrarAlerta("Buscando en la base de datos...", "info");
+        
+        try {
+            let respuesta = await fetch(`${URL_API}?accion=buscar&extintor=${encodeURIComponent(nro)}`);
+            if (!respuesta.ok) throw new Error("Error de conexión");
+            let resultado = await respuesta.json();
+
+            formulario.style.display = 'block';
+            document.getElementById('nroExtintorFijo').value = nro;
+            btnImprimir.style.display = 'none';
+
+            if (resultado.encontrado) {
+                esRegistroNuevo = false;
+                document.getElementById('tipoOblea').value = resultado.tipo || "A";
+                document.getElementById('fechaRecarga').value = resultado.recarga || "";
+                document.getElementById('vencimiento').value = resultado.vencimiento || "";
+                document.getElementById('taller').value = resultado.taller || "VIVATEC 382";
+                mostrarAlerta("Extintor encontrado. Modifique si es necesario y guarde.", "info");
+            } else {
+                esRegistroNuevo = true;
+                document.getElementById('tipoOblea').value = "A";
+                document.getElementById('fechaRecarga').value = "";
+                document.getElementById('vencimiento').value = "";
+                mostrarAlerta("Extintor NUEVO. Complete los datos para registrarlo.", "success");
+            }
+        } catch (error) {
+            console.error("Error al buscar:", error);
+            if (URL_API.includes("AQUI_PEGA_TU_URL")) {
+                mostrarAlerta("Modo Prueba Local. Falta configurar URL_API.", "info");
+                formulario.style.display = 'block';
+                document.getElementById('nroExtintorFijo').value = nro;
+                esRegistroNuevo = true;
+            } else {
+                mostrarAlerta("Error de conexión con la base de datos.", "danger");
+            }
         }
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("No se pudo conectar con el servidor para guardar.");
     }
-}
+
+    async function guardarDatos() {
+        const btnImprimir = document.getElementById('btnImprimir');
+        const datosEnvio = {
+            accion: "guardar",
+            extintor: document.getElementById('nroExtintorFijo').value,
+            tipo: document.getElementById('tipoOblea').value,
+            recarga: document.getElementById('fechaRecarga').value,
+            vencimiento: document.getElementById('vencimiento').value,
+            taller: document.getElementById('taller').value
+        };
+
+        mostrarAlerta("Guardando datos...", "info");
+
+        try {
+            let respuesta = await fetch(URL_API, {
+                method: "POST",
+                body: JSON.stringify(datosEnvio)
+            });
+            let resultado = await respuesta.json();
+
+            if (resultado.exito) {
+                mostrarAlerta(esRegistroNuevo ? "¡Registrado con éxito!" : "¡Actualizado con éxito!", "success");
+                btnImprimir.style.display = 'block';
+            } else {
+                mostrarAlerta("Error al intentar guardar.", "danger");
+            }
+        } catch (error) {
+            console.error("Error al guardar:", error);
+            if (URL_API.includes("AQUI_PEGA_TU_URL")) {
+                mostrarAlerta("Guardado Simulado.", "success");
+                btnImprimir.style.display = 'block';
+            } else {
+                mostrarAlerta("Problema de conexión al guardar los datos.", "danger");
+            }
+        }
+    }
+
+    function lanzarImpresion() {
+        const nro = document.getElementById('nroExtintorFijo').value;
+        const recarga = document.getElementById('fechaRecarga').value;
+        const vencimiento = document.getElementById('vencimiento').value;
+        const taller = document.getElementById('taller').value;
+        const tipo = document.getElementById('tipoOblea').value;
+
+        document.getElementById('out-extintor').innerText = nro;
+        document.getElementById('out-recarga').innerText = recarga;
+        document.getElementById('out-vencimiento').innerText = vencimiento;
+        document.getElementById('out-taller').innerText = taller;
+
+        if (tipo === 'B') {
+            document.getElementById('out-extintor').style.top = '48mm';
+            document.getElementById('out-extintor').style.left = '40mm';
+        } else {
+            document.getElementById('out-extintor').style.top = '45mm';
+            document.getElementById('out-extintor').style.left = '35mm';
+        }
+        window.print();
+    }
+
+    function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.getElementById('alertaEstado');
+        alerta.innerText = mensaje;
+        alerta.className = `alert alert-${tipo}`;
+        alerta.style.display = "block";
+    }
+</script>
+
+</body>
+</html>
