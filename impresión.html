@@ -1,0 +1,82 @@
+// URL de tu Web App desplegada en Google Apps Script
+const URL_API = "AQUÍ_PEGAS_LA_URL_DE_TU_WEB_APP_DE_APPS_SCRIPT";
+
+async function buscarExtintor() {
+    const nro = document.getElementById('inputBuscador').value.trim();
+    const alerta = document.getElementById('alertaEstado');
+    const formulario = document.getElementById('seccionFormulario');
+    const btnImprimir = document.getElementById('btnImprimir');
+
+    if (!nro) {
+        alert("Por favor, ingrese un número de extintor.");
+        return;
+    }
+
+    // Mostrar estado de carga
+    alerta.className = "alert alert-info";
+    alerta.innerText = "Buscando en Google Sheets...";
+    alerta.style.display = "block";
+
+    try {
+        // Consultar a Google Sheets vía Apps Script (Método GET)
+        let respuesta = await fetch(`${URL_API}?accion=buscar&extintor=${nro}`);
+        let resultado = await respuesta.json();
+
+        formulario.style.display = 'block';
+        document.getElementById('nroExtintorFijo').value = nro;
+        btnImprimir.style.display = 'none';
+
+        if (resultado.encontrado) {
+            // CASO A: Ya existe en Google Sheets
+            esRegistroNuevo = false;
+            document.getElementById('tipoOblea').value = resultado.tipo || "A";
+            document.getElementById('fechaRecarga').value = resultado.recarga || "";
+            document.getElementById('vencimiento').value = resultado.vencimiento || "";
+            document.getElementById('taller').value = resultado.taller || "VIVATEC 382";
+
+            alerta.innerText = "Extintor encontrado en la base de datos. Modifique lo que necesite y guarde.";
+        } else {
+            // CASO B: No existe (Nuevo registro)
+            esRegistroNuevo = true;
+            document.getElementById('tipoOblea').value = "A";
+            document.getElementById('fechaRecarga').value = "";
+            document.getElementById('vencimiento').value = "";
+
+            alerta.innerText = "Extintor nuevo. Complete los datos para registrarlo por primera vez.";
+        }
+    } catch (error) {
+        console.error("Error al buscar:", error);
+        alert("Hubo un error al conectar con la base de datos.");
+        alerta.style.display = "none";
+    }
+}
+
+async function guardarDatos() {
+    const datosEnvio = {
+        accion: "guardar",
+        extintor: document.getElementById('nroExtintorFijo').value,
+        tipo: document.getElementById('tipoOblea').value,
+        recarga: document.getElementById('fechaRecarga').value,
+        vencimiento: document.getElementById('vencimiento').value,
+        taller: document.getElementById('taller').value
+    };
+
+    try {
+        // Enviar datos actualizados o nuevos a Google Sheets (Método POST)
+        let respuesta = await fetch(URL_API, {
+            method: "POST",
+            body: JSON.stringify(datosEnvio)
+        });
+        let resultado = await respuesta.json();
+
+        if(resultado.exito) {
+            alert(esRegistroNuevo ? "¡Extintor registrado con éxito en Google Sheets!" : "¡Datos actualizados con éxito!");
+            document.getElementById('btnImprimir').style.display = 'block';
+        } else {
+            alert("Error al guardar los datos.");
+        }
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        alert("No se pudo conectar con el servidor para guardar.");
+    }
+}
