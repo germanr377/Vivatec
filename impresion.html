@@ -9,41 +9,32 @@
         .card { max-width: 600px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
         h2 { color: #333; text-align: center; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
         input:read-only { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
         
         .btn { padding: 12px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
         .btn-buscar { background-color: #007bff; color: white; width: auto; flex-shrink: 0; padding: 10px 20px; margin-top: 0; }
-        .btn-buscar:hover { background-color: #0056b3; }
         .btn-guardar { background-color: #28a745; color: white; }
-        .btn-guardar:hover { background-color: #218838; }
-        .btn-imprimir { background-color: #17a2b8; color: white; display: none; }
-        .btn-imprimir:hover { background-color: #138496; }
+        .btn-imprimir { background-color: #17a2b8; color: white; display: none; margin-top: 15px;}
         
         .flex-row { display: flex; gap: 10px; align-items: center; }
-        
         .alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; text-align: center; display: none; }
-        .alert-info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; }
+        .alert-success { background-color: #d4edda; color: #155724; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; }
 
-        /* --- CORRECCIÓN PARA LA IMPRESORA --- */
+        /* --- ZONA IMPRESIÓN --- */
         #printable-area { display: none; }
-        .campo-impreso { position: absolute; font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; color: #000; }
+        .campo-impreso { position: absolute; font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; color: #000; }
+        .sello-impreso { font-family: 'Arial', sans-serif; font-size: 10px; font-weight: bold; color: #000; text-align: center; line-height: 1.2; }
 
         @media print {
             body { margin: 0; padding: 0; background-color: #fff; }
             .no-print { display: none !important; }
-            
-            #printable-area { 
-                display: block !important; 
-                position: absolute; 
-                top: 0; 
-                left: 0; 
-                width: 210mm; 
-                height: 100mm; 
-            }
+            #printable-area { display: block !important; position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; }
             @page { margin: 0; } 
         }
     </style>
@@ -63,146 +54,176 @@
     <div id="alertaEstado" class="alert"></div>
 
     <div id="seccionFormulario" style="display: none;">
-        <div class="form-group">
-            <label for="tipoOblea">Tipo de Oblea:</label>
-            <select id="tipoOblea">
-                <option value="A">Oblea A (Estándar PBA)</option>
-                <option value="B">Oblea B (Alternativa)</option>
-            </select>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tipo Oblea:</label>
+                <select id="tipoOblea"><option value="A">Oblea A</option><option value="B">Oblea B</option></select>
+            </div>
+            <div class="form-group">
+                <label>Nº Extintor:</label>
+                <input type="text" id="nroExtintorFijo" readonly>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="nroExtintorFijo">Número de Extintor (Bloqueado):</label>
-            <input type="text" id="nroExtintorFijo" readonly>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Año Fabricación:</label>
+                <input type="text" id="anoFab" placeholder="Ej: 2008">
+            </div>
+            <div class="form-group">
+                <label>Venc. PH (Recarga):</label>
+                <input type="text" id="fechaRecarga" placeholder="Ej: 11 28">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="fechaRecarga">Fecha de Recarga:</label>
-            <input type="text" id="fechaRecarga" placeholder="Ej: 11/28">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Capacidad:</label>
+                <input type="text" id="capacidad" value="1 Kg">
+            </div>
+            <div class="form-group">
+                <label>Agente Extintor:</label>
+                <input type="text" id="agente" value="DPS">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="vencimiento">Vencimiento:</label>
-            <input type="text" id="vencimiento" placeholder="Ej: 27">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Mes Vencimiento:</label>
+                <input type="text" id="vencMes" placeholder="Ej: 11">
+            </div>
+            <div class="form-group">
+                <label>Año Vencimiento:</label>
+                <input type="text" id="vencAno" placeholder="Ej: 27">
+            </div>
         </div>
+
         <div class="form-group">
-            <label for="taller">Taller / Responsable:</label>
+            <label>Taller / Responsable:</label>
             <input type="text" id="taller" value="VIVATEC 382">
         </div>
 
         <button class="btn btn-guardar" onclick="guardarDatos()">Guardar Cambios / Registrar</button>
-        <button id="btnImprimir" class="btn btn-imprimir" onclick="lanzarImpresion()">🖨️ Imprimir Tarjeta Oficial</button>
+        <button id="btnImprimir" class="btn btn-imprimir" onclick="lanzarImpresion()">🖨️ Imprimir Tarjeta y Oblea</button>
     </div>
 </div>
 
+<!-- ==========================================
+     MAPA DE IMPRESIÓN (MEDIDAS A CALIBRAR)
+     ========================================== -->
 <div id="printable-area">
-    <div id="out-extintor" class="campo-impreso" style="top: 45mm; left: 35mm;"></div>
-    <div id="out-recarga" class="campo-impreso" style="top: 45mm; left: 75mm;"></div>
-    <div id="out-vencimiento" class="campo-impreso" style="top: 65mm; left: 35mm;"></div>
-    <div id="out-taller" class="campo-impreso" style="top: 55mm; left: 75mm;"></div>
+    <!-- LADO IZQUIERDO (Tarjeta Usuario) -->
+    <div id="izq-extintor" class="campo-impreso" style="top: 88mm; left: 35mm;"></div>
+    <div id="izq-fab"      class="campo-impreso" style="top: 88mm; left: 55mm;"></div>
+    <div id="izq-ph"       class="campo-impreso" style="top: 88mm; left: 70mm;"></div>
+    <div id="izq-cap"      class="campo-impreso" style="top: 88mm; left: 90mm;"></div>
+    <div id="izq-agente"   class="campo-impreso" style="top: 88mm; left: 110mm;"></div>
+    <div id="izq-taller"   class="campo-impreso" style="top: 98mm; left: 50mm;"></div>
+    <div id="izq-mes"      class="campo-impreso" style="top: 108mm; left: 60mm;"></div>
+    <div id="izq-ano"      class="campo-impreso" style="top: 108mm; left: 75mm;"></div>
+    
+    <!-- SELLO AUTOMÁTICO (Mitad Izquierda) -->
+    <div id="izq-sello" class="campo-impreso sello-impreso" style="top: 98mm; left: 85mm;">
+        IGNACIO REPETTO<br>INGENIERO INDUSTRIAL<br>C.I.P.B.A. Mat. 5111
+    </div>
+
+    <!-- LADO DERECHO (Oblea Extintor) -->
+    <div id="der-extintor" class="campo-impreso" style="top: 60mm; left: 160mm; transform: rotate(-90deg);"></div>
+    <div id="der-ph"       class="campo-impreso" style="top: 60mm; left: 170mm; transform: rotate(-90deg);"></div>
+    <div id="der-mes"      class="campo-impreso" style="top: 75mm; left: 155mm; transform: rotate(-90deg);"></div>
+    <div id="der-ano"      class="campo-impreso" style="top: 75mm; left: 165mm; transform: rotate(-90deg);"></div>
+    <div id="der-taller"   class="campo-impreso" style="top: 70mm; left: 175mm; transform: rotate(-90deg);"></div>
 </div>
 
 <script>
-    const URL_API = "https://script.google.com/macros/s/AKfycbyqqpDioLnC7ZZtgGP1h2hv4cQ9kQAJNlN4U9CNNVoX3QPC0Sck4wffAIpM3SuQ5H12/exec";
-
+    // ACORDATE DE PEGAR TU URL DE APPS SCRIPT ACÁ ADENTRO
+    const URL_API = "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT";
     let esRegistroNuevo = false;
 
     async function buscarExtintor() {
         const nro = document.getElementById('inputBuscador').value.trim();
-        const alerta = document.getElementById('alertaEstado');
-        const formulario = document.getElementById('seccionFormulario');
-        const btnImprimir = document.getElementById('btnImprimir');
-
-        if (!nro) { mostrarAlerta("Por favor, ingrese un número de extintor.", "danger"); return; }
-        mostrarAlerta("Buscando en la base de datos...", "info");
+        if (!nro) { mostrarAlerta("Por favor, ingrese un número.", "danger"); return; }
+        mostrarAlerta("Buscando en la base...", "info");
         
         try {
             let respuesta = await fetch(`${URL_API}?accion=buscar&extintor=${encodeURIComponent(nro)}`);
-            if (!respuesta.ok) throw new Error("Error de conexión");
-            let resultado = await respuesta.json();
-
-            formulario.style.display = 'block';
+            let res = await respuesta.json();
+            document.getElementById('seccionFormulario').style.display = 'block';
             document.getElementById('nroExtintorFijo').value = nro;
-            btnImprimir.style.display = 'none';
+            document.getElementById('btnImprimir').style.display = 'none';
 
-            if (resultado.encontrado) {
+            if (res.encontrado) {
                 esRegistroNuevo = false;
-                document.getElementById('tipoOblea').value = resultado.tipo || "A";
-                document.getElementById('fechaRecarga').value = resultado.recarga || "";
-                document.getElementById('vencimiento').value = resultado.vencimiento || "";
-                document.getElementById('taller').value = resultado.taller || "VIVATEC 382";
-                mostrarAlerta("Extintor encontrado. Modifique si es necesario y guarde.", "info");
+                document.getElementById('tipoOblea').value = res.tipo || "A";
+                document.getElementById('anoFab').value = res.anoFab || "";
+                document.getElementById('fechaRecarga').value = res.recarga || "";
+                document.getElementById('capacidad').value = res.capacidad || "1 Kg";
+                document.getElementById('agente').value = res.agente || "DPS";
+                document.getElementById('vencMes').value = res.vencMes || "";
+                document.getElementById('vencAno').value = res.vencAno || "";
+                document.getElementById('taller').value = res.taller || "VIVATEC 382";
+                mostrarAlerta("Extintor encontrado. Verificá y guardá.", "info");
             } else {
                 esRegistroNuevo = true;
                 document.getElementById('tipoOblea').value = "A";
+                document.getElementById('anoFab').value = "";
                 document.getElementById('fechaRecarga').value = "";
-                document.getElementById('vencimiento').value = "";
-                mostrarAlerta("Extintor NUEVO. Complete los datos para registrarlo.", "success");
+                document.getElementById('vencMes').value = "";
+                document.getElementById('vencAno').value = "";
+                mostrarAlerta("Extintor NUEVO. Cargá los datos.", "success");
             }
-        } catch (error) {
-            console.error("Error al buscar:", error);
-            mostrarAlerta("Error de conexión con la base de datos.", "danger");
-        }
+        } catch (error) { mostrarAlerta("Error de conexión.", "danger"); }
     }
 
     async function guardarDatos() {
-        const btnImprimir = document.getElementById('btnImprimir');
-        const datosEnvio = {
+        const datos = {
             accion: "guardar",
             extintor: document.getElementById('nroExtintorFijo').value,
             tipo: document.getElementById('tipoOblea').value,
+            anoFab: document.getElementById('anoFab').value,
             recarga: document.getElementById('fechaRecarga').value,
-            vencimiento: document.getElementById('vencimiento').value,
+            capacidad: document.getElementById('capacidad').value,
+            agente: document.getElementById('agente').value,
+            vencMes: document.getElementById('vencMes').value,
+            vencAno: document.getElementById('vencAno').value,
             taller: document.getElementById('taller').value
         };
-
-        mostrarAlerta("Guardando datos...", "info");
-
+        mostrarAlerta("Guardando...", "info");
         try {
-            let respuesta = await fetch(URL_API, {
-                method: "POST",
-                body: JSON.stringify(datosEnvio)
-            });
-            let resultado = await respuesta.json();
-
-            if (resultado.exito) {
-                mostrarAlerta(esRegistroNuevo ? "¡Registrado con éxito!" : "¡Actualizado con éxito!", "success");
-                btnImprimir.style.display = 'block';
-            } else {
-                mostrarAlerta("Error al intentar guardar.", "danger");
+            let res = await fetch(URL_API, { method: "POST", body: JSON.stringify(datos) });
+            let json = await res.json();
+            if (json.exito) {
+                mostrarAlerta("¡Guardado OK!", "success");
+                document.getElementById('btnImprimir').style.display = 'block';
             }
-        } catch (error) {
-            console.error("Error al guardar:", error);
-            mostrarAlerta("Problema de conexión al guardar los datos.", "danger");
-        }
+        } catch (error) { mostrarAlerta("Error al guardar.", "danger"); }
     }
 
     function lanzarImpresion() {
-        const nro = document.getElementById('nroExtintorFijo').value;
-        const recarga = document.getElementById('fechaRecarga').value;
-        const vencimiento = document.getElementById('vencimiento').value;
-        const taller = document.getElementById('taller').value;
-        const tipo = document.getElementById('tipoOblea').value;
+        // Volcar a Tarjeta (Izq)
+        document.getElementById('izq-extintor').innerText = document.getElementById('nroExtintorFijo').value;
+        document.getElementById('izq-fab').innerText = document.getElementById('anoFab').value;
+        document.getElementById('izq-ph').innerText = document.getElementById('fechaRecarga').value;
+        document.getElementById('izq-cap').innerText = document.getElementById('capacidad').value;
+        document.getElementById('izq-agente').innerText = document.getElementById('agente').value;
+        document.getElementById('izq-taller').innerText = document.getElementById('taller').value;
+        document.getElementById('izq-mes').innerText = document.getElementById('vencMes').value;
+        document.getElementById('izq-ano').innerText = document.getElementById('vencAno').value;
 
-        document.getElementById('out-extintor').innerText = nro;
-        document.getElementById('out-recarga').innerText = recarga;
-        document.getElementById('out-vencimiento').innerText = vencimiento;
-        document.getElementById('out-taller').innerText = taller;
+        // Volcar a Oblea (Der)
+        document.getElementById('der-extintor').innerText = document.getElementById('nroExtintorFijo').value;
+        document.getElementById('der-ph').innerText = document.getElementById('fechaRecarga').value;
+        document.getElementById('der-mes').innerText = document.getElementById('vencMes').value;
+        document.getElementById('der-ano').innerText = document.getElementById('vencAno').value;
+        document.getElementById('der-taller').innerText = document.getElementById('taller').value;
 
-        if (tipo === 'B') {
-            document.getElementById('out-extintor').style.top = '48mm';
-            document.getElementById('out-extintor').style.left = '40mm';
-        } else {
-            document.getElementById('out-extintor').style.top = '45mm';
-            document.getElementById('out-extintor').style.left = '35mm';
-        }
         window.print();
     }
 
-    function mostrarAlerta(mensaje, tipo) {
-        const alerta = document.getElementById('alertaEstado');
-        alerta.innerText = mensaje;
-        alerta.className = `alert alert-${tipo}`;
-        alerta.style.display = "block";
+    function mostrarAlerta(msg, tipo) {
+        let a = document.getElementById('alertaEstado');
+        a.innerText = msg; a.className = `alert alert-${tipo}`; a.style.display = "block";
     }
 </script>
-
 </body>
 </html>
