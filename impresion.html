@@ -6,22 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .card { max-width: 600px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
-        h2 { color: #333; text-align: center; }
+        .card { max-width: 550px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         .form-row { display: flex; gap: 15px; }
         .form-row .form-group { flex: 1; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
+        
+        /* Inputs más compactos y prolijos */
+        input, select { width: 100%; max-width: 220px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
         input:read-only { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
         
-        .btn { padding: 12px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
-        .btn-buscar { background-color: #007bff; color: white; width: auto; flex-shrink: 0; padding: 10px 20px; margin-top: 0; }
-        .btn-guardar { background-color: #28a745; color: white; }
-        .btn-imprimir { background-color: #17a2b8; color: white; display: none; margin-top: 15px;}
+        .btn { padding: 10px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
+        .btn-buscar { background-color: #007bff; color: white; width: auto; padding: 8px 18px; margin-top: 0; }
+        .btn-guardar { background-color: #28a745; color: white; max-width: 250px; }
+        .btn-imprimir { background-color: #17a2b8; color: white; display: none; margin-top: 15px; max-width: 250px; }
         
         .flex-row { display: flex; gap: 10px; align-items: center; }
-        .alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; text-align: center; display: none; }
+        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; text-align: center; display: none; font-size: 14px; }
         .alert-info { background-color: #d1ecf1; color: #0c5460; }
         .alert-success { background-color: #d4edda; color: #155724; }
         .alert-danger { background-color: #f8d7da; color: #721c24; }
@@ -44,7 +46,7 @@
 <div class="card no-print">
     <h2>Módulo de Impresión de Obleas</h2>
     <div class="form-group">
-        <label for="inputBuscador">Número de Extintor (Buscar - Máx. 10 chars):</label>
+        <label for="inputBuscador">Número de Extintor (Buscar):</label>
         <div class="flex-row">
             <input type="text" id="inputBuscador" maxlength="10" placeholder="Ej: 136864">
             <button class="btn btn-buscar" onclick="buscarExtintor()">Buscar</button>
@@ -60,14 +62,14 @@
                 <select id="tipoOblea"><option value="A">Oblea A</option><option value="B">Oblea B</option></select>
             </div>
             <div class="form-group">
-                <label>Nº Extintor (Máx. 10):</label>
+                <label>Nº Extintor:</label>
                 <input type="text" id="nroExtintorFijo" maxlength="10" readonly>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label>Año Fabricación (Máx. 6, solo números):</label>
+                <label>Año Fabricación:</label>
                 <input type="text" id="anoFab" maxlength="6" oninput="soloNumeros(this)" placeholder="Ej: 2008">
             </div>
             <div class="form-group">
@@ -78,7 +80,7 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label>Capacidad (Máx. 6):</label>
+                <label>Capacidad:</label>
                 <input type="text" id="capacidad" maxlength="6" value="1 Kg">
             </div>
             <div class="form-group">
@@ -89,11 +91,11 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label>Mes Vencimiento (Máx. 4, solo números):</label>
+                <label>Mes Vencimiento:</label>
                 <input type="text" id="vencMes" maxlength="4" oninput="soloNumeros(this)" placeholder="Ej: 11">
             </div>
             <div class="form-group">
-                <label>Año Vencimiento (Máx. 4, solo números):</label>
+                <label>Año Vencimiento:</label>
                 <input type="text" id="vencAno" maxlength="4" oninput="soloNumeros(this)" placeholder="Ej: 27">
             </div>
         </div>
@@ -139,7 +141,6 @@
     const URL_API = "https://script.google.com/macros/s/AKfycbyqqpDioLnC7ZZtgGP1h2hv4cQ9kQAJNlN4U9CNNVoX3QPC0Sck4wffAIpM3SuQ5H12/exec";
     let esRegistroNuevo = false;
 
-    // Función auxiliar para forzar solo números en tiempo real
     function soloNumeros(input) {
         input.value = input.value.replace(/[^0-9]/g, '');
     }
