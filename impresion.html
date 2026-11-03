@@ -28,16 +28,24 @@
         .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
+        /* --- CORRECCIÓN PARA LA IMPRESORA --- */
+        #printable-area { display: none; }
+        .campo-impreso { position: absolute; font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; color: #000; }
+
         @media print {
-            body * { visibility: hidden; }
-            #printable-area, #printable-area * { visibility: visible; }
-            #printable-area { position: absolute; top: 0; left: 0; width: 100%; }
-            .no-print { display: none; }
+            body { margin: 0; padding: 0; background-color: #fff; }
+            .no-print { display: none !important; }
+            
+            #printable-area { 
+                display: block !important; 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 210mm; 
+                height: 100mm; 
+            }
             @page { margin: 0; } 
         }
-        
-        #printable-area { display: none; position: relative; width: 210mm; height: 100mm; }
-        .campo-impreso { position: absolute; font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; color: #000; }
     </style>
 </head>
 <body>
@@ -92,7 +100,6 @@
 </div>
 
 <script>
-    // PEGAR TU URL DE GOOGLE APPS SCRIPT ACÁ ADENTRO DE LAS COMILLAS
     const URL_API = "https://script.google.com/macros/s/AKfycbyqqpDioLnC7ZZtgGP1h2hv4cQ9kQAJNlN4U9CNNVoX3QPC0Sck4wffAIpM3SuQ5H12/exec";
 
     let esRegistroNuevo = false;
@@ -131,14 +138,7 @@
             }
         } catch (error) {
             console.error("Error al buscar:", error);
-            if (URL_API.includes("AQUI_PEGA_TU_URL")) {
-                mostrarAlerta("Modo Prueba Local. Falta configurar URL_API.", "info");
-                formulario.style.display = 'block';
-                document.getElementById('nroExtintorFijo').value = nro;
-                esRegistroNuevo = true;
-            } else {
-                mostrarAlerta("Error de conexión con la base de datos.", "danger");
-            }
+            mostrarAlerta("Error de conexión con la base de datos.", "danger");
         }
     }
 
@@ -170,12 +170,7 @@
             }
         } catch (error) {
             console.error("Error al guardar:", error);
-            if (URL_API.includes("AQUI_PEGA_TU_URL")) {
-                mostrarAlerta("Guardado Simulado.", "success");
-                btnImprimir.style.display = 'block';
-            } else {
-                mostrarAlerta("Problema de conexión al guardar los datos.", "danger");
-            }
+            mostrarAlerta("Problema de conexión al guardar los datos.", "danger");
         }
     }
 
