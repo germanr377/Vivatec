@@ -44,9 +44,9 @@
 <div class="card no-print">
     <h2>Módulo de Impresión de Obleas</h2>
     <div class="form-group">
-        <label for="inputBuscador">Número de Extintor (Buscar):</label>
+        <label for="inputBuscador">Número de Extintor (Buscar - Máx. 10 chars):</label>
         <div class="flex-row">
-            <input type="text" id="inputBuscador" placeholder="Ej: 136864">
+            <input type="text" id="inputBuscador" maxlength="10" placeholder="Ej: 136864">
             <button class="btn btn-buscar" onclick="buscarExtintor()">Buscar</button>
         </div>
     </div>
@@ -60,15 +60,15 @@
                 <select id="tipoOblea"><option value="A">Oblea A</option><option value="B">Oblea B</option></select>
             </div>
             <div class="form-group">
-                <label>Nº Extintor:</label>
-                <input type="text" id="nroExtintorFijo" readonly>
+                <label>Nº Extintor (Máx. 10):</label>
+                <input type="text" id="nroExtintorFijo" maxlength="10" readonly>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label>Año Fabricación:</label>
-                <input type="text" id="anoFab" placeholder="Ej: 2008">
+                <label>Año Fabricación (Máx. 6, solo números):</label>
+                <input type="text" id="anoFab" maxlength="6" oninput="soloNumeros(this)" placeholder="Ej: 2008">
             </div>
             <div class="form-group">
                 <label>Venc. PH (Recarga):</label>
@@ -78,8 +78,8 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label>Capacidad:</label>
-                <input type="text" id="capacidad" value="1 Kg">
+                <label>Capacidad (Máx. 6):</label>
+                <input type="text" id="capacidad" maxlength="6" value="1 Kg">
             </div>
             <div class="form-group">
                 <label>Agente Extintor:</label>
@@ -89,12 +89,12 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label>Mes Vencimiento:</label>
-                <input type="text" id="vencMes" placeholder="Ej: 11">
+                <label>Mes Vencimiento (Máx. 4, solo números):</label>
+                <input type="text" id="vencMes" maxlength="4" oninput="soloNumeros(this)" placeholder="Ej: 11">
             </div>
             <div class="form-group">
-                <label>Año Vencimiento:</label>
-                <input type="text" id="vencAno" placeholder="Ej: 27">
+                <label>Año Vencimiento (Máx. 4, solo números):</label>
+                <input type="text" id="vencAno" maxlength="4" oninput="soloNumeros(this)" placeholder="Ej: 27">
             </div>
         </div>
 
@@ -136,9 +136,13 @@
 </div>
 
 <script>
-    // ACORDATE DE PEGAR TU URL DE APPS SCRIPT ACÁ ADENTRO
-    const URL_API = "https://script.google.com/macros/s/AKfycbxNCyfC_RWgJO1yymVz1X8FU405a7hly66RmF-lGxy_SuoPyaiesfDojak2PaN5RQc/exec";
+    const URL_API = "https://script.google.com/macros/s/AKfycbyqqpDioLnC7ZZtgGP1h2hv4cQ9kQAJNlN4U9CNNVoX3QPC0Sck4wffAIpM3SuQ5H12/exec";
     let esRegistroNuevo = false;
+
+    // Función auxiliar para forzar solo números en tiempo real
+    function soloNumeros(input) {
+        input.value = input.value.replace(/[^0-9]/g, '');
+    }
 
     async function buscarExtintor() {
         const nro = document.getElementById('inputBuscador').value.trim();
@@ -200,7 +204,6 @@
     }
 
     function lanzarImpresion() {
-        // Volcar a Tarjeta (Izq)
         document.getElementById('izq-extintor').innerText = document.getElementById('nroExtintorFijo').value;
         document.getElementById('izq-fab').innerText = document.getElementById('anoFab').value;
         document.getElementById('izq-ph').innerText = document.getElementById('fechaRecarga').value;
@@ -210,7 +213,6 @@
         document.getElementById('izq-mes').innerText = document.getElementById('vencMes').value;
         document.getElementById('izq-ano').innerText = document.getElementById('vencAno').value;
 
-        // Volcar a Oblea (Der)
         document.getElementById('der-extintor').innerText = document.getElementById('nroExtintorFijo').value;
         document.getElementById('der-ph').innerText = document.getElementById('fechaRecarga').value;
         document.getElementById('der-mes').innerText = document.getElementById('vencMes').value;
