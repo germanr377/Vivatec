@@ -2,236 +2,236 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gestión e Impresión de Obleas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Impresión de Obleas</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .card { max-width: 550px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
-        h2 { color: #333; text-align: center; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-row { display: flex; gap: 15px; }
-        .form-row .form-group { flex: 1; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
-        
-        /* Tamaños personalizados adaptados a la cantidad de caracteres */
-        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        input:read-only { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
-        
-        .input-corto-4 { width: 90px; }   /* Para Mes y Año de Vencimiento (máx 4) */
-        .input-mediano-6 { width: 120px; } /* Para Año Fab y Capacidad (máx 6) */
-        .input-largo-10 { width: 150px; }  /* Para Nº de Extintor y Buscador (máx 10) */
-        .input-estandar { width: 100%; max-width: 200px; } /* Para el resto */
-
-        .btn { padding: 10px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; font-weight: bold; }
-        .btn-buscar { background-color: #007bff; color: white; width: auto; padding: 8px 18px; margin-top: 0; }
-        .btn-guardar { background-color: #28a745; color: white; max-width: 250px; }
-        .btn-imprimir { background-color: #17a2b8; color: white; display: none; margin-top: 15px; max-width: 250px; }
-        
-        .flex-row { display: flex; gap: 10px; align-items: center; }
-        .alert { padding: 12px; margin-bottom: 20px; border-radius: 4px; font-weight: bold; text-align: center; display: none; font-size: 14px; }
-        .alert-info { background-color: #d1ecf1; color: #0c5460; }
-        .alert-success { background-color: #d4edda; color: #155724; }
-        .alert-danger { background-color: #f8d7da; color: #721c24; }
-
-        /* --- ZONA IMPRESIÓN --- */
-        #printable-area { display: none; }
-        .campo-impreso { position: absolute; font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; color: #000; }
-        .sello-impreso { font-family: 'Arial', sans-serif; font-size: 10px; font-weight: bold; color: #000; text-align: center; line-height: 1.2; }
-
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .search-row {
+            display: flex;
+            gap: 15px;
+        }
+        .search-row .form-group {
+            flex: 1;
+        }
+        .or-divider {
+            text-align: center;
+            font-weight: bold;
+            color: #888;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        /* Estilo de la Oblea para Imprimir */
+        .oblea-preview {
+            margin-top: 30px;
+            border: 2px dashed #3498db;
+            padding: 20px;
+            border-radius: 6px;
+            background: #fafbfc;
+            display: none;
+        }
+        .oblea-header {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .oblea-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+        .oblea-grid div span {
+            font-weight: bold;
+        }
+        .btn-print {
+            background-color: #27ae60;
+            margin-top: 15px;
+        }
+        .btn-print:hover {
+            background-color: #219653;
+        }
         @media print {
-            body { margin: 0; padding: 0; background-color: #fff; }
-            .no-print { display: none !important; }
-            #printable-area { display: block !important; position: absolute; top: 0; left: 0; width: 210mm; height: 297mm; }
-            @page { margin: 0; } 
+            body * {
+                visibility: hidden;
+            }
+            .oblea-preview, .oblea-preview * {
+                visibility: visible;
+            }
+            .oblea-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none;
+                background: white;
+            }
+            .btn-print, .container > *:not(.oblea-preview) {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="card no-print">
-    <h2>Módulo de Impresión de Obleas</h2>
-    <div class="form-group">
-        <label for="inputBuscador">Número de Extintor (Buscar):</label>
-        <div class="flex-row">
-            <input type="text" id="inputBuscador" class="input-largo-10" maxlength="10" placeholder="Ej: 136864">
-            <button class="btn btn-buscar" onclick="buscarExtintor()">Buscar</button>
-        </div>
-    </div>
-
-    <div id="alertaEstado" class="alert"></div>
-
-    <div id="seccionFormulario" style="display: none;">
-        <div class="form-row">
-            <div class="form-group">
-                <label>Tipo Oblea:</label>
-                <select id="tipoOblea" class="input-estandar"><option value="A">Oblea A</option><option value="B">Oblea B</option></select>
-            </div>
-            <div class="form-group">
-                <label>Nº Extintor:</label>
-                <input type="text" id="nroExtintorFijo" class="input-largo-10" maxlength="10" readonly>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Año Fabricación:</label>
-                <input type="text" id="anoFab" class="input-mediano-6" maxlength="6" oninput="soloNumeros(this)" placeholder="Ej: 2008">
-            </div>
-            <div class="form-group">
-                <label>Venc. PH (Recarga):</label>
-                <input type="text" id="fechaRecarga" class="input-mediano-6" placeholder="Ej: 11 28">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Capacidad:</label>
-                <input type="text" id="capacidad" class="input-mediano-6" maxlength="6" value="1 Kg">
-            </div>
-            <div class="form-group">
-                <label>Agente Extintor:</label>
-                <input type="text" id="agente" class="input-estandar" value="DPS">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>Mes Vencimiento:</label>
-                <input type="text" id="vencMes" class="input-corto-4" maxlength="4" oninput="soloNumeros(this)" placeholder="Ej: 11">
-            </div>
-            <div class="form-group">
-                <label>Año Vencimiento:</label>
-                <input type="text" id="vencAno" class="input-corto-4" maxlength="4" oninput="soloNumeros(this)" placeholder="Ej: 27">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Taller / Responsable:</label>
-            <input type="text" id="taller" class="input-estandar" value="VIVATEC 382">
-        </div>
-
-        <button class="btn btn-guardar" onclick="guardarDatos()">Guardar Cambios / Registrar</button>
-        <button id="btnImprimir" class="btn btn-imprimir" onclick="lanzarImpresion()">🖨️ Imprimir Tarjeta y Oblea</button>
-    </div>
-</div>
-
-<!-- ==========================================
-     MAPA DE IMPRESIÓN (MEDIDAS A CALIBRAR)
-     ========================================== -->
-<div id="printable-area">
-    <!-- LADO IZQUIERDO (Tarjeta Usuario) -->
-    <div id="izq-extintor" class="campo-impreso" style="top: 88mm; left: 35mm;"></div>
-    <div id="izq-fab"      class="campo-impreso" style="top: 88mm; left: 55mm;"></div>
-    <div id="izq-ph"       class="campo-impreso" style="top: 88mm; left: 70mm;"></div>
-    <div id="izq-cap"      class="campo-impreso" style="top: 88mm; left: 90mm;"></div>
-    <div id="izq-agente"   class="campo-impreso" style="top: 88mm; left: 110mm;"></div>
-    <div id="izq-taller"   class="campo-impreso" style="top: 98mm; left: 50mm;"></div>
-    <div id="izq-mes"      class="campo-impreso" style="top: 108mm; left: 60mm;"></div>
-    <div id="izq-ano"      class="campo-impreso" style="top: 108mm; left: 75mm;"></div>
+<div class="container">
+    <h2>Impresión de Obleas - Vivatec</h2>
     
-    <!-- SELLO AUTOMÁTICO (Mitad Izquierda) -->
-    <div id="izq-sello" class="campo-impreso sello-impreso" style="top: 98mm; left: 85mm;">
-        IGNACIO REPETTO<br>INGENIERO INDUSTRIAL<br>C.I.P.B.A. Mat. 5111
+    <!-- 1. Selección de Cliente -->
+    <div class="form-group">
+        <label for="clienteSelect">Seleccionar Cliente:</label>
+        <select id="clienteSelect">
+            <option value="">-- Cargar Clientes --</option>
+        </select>
     </div>
 
-    <!-- LADO DERECHO (Oblea Extintor) -->
-    <div id="der-extintor" class="campo-impreso" style="top: 60mm; left: 160mm; transform: rotate(-90deg);"></div>
-    <div id="der-ph"       class="campo-impreso" style="top: 60mm; left: 170mm; transform: rotate(-90deg);"></div>
-    <div id="der-mes"      class="campo-impreso" style="top: 75mm; left: 155mm; transform: rotate(-90deg);"></div>
-    <div id="der-ano"      class="campo-impreso" style="top: 75mm; left: 165mm; transform: rotate(-90deg);"></div>
-    <div id="der-taller"   class="campo-impreso" style="top: 70mm; left: 175mm; transform: rotate(-90deg);"></div>
+    <!-- 2. Doble forma de búsqueda: N° Extintor o N° DPS -->
+    <div class="search-row">
+        <div class="form-group">
+            <label for="nroExtintorInput">N° de Extintor:</label>
+            <input type="text" id="nroExtintorInput" placeholder="Ej: 105">
+        </div>
+        <div class="form-group">
+            <label for="nroDpsInput">N° de DPS:</label>
+            <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
+        </div>
+    </div>
+
+    <button onclick="buscarExtintor()">Buscar Extintor</button>
+
+    <!-- Vista Previa de la Oblea -->
+    <div id="obleaPreview" class="oblea-preview">
+        <div class="oblea-header">VIVATEC - CONTROL DE EXTINTORES</div>
+        <div class="oblea-grid">
+            <div><span>Cliente:</span> <span id="lblCliente">-</span></div>
+            <div><span>Extintor N°:</span> <span id="lblExtintor">-</span></div>
+            <div><span>Tipo y Capacidad:</span> <span id="lblTipoCap">-</span></div>
+            <div><span>Marca:</span> <span id="lblMarca">-</span></div>
+            <div><span>Venc. Carga:</span> <span id="lblVencCarga">-</span></div>
+            <div><span>Venc. P.H.:</span> <span id="lblVencPH">-</span></div>
+            <div><span>N° DPS:</span> <span id="lblDps">-</span></div>
+            <div><span>Puesto / Ubicación:</span> <span id="lblUbicacion">-</span></div>
+        </div>
+        <button class="btn-print" onclick="window.print()">Imprimir Oblea</button>
+    </div>
 </div>
 
 <script>
-    const URL_API = "https://script.google.com/macros/s/AKfycbyqqpDioLnC7ZZtgGP1h2hv4cQ9kQAJNlN4U9CNNVoX3QPC0Sck4wffAIpM3SuQ5H12/exec";
-    let esRegistroNuevo = false;
+    // URL de tu Web App de Google Apps Script (Reemplazá esto cuando tengas tu URL de Apps Script)
+    const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
 
-    function soloNumeros(input) {
-        input.value = input.value.replace(/[^0-9]/g, '');
-    }
+    // Cargar la lista de clientes al abrir la página
+    window.onload = function() {
+        fetch(URL_API + "?accion=obtenerClientes")
+            .then(response => response.json())
+            .then(data => {
+                let select = document.getElementById("clienteSelect");
+                if(data.clientes) {
+                    data.clientes.forEach(cliente => {
+                        let opt = document.createElement("option");
+                        opt.value = cliente;
+                        opt.textContent = cliente;
+                        select.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => console.error("Error al cargar clientes:", err));
+    };
 
-    async function buscarExtintor() {
-        const nro = document.getElementById('inputBuscador').value.trim();
-        if (!nro) { mostrarAlerta("Por favor, ingrese un número.", "danger"); return; }
-        mostrarAlerta("Buscando en la base...", "info");
-        
-        try {
-            let respuesta = await fetch(`${URL_API}?accion=buscar&extintor=${encodeURIComponent(nro)}`);
-            let res = await respuesta.json();
-            document.getElementById('seccionFormulario').style.display = 'block';
-            document.getElementById('nroExtintorFijo').value = nro;
-            document.getElementById('btnImprimir').style.display = 'none';
+    function buscarExtintor() {
+        let cliente = document.getElementById("clienteSelect").value;
+        let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
+        let nroDps = document.getElementById("nroDpsInput").value.trim();
 
-            if (res.encontrado) {
-                esRegistroNuevo = false;
-                document.getElementById('tipoOblea').value = res.tipo || "A";
-                document.getElementById('anoFab').value = res.anoFab || "";
-                document.getElementById('fechaRecarga').value = res.recarga || "";
-                document.getElementById('capacidad').value = res.capacidad || "1 Kg";
-                document.getElementById('agente').value = res.agente || "DPS";
-                document.getElementById('vencMes').value = res.vencMes || "";
-                document.getElementById('vencAno').value = res.vencAno || "";
-                document.getElementById('taller').value = res.taller || "VIVATEC 382";
-                mostrarAlerta("Extintor encontrado. Verificá y guardá.", "info");
-            } else {
-                esRegistroNuevo = true;
-                document.getElementById('tipoOblea').value = "A";
-                document.getElementById('anoFab').value = "";
-                document.getElementById('fechaRecarga').value = "";
-                document.getElementById('vencMes').value = "";
-                document.getElementById('vencAno').value = "";
-                mostrarAlerta("Extintor NUEVO. Cargá los datos.", "success");
-            }
-        } catch (error) { mostrarAlerta("Error de conexión.", "danger"); }
-    }
+        if (!cliente) {
+            alert("Por favor, seleccioná un cliente.");
+            return;
+        }
+        if (!nroExtintor && !nroDps) {
+            alert("Ingresá el N° de Extintor o el N° de DPS para buscar.");
+            return;
+        }
 
-    async function guardarDatos() {
-        const datos = {
-            accion: "guardar",
-            extintor: document.getElementById('nroExtintorFijo').value,
-            tipo: document.getElementById('tipoOblea').value,
-            anoFab: document.getElementById('anoFab').value,
-            recarga: document.getElementById('fechaRecarga').value,
-            capacidad: document.getElementById('capacidad').value,
-            agente: document.getElementById('agente').value,
-            vencMes: document.getElementById('vencMes').value,
-            vencAno: document.getElementById('vencAno').value,
-            taller: document.getElementById('taller').value
-        };
-        mostrarAlerta("Guardando...", "info");
-        try {
-            let res = await fetch(URL_API, { method: "POST", body: JSON.stringify(datos) });
-            let json = await res.json();
-            if (json.exito) {
-                mostrarAlerta("¡Guardado OK!", "success");
-                document.getElementById('btnImprimir').style.display = 'block';
-            }
-        } catch (error) { mostrarAlerta("Error al guardar.", "danger"); }
-    }
+        let url = `${URL_API}?accion=buscarParaImpresion&cliente=${encodeURIComponent(cliente)}&extintor=${encodeURIComponent(nroExtintor)}&dps=${encodeURIComponent(nroDps)}`;
 
-    function lanzarImpresion() {
-        document.getElementById('izq-extintor').innerText = document.getElementById('nroExtintorFijo').value;
-        document.getElementById('izq-fab').innerText = document.getElementById('anoFab').value;
-        document.getElementById('izq-ph').innerText = document.getElementById('fechaRecarga').value;
-        document.getElementById('izq-cap').innerText = document.getElementById('capacidad').value;
-        document.getElementById('izq-agente').innerText = document.getElementById('agente').value;
-        document.getElementById('izq-taller').innerText = document.getElementById('taller').value;
-        document.getElementById('izq-mes').innerText = document.getElementById('vencMes').value;
-        document.getElementById('izq-ano').innerText = document.getElementById('vencAno').value;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.encontrado) {
+                    document.getElementById("lblCliente").textContent = cliente;
+                    document.getElementById("lblExtintor").textContent = data.extintor.extintor;
+                    document.getElementById("lblTipoCap").textContent = `${data.extintor.tipo} - ${data.extintor.capacidad}`;
+                    document.getElementById("lblMarca").textContent = data.extintor.marca;
+                    document.getElementById("lblVencCarga").textContent = data.extintor.vencCarga;
+                    document.getElementById("lblVencPH").textContent = data.extintor.vencPH;
+                    document.getElementById("lblDps").textContent = data.extintor.nroDps;
+                    document.getElementById("lblUbicacion").textContent = `${data.extintor.puesto} (${data.extintor.ubicacion})`;
 
-        document.getElementById('der-extintor').innerText = document.getElementById('nroExtintorFijo').value;
-        document.getElementById('der-ph').innerText = document.getElementById('fechaRecarga').value;
-        document.getElementById('der-mes').innerText = document.getElementById('vencMes').value;
-        document.getElementById('der-ano').innerText = document.getElementById('vencAno').value;
-        document.getElementById('der-taller').innerText = document.getElementById('taller').value;
-
-        window.print();
-    }
-
-    function mostrarAlerta(msg, tipo) {
-        let a = document.getElementById('alertaEstado');
-        a.innerText = msg; a.className = `alert alert-${tipo}`; a.style.display = "block";
+                    document.getElementById("obleaPreview").style.display = "block";
+                } else {
+                    alert("No se encontró ningún extintor con los datos provistos.");
+                    document.getElementById("obleaPreview").style.display = "none";
+                }
+            })
+            .catch(err => {
+                console.error("Error en la búsqueda:", err);
+                alert("Error al comunicarse con la base de datos.");
+            });
     }
 </script>
+
 </body>
 </html>
