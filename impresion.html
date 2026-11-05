@@ -92,22 +92,25 @@
 
         #scannerContainer {
             display: none;
-            margin: 12px auto;
+            margin: 10px auto;
+            width: 100%;
             max-width: 420px;
             text-align: center;
             background: #111;
-            padding: 10px;
+            padding: 8px;
             border-radius: 10px;
             box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            box-sizing: border-box;
         }
 
         .video-wrapper {
             position: relative;
             width: 100%;
-            height: 135px;
+            height: 105px;
             overflow: hidden;
             border-radius: 7px;
             border: 2px solid #3498db;
+            box-sizing: border-box;
         }
 
         #videoElement {
@@ -121,7 +124,7 @@
             top: 50%;
             left: 10%;
             right: 10%;
-            height: 42px;
+            height: 36px;
             border: 2px dashed #2ecc71;
             border-radius: 5px;
             transform: translateY(-50%);
@@ -130,20 +133,27 @@
         }
 
         .scanner-controls {
-            margin-top: 8px;
-            display: flex;
-            gap: 10px;
+            margin-top: 7px;
         }
 
         .btn-close-cam {
             background: #e74c3c;
             color: white;
             border: none;
-            padding: 10px;
+            padding: 9px;
             width: 100%;
             font-weight: bold;
             border-radius: 5px;
             cursor: pointer;
+        }
+
+        #loadingScan {
+            display: none;
+            color: #f39c12;
+            font-weight: bold;
+            font-size: 13px;
+            margin-top: 7px;
+            text-align: center;
         }
 
         .btn-search {
@@ -210,15 +220,6 @@
 
         .btn-print:hover {
             background-color: #219653;
-        }
-
-        #loadingScan {
-            display: none;
-            color: #f39c12;
-            font-weight: bold;
-            font-size: 13px;
-            margin-top: 8px;
-            text-align: center;
         }
 
         @media print {
@@ -405,18 +406,75 @@ const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
 
 let mediaStream = null;
 let workerOCR = null;
+let workerOCRPromise = null;
+
 let temporizadorOCR = null;
 let leyendo = false;
+let iniciandoCamara = false;
+
 let ultimoNumero = "";
 let lecturasIguales = 0;
 let sesionCamara = 0;
 
 
 // ========================================
-// CARGAR CLIENTES
+// PREPARAR OCR ANTICIPADAMENTE
 // ========================================
 
-window.onload = function() {
+async function prepararOCR() {
+
+    if (workerOCR) {
+        return workerOCR;
+    }
+
+    // Evitar crear varios lectores simultáneamente
+
+    if (!workerOCRPromise) {
+
+        workerOCRPromise = (async () => {
+
+            const worker = await Tesseract.createWorker("eng");
+
+            await worker.setParameters({
+
+                tessedit_char_whitelist: "0123456789",
+                tessedit_pageseg_mode: "7"
+
+            });
+
+            workerOCR = worker;
+
+            console.log("Lector OCR preparado.");
+
+            return worker;
+
+        })().catch(err => {
+
+            workerOCRPromise = null;
+            throw err;
+
+        });
+
+    }
+
+    return workerOCRPromise;
+
+}
+
+
+// ========================================
+// CARGAR CLIENTES Y PREPARAR LECTOR
+// ========================================
+
+window.addEventListener("load", function() {
+
+    // Preparar OCR mientras el usuario utiliza la página
+
+    prepararOCR().catch(err => {
+        console.error("Error preparando OCR:", err);
+    });
+
+    // Cargar clientes
 
     fetch(URL_API + "?accion=obtenerClientes")
 
@@ -445,7 +503,7 @@ window.onload = function() {
 
         .catch(err => console.error("Error al cargar clientes:", err));
 
-};
+});
 
 
 // ========================================
@@ -454,16 +512,18 @@ window.onload = function() {
 
 async function iniciarCamara() {
 
+    if (mediaStream || iniciandoCamara) return;
+
+    iniciandoCamara = true;
+
     let container = document.getElementById("scannerContainer");
     let video = document.getElementById("videoElement");
     let loading = document.getElementById("loadingScan");
 
-    if (mediaStream) return;
-
     container.style.display = "block";
 
     loading.style.display = "block";
-    loading.textContent = "Preparando lector...";
+    loading.textContent = "Activando cámara y lector...";
 
     ultimoNumero = "";
     lecturasIguales = 0;
@@ -479,45 +539,49 @@ async function iniciarCamara() {
 
         }
 
-        mediaStream = await navigator.mediaDevices.getUserMedia({
+        // Solicitar cámara y preparar OCR al mismo tiempo
+
+        const promesaOCR = prepararOCR();
+
+        const promesaCamara = navigator.mediaDevices.getUserMedia({
 
             video: {
                 facingMode: "environment",
                 width: { ideal: 1280 },
-                height: { ideal: 720 }
+                height: { ideal: 720 },
+                frameRate: { ideal: 30 }
             }
 
         });
 
-        if (miSesion !== sesionCamara) return;
+        const stream = await promesaCamara;
+
+        // Si el usuario canceló durante el inicio
+
+        if (miSesion !== sesionCamara) {
+
+            stream.getTracks().forEach(track => track.stop());
+            return;
+
+        }
+
+        mediaStream = stream;
 
         video.srcObject = mediaStream;
 
         await video.play();
 
-        // Crear el lector OCR una sola vez
+        // Esperar al lector si todavía está cargando
 
-        if (!workerOCR) {
-
-            workerOCR = await Tesseract.createWorker("eng");
-
-            await workerOCR.setParameters({
-
-                tessedit_char_whitelist: "0123456789",
-                tessedit_pageseg_mode: "7"
-
-            });
-
-        }
+        await promesaOCR;
 
         if (miSesion !== sesionCamara) return;
 
         loading.textContent = "Enfocá el número dentro del recuadro...";
 
-        temporizadorOCR = setInterval(
-            leerAutomaticamente,
-            1200
-        );
+        // Primera lectura inmediata
+
+        leerAutomaticamente();
 
     }
 
@@ -525,9 +589,19 @@ async function iniciarCamara() {
 
         console.error("Error al iniciar cámara:", err);
 
-        alert("No se pudo iniciar la cámara o el lector OCR.");
+        if (miSesion === sesionCamara) {
 
-        cerrarCamara();
+            alert("No se pudo iniciar la cámara o el lector OCR.");
+
+            cerrarCamara();
+
+        }
+
+    }
+
+    finally {
+
+        iniciandoCamara = false;
 
     }
 
@@ -540,11 +614,16 @@ async function iniciarCamara() {
 
 async function leerAutomaticamente() {
 
-    if (leyendo || !mediaStream) return;
+    if (leyendo || !mediaStream || !workerOCR) return;
 
     let video = document.getElementById("videoElement");
 
-    if (!video.videoWidth) return;
+    if (!video.videoWidth || video.readyState < 2) {
+
+        temporizadorOCR = setTimeout(leerAutomaticamente, 200);
+        return;
+
+    }
 
     leyendo = true;
 
@@ -554,23 +633,34 @@ async function leerAutomaticamente() {
 
         let canvas = document.createElement("canvas");
 
-        // Recortar la zona central del visor
+        // Recortar la zona central donde está el número
 
-        canvas.width = Math.floor(video.videoWidth * 0.80);
+        const x = Math.floor(video.videoWidth * 0.10);
+        const y = Math.floor(video.videoHeight * 0.35);
 
-        canvas.height = Math.floor(video.videoHeight * 0.30);
+        const ancho = Math.floor(video.videoWidth * 0.80);
+        const alto = Math.floor(video.videoHeight * 0.30);
+
+        // Limitar tamaño de imagen para acelerar OCR
+
+        const escala = Math.min(1, 1000 / ancho);
+
+        canvas.width = Math.floor(ancho * escala);
+        canvas.height = Math.floor(alto * escala);
 
         let ctx = canvas.getContext("2d");
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
 
         ctx.drawImage(
 
             video,
 
-            video.videoWidth * 0.10,
-            video.videoHeight * 0.35,
-
-            canvas.width,
-            canvas.height,
+            x,
+            y,
+            ancho,
+            alto,
 
             0,
             0,
@@ -581,6 +671,8 @@ async function leerAutomaticamente() {
         );
 
         let resultado = await workerOCR.recognize(canvas);
+
+        // Comprobar que la cámara sigue abierta
 
         if (miSesion !== sesionCamara || !mediaStream) return;
 
@@ -605,13 +697,28 @@ async function leerAutomaticamente() {
 
             }
 
-            // Dos lecturas iguales consecutivas
+            console.log(
+                "Número detectado:",
+                numeros,
+                "Confianza:",
+                confianza,
+                "Lecturas:",
+                lecturasIguales
+            );
+
+            // DOS LECTURAS IGUALES = NUMERO CONFIRMADO
 
             if (lecturasIguales >= 2) {
 
+                // Completar automáticamente el campo DPS
+
                 document.getElementById("nroDpsInput").value = numeros;
 
+                // Cerrar cámara y ocultar visor
+
                 cerrarCamara();
+
+                // Dejar el cursor en el campo
 
                 document.getElementById("nroDpsInput").focus();
 
@@ -636,6 +743,17 @@ async function leerAutomaticamente() {
 
         leyendo = false;
 
+        // Programar siguiente lectura sin acumular intervalos
+
+        if (mediaStream && miSesion === sesionCamara) {
+
+            temporizadorOCR = setTimeout(
+                leerAutomaticamente,
+                250
+            );
+
+        }
+
     }
 
 }
@@ -653,7 +771,7 @@ function cerrarCamara() {
 
     if (temporizadorOCR) {
 
-        clearInterval(temporizadorOCR);
+        clearTimeout(temporizadorOCR);
         temporizadorOCR = null;
 
     }
@@ -672,6 +790,8 @@ function cerrarCamara() {
     }
 
     document.getElementById("videoElement").srcObject = null;
+
+    // Desaparecer completamente el visor
 
     document.getElementById("scannerContainer").style.display = "none";
 
