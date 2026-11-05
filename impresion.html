@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
-    <!-- Incluimos Tesseract.js para procesar la captura del visor -->
+    <!-- Incluimos Tesseract.js para procesar la lectura -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
     <style>
         body {
@@ -73,22 +73,42 @@
         .btn-cam-icon:hover {
             background: #2980b9;
         }
-        /* Contenedor del visor de cámara en rectángulo chico */
+        
+        /* Visor tipo rectángulo largo y chato (Horizontal) */
         #scannerContainer {
             display: none;
             margin-top: 10px;
             text-align: center;
-            background: #222;
+            background: #111;
             padding: 10px;
             border-radius: 6px;
         }
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            max-height: 140px; /* Rectángulo chato */
+            overflow: hidden;
+            border-radius: 4px;
+            border: 2px solid #3498db;
+        }
         #videoElement {
             width: 100%;
-            max-height: 200px;
+            height: 130px;
             object-fit: cover;
-            border-radius: 4px;
-            border: 2px dashed #3498db;
         }
+        /* Guía visual interna en forma de barra horizontal */
+        .scanner-laser {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #e74c3c;
+            box-shadow: 0 0 8px #e74c3c;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
         .scanner-controls {
             margin-top: 8px;
             display: flex;
@@ -223,13 +243,16 @@
             <label for="nroDpsInput">N° de DPS:</label>
             <div class="input-with-cam">
                 <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-                <button type="button" class="btn-cam-icon" onclick="iniciarCamara()" title="Abrir visor de cámara">📷</button>
+                <button type="button" class="btn-cam-icon" onclick="iniciarCamara()" title="Abrir visor de escaneo">📷</button>
             </div>
             
-            <!-- Visor de cámara en rectángulo chico -->
+            <!-- Visor rectángulo largo y chato con guía láser -->
             <div id="scannerContainer">
-                <video id="videoElement" autoplay playsinline></video>
-                <div id="loadingScan">Leyendo número del visor...</div>
+                <div class="video-wrapper">
+                    <video id="videoElement" autoplay playsinline></video>
+                    <div class="scanner-laser"></div>
+                </div>
+                <div id="loadingScan">Leyendo número...</div>
                 <div class="scanner-controls">
                     <button type="button" class="btn-capture" onclick="capturarYLeer()">📸 Capturar</button>
                     <button type="button" class="btn-close-cam" onclick="cerrarCamara()">❌ Cerrar</button>
@@ -278,7 +301,6 @@
             .catch(err => console.error("Error al cargar clientes:", err));
     };
 
-    // Iniciar el visor de cámara en rectángulo chico
     function iniciarCamara() {
         let container = document.getElementById("scannerContainer");
         let video = document.getElementById("videoElement");
@@ -296,7 +318,6 @@
             });
     }
 
-    // Apagar la cámara
     function cerrarCamara() {
         if (mediaStream) {
             mediaStream.getTracks().forEach(track => track.stop());
@@ -306,7 +327,6 @@
         document.getElementById("loadingScan").style.display = "none";
     }
 
-    // Capturar el fotograma del rectángulo y procesarlo con OCR
     function capturarYLeer() {
         let video = document.getElementById("videoElement");
         let loadingDiv = document.getElementById("loadingScan");
@@ -315,7 +335,6 @@
 
         loadingDiv.style.display = "block";
 
-        // Crear un canvas temporal para extraer la imagen del video
         let canvas = document.createElement("canvas");
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
@@ -324,7 +343,6 @@
 
         let dataUrl = canvas.toDataURL("image/png");
 
-        // Procesar con Tesseract
         Tesseract.recognize(
             dataUrl,
             'eng',
@@ -334,9 +352,9 @@
             let textoLimpiado = text.replace(/[^0-9]/g, '').trim();
             if (textoLimpiado) {
                 document.getElementById("nroDpsInput").value = textoLimpiado;
-                cerrarCamara();
+                cerrarCamara(); // Cierra la cámara automáticamente al leer el número
             } else {
-                alert("No se distinguió el número con claridad. Reintentá enfocar mejor dentro del recuadro.");
+                alert("No se distinguió el número con claridad. Reintentá enfocar mejor dentro de la franja.");
             }
         }).catch(err => {
             loadingDiv.style.display = "none";
@@ -385,4 +403,3 @@
 
 </body>
 </html>
-
