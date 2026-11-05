@@ -2,62 +2,160 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vivatec - Consultas</title>
-    <link rel="stylesheet" href="estilos.css">
+    <title>Consulta de Matafuegos por Cliente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* Estilos específicos para la tabla de consultas */
-        .contenedor-consultas { padding: 15px; width: 100%; max-width: 600px; margin: 0 auto; }
-        .filtro-grupo { margin-bottom: 15px; }
-        .filtro-grupo label { display: block; color: #aaa; margin-bottom: 5px; font-size: 16px; }
-        .filtro-grupo input { width: 100%; padding: 12px; background-color: #2a2a2a; border: 2px solid #444; color: white; border-radius: 8px; font-size: 16px; outline: none; }
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #1e1e1e; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; font-size: 14px; }
-        th { background-color: #d32f2f; color: white; }
-        tr:hover { background-color: #252525; }
-        .sin-resultados { text-align: center; color: #888; padding: 20px; }
+        .filter-section { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; background: #e9ecef; padding: 15px; border-radius: 6px; }
+        label { font-weight: bold; color: #555; }
+        select, input { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        select { flex: 1; max-width: 350px; }
+        
+        .btn { padding: 10px 20px; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; background-color: #007bff; }
+        .btn:hover { background-color: #0056b3; }
+
+        .table-responsive { overflow-x: auto; max-height: 500px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; white-space: nowrap; }
+        th { background-color: #343a40; color: white; position: sticky; top: 0; z-index: 1; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .alert { padding: 15px; border-radius: 4px; font-weight: bold; text-align: center; display: none; margin-top: 20px; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
 
-    <header>Consultas de Vencimientos</header>
-
-    <div class="contenedor-consultas">
-        <div class="filtro-grupo">
-            <label for="fecha-desde">Desde:</label>
-            <input type="date" id="fecha-desde">
-        </div>
-
-        <div class="filtro-grupo">
-            <label for="fecha-hasta">Hasta:</label>
-            <input type="date" id="fecha-hasta">
-        </div>
-
-        <button class="btn btn-azul" onclick="consultarFechas()">BUSCAR VENCIMIENTOS</button>
-        <button class="btn btn-gris" onclick="window.location.href='index.html'">VOLVER AL INICIO</button>
-
-        <!-- Tabla donde se cargarán los resultados -->
-        <div style="overflow-x: auto;">
-            <table id="tabla-resultados">
-                <thead>
-                    <tr>
-                        <th>Oblea</th>
-                        <th>Extintor</th>
-                        <th>Recarga</th>
-                        <th>Vencimiento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan="4" class="sin-resultados">Seleccioná un rango y buscá.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+<div class="container">
+    <h2>Consulta General de Matafuegos</h2>
+    
+    <div class="filter-section">
+        <label for="selectCliente">Seleccionar Cliente:</label>
+        <select id="selectCliente">
+            <option value="">-- Cargando clientes... --</option>
+        </select>
+        <button class="btn" onclick="consultarExtintores()">Filtrar</button>
     </div>
 
-    <!-- Script de consultas -->
-    <script src="consultas.js"></script>
+    <div id="alertaEstado" class="alert"></div>
+
+    <div class="table-responsive">
+        <table id="tablaResultados" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Extintor N°</th>
+                    <th>Tipo</th>
+                    <th>Capacidad</th>
+                    <th>Año Fab.</th>
+                    <th>Marca</th>
+                    <th>Venc. P. Hidráulica</th>
+                    <th>Venc. Carga</th>
+                    <th>Nº DPS</th>
+                    <th>Puesto</th>
+                    <th>Ubicación</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <!-- Los datos se cargan dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // URL DE TU NUEVO GOOGLE APPS SCRIPT (Asegurate de usar la de la hoja Vivatecc)
+    const URL_API = "AQUÍ_PEGA_TU_URL_DE_APPS_SCRIPT";
+
+    // Al cargar la página, traemos la lista de clientes disponibles
+    window.onload = function() {
+        cargarClientes();
+    };
+
+    async function cargarClientes() {
+        try {
+            let respuesta = await fetch(`${URL_API}?accion=obtenerClientes`);
+            let datos = await respuesta.json();
+            
+            const select = document.getElementById('selectCliente');
+            select.innerHTML = '<option value="">-- Seleccione un cliente --</option>';
+            
+            if (datos.clientes && datos.clientes.length > 0) {
+                datos.clientes.forEach(cliente => {
+                    let opt = document.createElement('option');
+                    opt.value = cliente;
+                    opt.innerText = cliente;
+                    select.appendChild(opt);
+                });
+            } else {
+                select.innerHTML = '<option value="">No se encontraron clientes</option>';
+            }
+        } catch (error) {
+            console.error("Error cargando clientes:", error);
+            mostrarAlerta("Error al conectar con la base de datos para cargar clientes.", "danger");
+        }
+    }
+
+    async function consultarExtintores() {
+        const clienteSeleccionado = document.getElementById('selectCliente').value;
+        const tabla = document.getElementById('tablaResultados');
+        const cuerpo = document.getElementById('cuerpoTabla');
+
+        if (!clienteSeleccionado) {
+            mostrarAlerta("Por favor, seleccione un cliente para filtrar.", "danger");
+            tabla.style.display = "none";
+            return;
+        }
+
+        mostrarAlerta("Buscando extintores del cliente...", "info");
+        cuerpo.innerHTML = "";
+
+        try {
+            let respuesta = await fetch(`${URL_API}?accion=filtrarPorCliente&cliente=${encodeURIComponent(clienteSeleccionado)}`);
+            let resultado = await respuesta.json();
+
+            if (resultado.encontrado && resultado.extintores.length > 0) {
+                ocultarAlerta();
+                resultado.extintores.forEach(ext => {
+                    let fila = `<tr>
+                        <td><b>${ext.extintor || ''}</b></td>
+                        <td>${ext.tipo || ''}</td>
+                        <td>${ext.capacidad || ''}</td>
+                        <td>${ext.anoFab || ''}</td>
+                        <td>${ext.marca || ''}</td>
+                        <td>${ext.vencPH || ''}</td>
+                        <td>${ext.vencCarga || ''}</td>
+                        <td>${ext.nroDps || ''}</td>
+                        <td>${ext.puesto || ''}</td>
+                        <td>${ext.ubicacion || ''}</td>
+                    </tr>`;
+                    cuerpo.innerHTML += fila;
+                });
+                tabla.style.display = "table";
+            } else {
+                tabla.style.display = "none";
+                mostrarAlerta("No se encontraron extintores para este cliente.", "info");
+            }
+        } catch (error) {
+            console.error("Error en la consulta:", error);
+            mostrarAlerta("Error de conexión al realizar la consulta.", "danger");
+        }
+    }
+
+    function mostrarAlerta(mensaje, tipo) {
+        const a = document.getElementById('alertaEstado');
+        a.innerText = mensaje;
+        a.className = `alert alert-${tipo}`;
+        a.style.display = "block";
+    }
+
+    function ocultarAlerta() {
+        document.getElementById('alertaEstado').style.display = "none";
+    }
+</script>
+
 </body>
 </html>
