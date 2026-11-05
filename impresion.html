@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
-    <!-- Incluimos Tesseract.js para el reconocimiento óptico de caracteres -->
+    <!-- Incluimos Tesseract.js para procesar la captura del visor -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
     <style>
         body {
@@ -57,7 +57,7 @@
             position: relative;
         }
         .input-with-cam input {
-            padding-right: 45px; /* Espacio para el botón de la cámara */
+            padding-right: 45px;
         }
         .btn-cam-icon {
             position: absolute;
@@ -73,8 +73,49 @@
         .btn-cam-icon:hover {
             background: #2980b9;
         }
+        /* Contenedor del visor de cámara en rectángulo chico */
+        #scannerContainer {
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+            background: #222;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        #videoElement {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px dashed #3498db;
+        }
+        .scanner-controls {
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn-capture {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px;
+            flex: 1;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-close-cam {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px;
+            flex: 1;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
         button.btn-search {
-            background-color: #27ae60;
+            background-color: #2980b9;
             color: white;
             border: none;
             padding: 12px;
@@ -86,7 +127,7 @@
             transition: background 0.3s;
         }
         button.btn-search:hover {
-            background-color: #219653;
+            background-color: #1f618d;
         }
         /* Estilo de la Oblea para Imprimir */
         .oblea-preview {
@@ -116,7 +157,7 @@
             font-weight: bold;
         }
         .btn-print {
-            background-color: #2980b9;
+            background-color: #27ae60;
             margin-top: 15px;
             width: 100%;
             padding: 12px;
@@ -128,14 +169,15 @@
             cursor: pointer;
         }
         .btn-print:hover {
-            background-color: #1f618d;
+            background-color: #219653;
         }
         #loadingScan {
             display: none;
-            color: #e67e22;
+            color: #f39c12;
             font-weight: bold;
-            font-size: 12px;
-            margin-top: 4px;
+            font-size: 13px;
+            margin-top: 5px;
+            text-align: center;
         }
         @media print {
             body * {
@@ -181,11 +223,18 @@
             <label for="nroDpsInput">N° de DPS:</label>
             <div class="input-with-cam">
                 <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-                <!-- Input de cámara oculto que se activa al presionar el ícono -->
-                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="leerTextoDPS(event)">
-                <button type="button" class="btn-cam-icon" onclick="document.getElementById('cameraInput').click()" title="Escanear con cámara">📷</button>
+                <button type="button" class="btn-cam-icon" onclick="iniciarCamara()" title="Abrir visor de cámara">📷</button>
             </div>
-            <div id="loadingScan">Leyendo número...</div>
+            
+            <!-- Visor de cámara en rectángulo chico -->
+            <div id="scannerContainer">
+                <video id="videoElement" autoplay playsinline></video>
+                <div id="loadingScan">Leyendo número del visor...</div>
+                <div class="scanner-controls">
+                    <button type="button" class="btn-capture" onclick="capturarYLeer()">📸 Capturar</button>
+                    <button type="button" class="btn-close-cam" onclick="cerrarCamara()">❌ Cerrar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -210,8 +259,8 @@
 
 <script>
     const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
+    let mediaStream = null;
 
-    // Cargar la lista de clientes al abrir la página
     window.onload = function() {
         fetch(URL_API + "?accion=obtenerClientes")
             .then(response => response.json())
@@ -229,16 +278,55 @@
             .catch(err => console.error("Error al cargar clientes:", err));
     };
 
-    // Función que procesa la foto de la cámara y extrae el número DPS
-    function leerTextoDPS(event) {
-        let file = event.target.files[0];
-        if (!file) return;
+    // Iniciar el visor de cámara en rectángulo chico
+    function iniciarCamara() {
+        let container = document.getElementById("scannerContainer");
+        let video = document.getElementById("videoElement");
+        container.style.display = "block";
 
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                mediaStream = stream;
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error al acceder a la cámara:", err);
+                alert("No se pudo acceder a la cámara del dispositivo.");
+                container.style.display = "none";
+            });
+    }
+
+    // Apagar la cámara
+    function cerrarCamara() {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            mediaStream = null;
+        }
+        document.getElementById("scannerContainer").style.display = "none";
+        document.getElementById("loadingScan").style.display = "none";
+    }
+
+    // Capturar el fotograma del rectángulo y procesarlo con OCR
+    function capturarYLeer() {
+        let video = document.getElementById("videoElement");
         let loadingDiv = document.getElementById("loadingScan");
+        
+        if (!mediaStream) return;
+
         loadingDiv.style.display = "block";
 
+        // Crear un canvas temporal para extraer la imagen del video
+        let canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        let dataUrl = canvas.toDataURL("image/png");
+
+        // Procesar con Tesseract
         Tesseract.recognize(
-            file,
+            dataUrl,
             'eng',
             { logger: m => console.log(m) }
         ).then(({ data: { text } }) => {
@@ -246,13 +334,14 @@
             let textoLimpiado = text.replace(/[^0-9]/g, '').trim();
             if (textoLimpiado) {
                 document.getElementById("nroDpsInput").value = textoLimpiado;
+                cerrarCamara();
             } else {
-                alert("No se pudo leer con claridad. Probá enfocar bien el número o tipearlo a mano.");
+                alert("No se distinguió el número con claridad. Reintentá enfocar mejor dentro del recuadro.");
             }
         }).catch(err => {
             loadingDiv.style.display = "none";
             console.error(err);
-            alert("Error al procesar la imagen.");
+            alert("Error al procesar la imagen capturada.");
         });
     }
 
@@ -296,3 +385,4 @@
 
 </body>
 </html>
+
