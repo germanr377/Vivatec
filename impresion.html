@@ -49,12 +49,6 @@
         .search-row .form-group {
             flex: 1;
         }
-        .or-divider {
-            text-align: center;
-            font-weight: bold;
-            color: #888;
-            margin: 10px 0;
-        }
         button {
             background-color: #3498db;
             color: white;
@@ -130,22 +124,22 @@
 <div class="container">
     <h2>Impresión de Obleas - Vivatec</h2>
     
-    <!-- 1. Selección de Cliente -->
+    <!-- Selección de Cliente (Opcional) -->
     <div class="form-group">
-        <label for="clienteSelect">Seleccionar Cliente:</label>
+        <label for="clienteSelect">Cliente (Opcional):</label>
         <select id="clienteSelect">
-            <option value="">-- Cargar Clientes --</option>
+            <option value="">-- Todos los clientes / No filtrar --</option>
         </select>
     </div>
 
-    <!-- 2. Doble forma de búsqueda: N° Extintor o N° DPS -->
+    <!-- Búsqueda por N° de Extintor o N° DPS (Ambos opcionales, pero al menos uno requerido) -->
     <div class="search-row">
         <div class="form-group">
-            <label for="nroExtintorInput">N° de Extintor:</label>
+            <label for="nroExtintorInput">N° de Extintor (Opcional):</label>
             <input type="text" id="nroExtintorInput" placeholder="Ej: 105">
         </div>
         <div class="form-group">
-            <label for="nroDpsInput">N° de DPS:</label>
+            <label for="nroDpsInput">N° de DPS (Opcional):</label>
             <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
         </div>
     </div>
@@ -170,7 +164,6 @@
 </div>
 
 <script>
-    // URL de tu Web App de Google Apps Script (Reemplazá esto cuando tengas tu URL de Apps Script)
     const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
 
     // Cargar la lista de clientes al abrir la página
@@ -192,16 +185,13 @@
     };
 
     function buscarExtintor() {
-        let cliente = document.getElementById("clienteSelect").value;
+        let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
         let nroDps = document.getElementById("nroDpsInput").value.trim();
 
-        if (!cliente) {
-            alert("Por favor, seleccioná un cliente.");
-            return;
-        }
-        if (!nroExtintor && !nroDps) {
-            alert("Ingresá el N° de Extintor o el N° de DPS para buscar.");
+        // Validar que al menos haya ingresado algún criterio de búsqueda
+        if (!cliente && !nroExtintor && !nroDps) {
+            alert("Por favor, completá al menos un campo de búsqueda (Cliente, N° de Extintor o N° de DPS).");
             return;
         }
 
@@ -211,7 +201,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.encontrado) {
-                    document.getElementById("lblCliente").textContent = cliente;
+                    document.getElementById("lblCliente").textContent = data.extintor.cliente || cliente || "N/D";
                     document.getElementById("lblExtintor").textContent = data.extintor.extintor;
                     document.getElementById("lblTipoCap").textContent = `${data.extintor.tipo} - ${data.extintor.capacidad}`;
                     document.getElementById("lblMarca").textContent = data.extintor.marca;
@@ -222,7 +212,7 @@
 
                     document.getElementById("obleaPreview").style.display = "block";
                 } else {
-                    alert("No se encontró ningún extintor con los datos provistos.");
+                    alert("No se encontró ningún extintor con los criterios indicados.");
                     document.getElementById("obleaPreview").style.display = "none";
                 }
             })
