@@ -1,11 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
-    <!-- Incluimos Tesseract.js para procesar la lectura -->
+
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,6 +16,7 @@
             padding: 20px;
             color: #333;
         }
+
         .container {
             max-width: 700px;
             margin: 0 auto;
@@ -22,20 +25,24 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
+
         h2 {
             text-align: center;
             color: #2c3e50;
             margin-bottom: 20px;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
             color: #555;
         }
+
         select, input {
             width: 100%;
             padding: 10px;
@@ -44,21 +51,27 @@
             font-size: 16px;
             box-sizing: border-box;
         }
+
         .search-row {
             display: flex;
             gap: 15px;
         }
+
         .search-row .form-group {
             flex: 1;
+            min-width: 0;
         }
+
         .input-with-cam {
             display: flex;
             align-items: center;
             position: relative;
         }
+
         .input-with-cam input {
             padding-right: 45px;
         }
+
         .btn-cam-icon {
             position: absolute;
             right: 5px;
@@ -70,75 +83,70 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         .btn-cam-icon:hover {
             background: #2980b9;
         }
-        
-        /* Visor grande que ocupa todo el ancho */
+
+        /* VISOR COMPACTO */
+
         #scannerContainer {
             display: none;
-            margin-top: 15px;
+            margin: 12px auto;
+            max-width: 420px;
             text-align: center;
             background: #111;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
         }
+
         .video-wrapper {
             position: relative;
             width: 100%;
-            height: 220px; /* Visor más alto y ancho */
+            height: 135px;
             overflow: hidden;
-            border-radius: 6px;
+            border-radius: 7px;
             border: 2px solid #3498db;
         }
+
         #videoElement {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        /* Guía visual centrada para enfocar de cerca */
+
         .scanner-guide {
             position: absolute;
             top: 50%;
-            left: 5%;
-            right: 5%;
-            height: 50px;
-            border: 2px dashed #e74c3c;
-            border-radius: 4px;
+            left: 10%;
+            right: 10%;
+            height: 42px;
+            border: 2px dashed #2ecc71;
+            border-radius: 5px;
             transform: translateY(-50%);
             pointer-events: none;
-            background: rgba(231, 76, 60, 0.05);
+            background: rgba(46,204,113,0.06);
         }
 
         .scanner-controls {
-            margin-top: 10px;
+            margin-top: 8px;
             display: flex;
             gap: 10px;
         }
-        .btn-capture {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 12px;
-            flex: 1;
-            font-weight: bold;
-            font-size: 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+
         .btn-close-cam {
             background: #e74c3c;
             color: white;
             border: none;
-            padding: 12px;
-            flex: 1;
+            padding: 10px;
+            width: 100%;
             font-weight: bold;
-            font-size: 16px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
         }
-        button.btn-search {
+
+        .btn-search {
             background-color: #2980b9;
             color: white;
             border: none;
@@ -150,10 +158,13 @@
             cursor: pointer;
             transition: background 0.3s;
         }
-        button.btn-search:hover {
+
+        .btn-search:hover {
             background-color: #1f618d;
         }
-        /* Estilo de la Oblea para Imprimir */
+
+        /* VISTA PREVIA OBLEA */
+
         .oblea-preview {
             margin-top: 30px;
             border: 2px dashed #3498db;
@@ -162,6 +173,7 @@
             background: #fafbfc;
             display: none;
         }
+
         .oblea-header {
             font-size: 18px;
             font-weight: bold;
@@ -171,15 +183,18 @@
             padding-bottom: 8px;
             margin-bottom: 15px;
         }
+
         .oblea-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             font-size: 14px;
         }
+
         .oblea-grid div span {
             font-weight: bold;
         }
+
         .btn-print {
             background-color: #27ae60;
             margin-top: 15px;
@@ -192,24 +207,29 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         .btn-print:hover {
             background-color: #219653;
         }
+
         #loadingScan {
             display: none;
             color: #f39c12;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             margin-top: 8px;
             text-align: center;
         }
+
         @media print {
             body * {
                 visibility: hidden;
             }
+
             .oblea-preview, .oblea-preview * {
                 visibility: visible;
             }
+
             .oblea-preview {
                 position: absolute;
                 left: 0;
@@ -218,200 +238,526 @@
                 border: none;
                 background: white;
             }
+
             .btn-print, .container > *:not(.oblea-preview) {
                 display: none;
             }
         }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .search-row {
+                gap: 8px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
 <div class="container">
+
     <h2>Impresión de Obleas - Vivatec</h2>
-    
-    <!-- Selección de Cliente (Opcional) -->
+
+    <!-- CLIENTE -->
+
     <div class="form-group">
         <label for="clienteSelect">Cliente (Opcional):</label>
+
         <select id="clienteSelect">
             <option value="">-- Todos los clientes / No filtrar --</option>
         </select>
     </div>
 
-    <!-- Visor grande de cámara para escaneo cercano (Ocupa ancho total debajo de los campos) -->
+    <!-- VISOR DE CAMARA -->
+
     <div id="scannerContainer">
+
         <div class="video-wrapper">
             <video id="videoElement" autoplay playsinline></video>
             <div class="scanner-guide"></div>
         </div>
-        <div id="loadingScan">Leyendo número de la etiqueta... un momento.</div>
-        <div class="scanner-controls">
-            <button type="button" class="btn-capture" onclick="capturarYLeer()">📸 Capturar y Leer</button>
-            <button type="button" class="btn-close-cam" onclick="cerrarCamara()">❌ Cancelar</button>
+
+        <div id="loadingScan">
+            Preparando lector...
         </div>
+
+        <div class="scanner-controls">
+            <button type="button"
+                class="btn-close-cam"
+                onclick="cerrarCamara()">
+                ❌ Cancelar
+            </button>
+        </div>
+
     </div>
 
-    <!-- Campos de Búsqueda -->
+    <!-- CAMPOS DE BUSQUEDA -->
+
     <div class="search-row">
+
         <div class="form-group">
             <label for="nroExtintorInput">N° de Extintor:</label>
-            <input type="text" id="nroExtintorInput" placeholder="Ej: 105">
+
+            <input
+                type="text"
+                id="nroExtintorInput"
+                placeholder="Ej: 105">
         </div>
+
         <div class="form-group">
             <label for="nroDpsInput">N° de DPS:</label>
+
             <div class="input-with-cam">
-                <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-                <button type="button" class="btn-cam-icon" onclick="iniciarCamara()" title="Abrir cámara">📷</button>
+
+                <input
+                    type="text"
+                    id="nroDpsInput"
+                    placeholder="Ej: 4521">
+
+                <button
+                    type="button"
+                    class="btn-cam-icon"
+                    onclick="iniciarCamara()"
+                    title="Abrir cámara">
+                    📷
+                </button>
+
             </div>
         </div>
+
     </div>
 
-    <button class="btn-search" onclick="buscarExtintor()">Buscar Extintor</button>
+    <button class="btn-search" onclick="buscarExtintor()">
+        Buscar Extintor
+    </button>
 
-    <!-- Vista Previa de la Oblea -->
+    <!-- VISTA PREVIA OBLEA -->
+
     <div id="obleaPreview" class="oblea-preview">
-        <div class="oblea-header">VIVATEC - CONTROL DE EXTINTORES</div>
-        <div class="oblea-grid">
-            <div><span>Cliente:</span> <span id="lblCliente">-</span></div>
-            <div><span>Extintor N°:</span> <span id="lblExtintor">-</span></div>
-            <div><span>Tipo y Capacidad:</span> <span id="lblTipoCap">-</span></div>
-            <div><span>Marca:</span> <span id="lblMarca">-</span></div>
-            <div><span>Venc. Carga:</span> <span id="lblVencCarga">-</span></div>
-            <div><span>Venc. P.H.:</span> <span id="lblVencPH">-</span></div>
-            <div><span>N° DPS:</span> <span id="lblDps">-</span></div>
-            <div><span>Puesto / Ubicación:</span> <span id="lblUbicacion">-</span></div>
+
+        <div class="oblea-header">
+            VIVATEC - CONTROL DE EXTINTORES
         </div>
-        <button class="btn-print" onclick="window.print()">Imprimir Oblea</button>
+
+        <div class="oblea-grid">
+
+            <div>
+                <span>Cliente:</span>
+                <span id="lblCliente">-</span>
+            </div>
+
+            <div>
+                <span>Extintor N°:</span>
+                <span id="lblExtintor">-</span>
+            </div>
+
+            <div>
+                <span>Tipo y Capacidad:</span>
+                <span id="lblTipoCap">-</span>
+            </div>
+
+            <div>
+                <span>Marca:</span>
+                <span id="lblMarca">-</span>
+            </div>
+
+            <div>
+                <span>Venc. Carga:</span>
+                <span id="lblVencCarga">-</span>
+            </div>
+
+            <div>
+                <span>Venc. P.H.:</span>
+                <span id="lblVencPH">-</span>
+            </div>
+
+            <div>
+                <span>N° DPS:</span>
+                <span id="lblDps">-</span>
+            </div>
+
+            <div>
+                <span>Puesto / Ubicación:</span>
+                <span id="lblUbicacion">-</span>
+            </div>
+
+        </div>
+
+        <button class="btn-print" onclick="window.print()">
+            Imprimir Oblea
+        </button>
+
     </div>
+
 </div>
 
 <script>
-    const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
-    let mediaStream = null;
 
-    window.onload = function() {
-        fetch(URL_API + "?accion=obtenerClientes")
-            .then(response => response.json())
-            .then(data => {
-                let select = document.getElementById("clienteSelect");
-                if(data.clientes) {
-                    data.clientes.forEach(cliente => {
-                        let opt = document.createElement("option");
-                        opt.value = cliente;
-                        opt.textContent = cliente;
-                        select.appendChild(opt);
-                    });
-                }
-            })
-            .catch(err => console.error("Error al cargar clientes:", err));
-    };
+// ========================================
+// CONFIGURACION
+// ========================================
 
-    function iniciarCamara() {
-        let container = document.getElementById("scannerContainer");
-        let video = document.getElementById("videoElement");
-        container.style.display = "block";
+const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
 
-        // Forzar cámara trasera y configuraciones ideales para enfoque cercano (macro)
-        let constraints = {
+let mediaStream = null;
+let workerOCR = null;
+let temporizadorOCR = null;
+let leyendo = false;
+let ultimoNumero = "";
+let lecturasIguales = 0;
+let sesionCamara = 0;
+
+
+// ========================================
+// CARGAR CLIENTES
+// ========================================
+
+window.onload = function() {
+
+    fetch(URL_API + "?accion=obtenerClientes")
+
+        .then(response => response.json())
+
+        .then(data => {
+
+            let select = document.getElementById("clienteSelect");
+
+            if (data.clientes) {
+
+                data.clientes.forEach(cliente => {
+
+                    let opt = document.createElement("option");
+
+                    opt.value = cliente;
+                    opt.textContent = cliente;
+
+                    select.appendChild(opt);
+
+                });
+
+            }
+
+        })
+
+        .catch(err => console.error("Error al cargar clientes:", err));
+
+};
+
+
+// ========================================
+// INICIAR CAMARA
+// ========================================
+
+async function iniciarCamara() {
+
+    let container = document.getElementById("scannerContainer");
+    let video = document.getElementById("videoElement");
+    let loading = document.getElementById("loadingScan");
+
+    if (mediaStream) return;
+
+    container.style.display = "block";
+
+    loading.style.display = "block";
+    loading.textContent = "Preparando lector...";
+
+    ultimoNumero = "";
+    lecturasIguales = 0;
+
+    const miSesion = ++sesionCamara;
+
+    try {
+
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+
+            throw new Error("Cámara no disponible. Se necesita HTTPS.");
+
+        }
+
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+
             video: {
                 facingMode: "environment",
                 width: { ideal: 1280 },
                 height: { ideal: 720 }
             }
-        };
 
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                mediaStream = stream;
-                video.srcObject = stream;
-            })
-            .catch(err => {
-                console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo acceder a la cámara del dispositivo.");
-                container.style.display = "none";
+        });
+
+        if (miSesion !== sesionCamara) return;
+
+        video.srcObject = mediaStream;
+
+        await video.play();
+
+        // Crear el lector OCR una sola vez
+
+        if (!workerOCR) {
+
+            workerOCR = await Tesseract.createWorker("eng");
+
+            await workerOCR.setParameters({
+
+                tessedit_char_whitelist: "0123456789",
+                tessedit_pageseg_mode: "7"
+
             });
-    }
 
-    function cerrarCamara() {
-        if (mediaStream) {
-            mediaStream.getTracks().forEach(track => track.stop());
-            mediaStream = null;
         }
-        document.getElementById("scannerContainer").style.display = "none";
-        document.getElementById("loadingScan").style.display = "none";
+
+        if (miSesion !== sesionCamara) return;
+
+        loading.textContent = "Enfocá el número dentro del recuadro...";
+
+        temporizadorOCR = setInterval(
+            leerAutomaticamente,
+            1200
+        );
+
     }
 
-    function capturarYLeer() {
-        let video = document.getElementById("videoElement");
-        let loadingDiv = document.getElementById("loadingScan");
-        
-        if (!mediaStream) return;
+    catch (err) {
 
-        loadingDiv.style.display = "block";
+        console.error("Error al iniciar cámara:", err);
+
+        alert("No se pudo iniciar la cámara o el lector OCR.");
+
+        cerrarCamara();
+
+    }
+
+}
+
+
+// ========================================
+// LECTURA AUTOMATICA
+// ========================================
+
+async function leerAutomaticamente() {
+
+    if (leyendo || !mediaStream) return;
+
+    let video = document.getElementById("videoElement");
+
+    if (!video.videoWidth) return;
+
+    leyendo = true;
+
+    const miSesion = sesionCamara;
+
+    try {
 
         let canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
+
+        // Recortar la zona central del visor
+
+        canvas.width = Math.floor(video.videoWidth * 0.80);
+
+        canvas.height = Math.floor(video.videoHeight * 0.30);
+
         let ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        let dataUrl = canvas.toDataURL("image/png");
+        ctx.drawImage(
 
-        Tesseract.recognize(
-            dataUrl,
-            'eng',
-            { logger: m => console.log(m) }
-        ).then(({ data: { text } }) => {
-            loadingDiv.style.display = "none";
-            let textoLimpiado = text.replace(/[^0-9]/g, '').trim();
-            if (textoLimpiado) {
-                document.getElementById("nroDpsInput").value = textoLimpiado;
-                cerrarCamara(); // Cierra el visor automáticamente al leer con éxito
+            video,
+
+            video.videoWidth * 0.10,
+            video.videoHeight * 0.35,
+
+            canvas.width,
+            canvas.height,
+
+            0,
+            0,
+
+            canvas.width,
+            canvas.height
+
+        );
+
+        let resultado = await workerOCR.recognize(canvas);
+
+        if (miSesion !== sesionCamara || !mediaStream) return;
+
+        let confianza = resultado.data.confidence;
+
+        let numeros = resultado.data.text
+            .replace(/[^0-9]/g, "")
+            .trim();
+
+        // Exigir una lectura con cierta confianza
+
+        if (numeros.length >= 2 && confianza >= 60) {
+
+            if (numeros === ultimoNumero) {
+
+                lecturasIguales++;
+
             } else {
-                alert("No se distinguió el número con claridad. Acercá un poco más el celu y asegurate de que haya buena luz.");
+
+                ultimoNumero = numeros;
+                lecturasIguales = 1;
+
             }
-        }).catch(err => {
-            loadingDiv.style.display = "none";
-            console.error(err);
-            alert("Error al procesar la imagen capturada.");
-        });
-    }
 
-    function buscarExtintor() {
-        let cliente = document.getElementById("clienteSelect").value.trim();
-        let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
-        let nroDps = document.getElementById("nroDpsInput").value.trim();
+            // Dos lecturas iguales consecutivas
 
-        if (!cliente && !nroExtintor && !nroDps) {
-            alert("Por favor, completá al menos un campo de búsqueda.");
-            return;
+            if (lecturasIguales >= 2) {
+
+                document.getElementById("nroDpsInput").value = numeros;
+
+                cerrarCamara();
+
+                document.getElementById("nroDpsInput").focus();
+
+            }
+
+        } else {
+
+            ultimoNumero = "";
+            lecturasIguales = 0;
+
         }
 
-        let url = `${URL_API}?accion=buscarParaImpresion&cliente=${encodeURIComponent(cliente)}&extintor=${encodeURIComponent(nroExtintor)}&dps=${encodeURIComponent(nroDps)}`;
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.encontrado) {
-                    document.getElementById("lblCliente").textContent = data.extintor.cliente || cliente || "N/D";
-                    document.getElementById("lblExtintor").textContent = data.extintor.extintor;
-                    document.getElementById("lblTipoCap").textContent = `${data.extintor.tipo} - ${data.extintor.capacidad}`;
-                    document.getElementById("lblMarca").textContent = data.extintor.marca;
-                    document.getElementById("lblVencCarga").textContent = data.extintor.vencCarga;
-                    document.getElementById("lblVencPH").textContent = data.extintor.vencPH;
-                    document.getElementById("lblDps").textContent = data.extintor.nroDps;
-                    document.getElementById("lblUbicacion").textContent = `${data.extintor.puesto} (${data.extintor.ubicacion})`;
-
-                    document.getElementById("obleaPreview").style.display = "block";
-                } else {
-                    alert("No se encontró ningún extintor con los datos indicados.");
-                    document.getElementById("obleaPreview").style.display = "none";
-                }
-            })
-            .catch(err => {
-                console.error("Error en la búsqueda:", err);
-                alert("Error al comunicarse con la base de datos.");
-            });
     }
+
+    catch (err) {
+
+        console.error("Error en lectura OCR:", err);
+
+    }
+
+    finally {
+
+        leyendo = false;
+
+    }
+
+}
+
+
+// ========================================
+// CERRAR CAMARA
+// ========================================
+
+function cerrarCamara() {
+
+    // Invalidar cualquier lectura pendiente
+
+    sesionCamara++;
+
+    if (temporizadorOCR) {
+
+        clearInterval(temporizadorOCR);
+        temporizadorOCR = null;
+
+    }
+
+    leyendo = false;
+
+    ultimoNumero = "";
+    lecturasIguales = 0;
+
+    if (mediaStream) {
+
+        mediaStream.getTracks().forEach(track => track.stop());
+
+        mediaStream = null;
+
+    }
+
+    document.getElementById("videoElement").srcObject = null;
+
+    document.getElementById("scannerContainer").style.display = "none";
+
+    document.getElementById("loadingScan").style.display = "none";
+
+}
+
+
+// ========================================
+// BUSCAR EXTINTOR
+// ========================================
+
+function buscarExtintor() {
+
+    let cliente = document.getElementById("clienteSelect").value.trim();
+
+    let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
+
+    let nroDps = document.getElementById("nroDpsInput").value.trim();
+
+    if (!cliente && !nroExtintor && !nroDps) {
+
+        alert("Por favor, completá al menos un campo de búsqueda.");
+
+        return;
+
+    }
+
+    let url = `${URL_API}?accion=buscarParaImpresion&cliente=${encodeURIComponent(cliente)}&extintor=${encodeURIComponent(nroExtintor)}&dps=${encodeURIComponent(nroDps)}`;
+
+    fetch(url)
+
+        .then(response => response.json())
+
+        .then(data => {
+
+            if (data.encontrado) {
+
+                document.getElementById("lblCliente").textContent =
+                    data.extintor.cliente || cliente || "N/D";
+
+                document.getElementById("lblExtintor").textContent =
+                    data.extintor.extintor;
+
+                document.getElementById("lblTipoCap").textContent =
+                    `${data.extintor.tipo} - ${data.extintor.capacidad}`;
+
+                document.getElementById("lblMarca").textContent =
+                    data.extintor.marca;
+
+                document.getElementById("lblVencCarga").textContent =
+                    data.extintor.vencCarga;
+
+                document.getElementById("lblVencPH").textContent =
+                    data.extintor.vencPH;
+
+                document.getElementById("lblDps").textContent =
+                    data.extintor.nroDps;
+
+                document.getElementById("lblUbicacion").textContent =
+                    `${data.extintor.puesto} (${data.extintor.ubicacion})`;
+
+                document.getElementById("obleaPreview").style.display = "block";
+
+            }
+
+            else {
+
+                alert("No se encontró ningún extintor con los datos indicados.");
+
+                document.getElementById("obleaPreview").style.display = "none";
+
+            }
+
+        })
+
+        .catch(err => {
+
+            console.error("Error en la búsqueda:", err);
+
+            alert("Error al comunicarse con la base de datos.");
+
+        });
+
+}
+
 </script>
 
 </body>
