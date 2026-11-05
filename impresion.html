@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
+    <!-- Incluimos Tesseract.js para el reconocimiento óptico de caracteres -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,8 +51,30 @@
         .search-row .form-group {
             flex: 1;
         }
-        button {
-            background-color: #3498db;
+        .input-with-cam {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .input-with-cam input {
+            padding-right: 45px; /* Espacio para el botón de la cámara */
+        }
+        .btn-cam-icon {
+            position: absolute;
+            right: 5px;
+            background: #3498db;
+            border: none;
+            color: white;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn-cam-icon:hover {
+            background: #2980b9;
+        }
+        button.btn-search {
+            background-color: #27ae60;
             color: white;
             border: none;
             padding: 12px;
@@ -61,8 +85,8 @@
             cursor: pointer;
             transition: background 0.3s;
         }
-        button:hover {
-            background-color: #2980b9;
+        button.btn-search:hover {
+            background-color: #219653;
         }
         /* Estilo de la Oblea para Imprimir */
         .oblea-preview {
@@ -92,11 +116,26 @@
             font-weight: bold;
         }
         .btn-print {
-            background-color: #27ae60;
+            background-color: #2980b9;
             margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
         }
         .btn-print:hover {
-            background-color: #219653;
+            background-color: #1f618d;
+        }
+        #loadingScan {
+            display: none;
+            color: #e67e22;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 4px;
         }
         @media print {
             body * {
@@ -124,27 +163,33 @@
 <div class="container">
     <h2>Impresión de Obleas - Vivatec</h2>
     
-    <!-- Cliente  -->
+    <!-- Selección de Cliente (Opcional) -->
     <div class="form-group">
-        <label for="clienteSelect">Cliente: </label>
+        <label for="clienteSelect">Cliente (Opcional):</label>
         <select id="clienteSelect">
             <option value="">-- Todos los clientes / No filtrar --</option>
         </select>
     </div>
 
-    <!-- Búsqueda por N° de Extintor o N° DPS (Ambos opcionales, pero al menos uno requerido) -->
+    <!-- Campos de Búsqueda -->
     <div class="search-row">
         <div class="form-group">
             <label for="nroExtintorInput">N° de Extintor:</label>
             <input type="text" id="nroExtintorInput" placeholder="Ej: 105">
         </div>
         <div class="form-group">
-            <label for="nroDpsInput">N° de DPS: </label>
-            <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
+            <label for="nroDpsInput">N° de DPS:</label>
+            <div class="input-with-cam">
+                <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
+                <!-- Input de cámara oculto que se activa al presionar el ícono -->
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="leerTextoDPS(event)">
+                <button type="button" class="btn-cam-icon" onclick="document.getElementById('cameraInput').click()" title="Escanear con cámara">📷</button>
+            </div>
+            <div id="loadingScan">Leyendo número...</div>
         </div>
     </div>
 
-    <button onclick="buscarExtintor()">Buscar Extintor</button>
+    <button class="btn-search" onclick="buscarExtintor()">Buscar Extintor</button>
 
     <!-- Vista Previa de la Oblea -->
     <div id="obleaPreview" class="oblea-preview">
@@ -184,14 +229,40 @@
             .catch(err => console.error("Error al cargar clientes:", err));
     };
 
+    // Función que procesa la foto de la cámara y extrae el número DPS
+    function leerTextoDPS(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let loadingDiv = document.getElementById("loadingScan");
+        loadingDiv.style.display = "block";
+
+        Tesseract.recognize(
+            file,
+            'eng',
+            { logger: m => console.log(m) }
+        ).then(({ data: { text } }) => {
+            loadingDiv.style.display = "none";
+            let textoLimpiado = text.replace(/[^0-9]/g, '').trim();
+            if (textoLimpiado) {
+                document.getElementById("nroDpsInput").value = textoLimpiado;
+            } else {
+                alert("No se pudo leer con claridad. Probá enfocar bien el número o tipearlo a mano.");
+            }
+        }).catch(err => {
+            loadingDiv.style.display = "none";
+            console.error(err);
+            alert("Error al procesar la imagen.");
+        });
+    }
+
     function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
         let nroDps = document.getElementById("nroDpsInput").value.trim();
 
-        // Validar que al menos haya ingresado algún criterio de búsqueda
         if (!cliente && !nroExtintor && !nroDps) {
-            alert("Por favor, completá al menos un campo de búsqueda (Cliente, N° de Extintor o N° de DPS).");
+            alert("Por favor, completá al menos un campo de búsqueda.");
             return;
         }
 
@@ -212,7 +283,7 @@
 
                     document.getElementById("obleaPreview").style.display = "block";
                 } else {
-                    alert("No se encontró ningún extintor con los criterios indicados.");
+                    alert("No se encontró ningún extintor con los datos indicados.");
                     document.getElementById("obleaPreview").style.display = "none";
                 }
             })
