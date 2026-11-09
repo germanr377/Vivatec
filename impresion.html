@@ -42,9 +42,11 @@
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; }
         .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         
+        /* Botones de acción */
         .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-save { background: #d35400; flex: 1; padding: 12px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        .btn-print { background: #27ae60; flex: 1; padding: 12px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-save { background: #d35400; flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-print { background: #27ae60; flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-cancel { background: #7f8c8d; flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         
         @media print {
             body * { visibility: hidden; }
@@ -53,7 +55,11 @@
             .action-buttons, input, select { border: none; background: transparent; }
             .action-buttons, .container > *:not(.oblea-preview) { display: none; }
         }
-        @media (max-width: 600px) { .oblea-grid { grid-template-columns: 1fr; } .search-row { flex-direction: column; gap: 0; } }
+        @media (max-width: 600px) { 
+            .oblea-grid { grid-template-columns: 1fr; } 
+            .search-row { flex-direction: column; gap: 0; } 
+            .action-buttons { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -159,6 +165,7 @@
         </div>
 
         <div class="action-buttons">
+            <button class="btn-cancel" onclick="volverABuscar()">↩️ Volver</button>
             <button class="btn-save" onclick="guardarCambios()">💾 Guardar Cambios</button>
             <button class="btn-print" onclick="window.print()">🖨️ Imprimir Oblea</button>
         </div>
@@ -191,7 +198,7 @@
         }
     });
 
-    // BUSCAR EXTINTOR EN SUPABASE (MAPEO EXACTO CON TU TABLA)
+    // BUSCAR EXTINTOR EN SUPABASE
     async function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
@@ -208,7 +215,6 @@
         if (nroExtintor) query = query.eq('extintor_numero', nroExtintor);
         if (nroDps) query = query.eq('numero_dps', nroDps);
 
-        // Trae el último registro guardado
         const { data, error } = await query.order('id', { ascending: false }).limit(1);
 
         if (error) {
@@ -240,7 +246,7 @@
         }
     }
 
-    // GUARDAR CAMBIOS EN SUPABASE (CONVERTIR NÚMEROS A ENTEROS SI CORRESPONDE)
+    // GUARDAR CAMBIOS EN SUPABASE
     async function guardarCambios() {
         let id = document.getElementById("editId").value;
         if (!id) {
@@ -277,6 +283,20 @@
         } else {
             alert("¡Extintor actualizado instantáneamente en Supabase!");
         }
+    }
+
+    // VOLVER (CERRAR EDICIÓN Y LIMPIAR CAMPOS)
+    function volverABuscar() {
+        // Ocultar el recuadro del extintor
+        document.getElementById("obleaPreview").style.display = "none";
+        
+        // Limpiar los campos de búsqueda
+        document.getElementById("clienteSelect").value = "";
+        document.getElementById("nroExtintorInput").value = "";
+        document.getElementById("nroDpsInput").value = "";
+        
+        // Subir la pantalla al tope
+        window.scrollTo(0, 0);
     }
 </script>
 
