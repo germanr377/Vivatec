@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
+    <!-- Librería OCR liviana -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 700px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
@@ -11,9 +13,20 @@
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
         select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        
         .search-row { display: flex; gap: 15px; }
         .search-row .form-group { flex: 1; }
         
+        /* Contenedor del input con el botón de cámara adentro */
+        .input-with-cam { position: relative; display: flex; align-items: center; }
+        .input-with-cam input { padding-right: 50px; }
+        .btn-cam-icon { 
+            position: absolute; right: 5px; background: #3498db; border: none; 
+            color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-cam-icon:hover { background: #2980b9; }
+
         .btn-search { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
         .btn-search:hover { background: #1f618d; }
         
@@ -52,7 +65,14 @@
         </div>
         <div class="form-group">
             <label for="nroDpsInput">N° de DPS:</label>
-            <input type="text" id="nroDpsInput" placeholder="Toca aquí para escribir o escanear">
+            <div class="input-with-cam">
+                <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
+                <!-- Botón de cámara que abre la cámara nativa del celular -->
+                <label class="btn-cam-icon" title="Escanear con cámara">
+                    📷
+                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="procesarFoto(event)">
+                </label>
+            </div>
         </div>
     </div>
 
@@ -94,6 +114,35 @@
             })
             .catch(err => console.error("Error al cargar clientes:", err));
     });
+
+    // Función simple para procesar la foto
+    function procesarFoto(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let inputDps = document.getElementById("nroDpsInput");
+        let valorAnterior = inputDps.value;
+        inputDps.value = "Leyendo foto..."; // Mensaje de espera
+
+        Tesseract.recognize(
+            file,
+            'eng',
+            { logger: m => console.log(m) }
+        ).then(({ data: { text } }) => {
+            // Extraer solo los números de lo que leyó la cámara
+            let numeros = text.replace(/[^0-9]/g, '').trim();
+            if (numeros) {
+                inputDps.value = numeros;
+            } else {
+                inputDps.value = valorAnterior;
+                alert("No se detectó un número claro en la foto. Intentá sacar la foto más de cerca.");
+            }
+        }).catch(err => {
+            console.error(err);
+            inputDps.value = valorAnterior;
+            alert("Error al procesar la foto.");
+        });
+    }
 
     function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
