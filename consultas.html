@@ -41,7 +41,7 @@
 <div class="container">
     <h2>📊 Consultas de Extintores - Vivatec</h2>
 
-    <!-- FILTROS DE BÚSQUEDA -->
+    <!-- FILTROS DE BÚSQUEDA Y ORDEN -->
     <div class="filtros-panel">
         <div class="form-group">
             <label for="filtroCliente">Cliente:</label>
@@ -56,6 +56,16 @@
         <div class="form-group">
             <label for="filtroDps">N° DPS:</label>
             <input type="text" id="filtroDps" placeholder="Buscar exacto...">
+        </div>
+        <div class="form-group">
+            <label for="ordenarPor">Ordenar por:</label>
+            <select id="ordenarPor" onchange="realizarConsulta()">
+                <option value="id_desc">Más recientes (Ingreso)</option>
+                <option value="vto_carga_asc">Próximo Venc. Carga (Más cercano)</option>
+                <option value="vto_ph_asc">Próximo Venc. P.H. (Más cercano)</option>
+                <option value="extintor_asc">N° Extintor (Menor a mayor)</option>
+                <option value="cliente_asc">Cliente (A - Z)</option>
+            </select>
         </div>
         <button class="btn-search" onclick="realizarConsulta()">🔍 Consultar</button>
         <button class="btn-limpiar" onclick="limpiarFiltros()">🧹 Limpiar</button>
@@ -118,30 +128,42 @@
                 select.appendChild(opt);
             });
         }
-        // Ejecutar una consulta inicial vacía para mostrar los últimos 50 registros
         realizarConsulta();
     });
 
-    // EJECUTAR LA CONSULTA
+    // EJECUTAR LA CONSULTA CON ORDENAMIENTO
     async function realizarConsulta() {
         const cliente = document.getElementById("filtroCliente").value.trim();
         const extintor = document.getElementById("filtroExtintor").value.trim();
         const dps = document.getElementById("filtroDps").value.trim();
+        const ordenSeleccionado = document.getElementById("ordenarPor").value;
         const tbody = document.getElementById("cuerpoTabla");
         const mensaje = document.getElementById("mensajeEstado");
 
         mensaje.textContent = "Buscando datos...";
-        tbody.innerHTML = ""; // Limpiar tabla
+        tbody.innerHTML = "";
 
-        // Construir la consulta
         let query = _supabase.from('extintores').select('*');
 
+        // Aplicar filtros
         if (cliente) query = query.eq('cliente', cliente);
         if (extintor) query = query.eq('extintor_numero', extintor);
         if (dps) query = query.eq('numero_dps', dps);
 
-        // Ordenar por ID descendente y limitar a 200 resultados para no saturar la pantalla
-        const { data, error } = await query.order('id', { ascending: false }).limit(200);
+        // Aplicar orden dinámico según lo que elegiste en el selector
+        if (ordenSeleccionado === "id_desc") {
+            query = query.order('id', { ascending: false });
+        } else if (ordenSeleccionado === "vto_carga_asc") {
+            query = query.order('vto_carga', { ascending: true, nullsFirst: false });
+        } else if (ordenSeleccionado === "vto_ph_asc") {
+            query = query.order('vto_prueb_hidr', { ascending: true, nullsFirst: false });
+        } else if (ordenSeleccionado === "extintor_asc") {
+            query = query.order('extintor_numero', { ascending: true });
+        } else if (ordenSeleccionado === "cliente_asc") {
+            query = query.order('cliente', { ascending: true });
+        }
+
+        const { data, error } = await query.limit(200);
 
         if (error) {
             console.error("Error al consultar:", error);
@@ -160,7 +182,6 @@
         data.forEach(ex => {
             let tr = document.createElement("tr");
 
-            // Etiqueta visual para el DPS si dice NUEVO
             let formatoDps = ex.numero_dps;
             if (formatoDps === "NUEVO") {
                 formatoDps = `<span class="badge badge-nuevo">NUEVO</span>`;
@@ -185,7 +206,8 @@
         document.getElementById("filtroCliente").value = "";
         document.getElementById("filtroExtintor").value = "";
         document.getElementById("filtroDps").value = "";
-        realizarConsulta(); // Vuelve a traer los últimos registros generales
+        document.getElementById("ordenarPor").value = "id_desc";
+        realizarConsulta();
     }
 </script>
 
