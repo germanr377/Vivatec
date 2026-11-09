@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivatec - Impresión de Obleas</title>
-    <!-- 1. Cargamos Tesseract -->
+    <title>Vivatec - Gestión e Impresión de Obleas</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Tesseract OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
-    <!-- 2. Cargamos tu nuevo módulo de escáner -->
+    <!-- Módulo de escáner cámara -->
     <script src="escaner.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 700px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 750px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; }
         
         .search-row { display: flex; gap: 15px; }
         .search-row .form-group { flex: 1; }
@@ -35,26 +37,29 @@
 
         .btn-search { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
         
-        /* Oblea Preview */
+        /* Formulario Editable y Preview */
         .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; }
-        .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
-        .oblea-grid div span { font-weight: bold; }
-        .btn-print { background: #27ae60; margin-top: 15px; width: 100%; padding: 12px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { background: #d35400; flex: 1; padding: 12px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-print { background: #27ae60; flex: 1; padding: 12px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         
         @media print {
             body * { visibility: hidden; }
             .oblea-preview, .oblea-preview * { visibility: visible; }
             .oblea-preview { position: absolute; left: 0; top: 0; width: 100%; border: none; background: white; }
-            .btn-print, .container > *:not(.oblea-preview) { display: none; }
+            .action-buttons, input, select { border: none; background: transparent; }
+            .action-buttons, .container > *:not(.oblea-preview) { display: none; }
         }
-        @media (max-width: 480px) { .search-row { flex-direction: column; gap: 0; } }
+        @media (max-width: 600px) { .oblea-grid { grid-template-columns: 1fr; } .search-row { flex-direction: column; gap: 0; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Impresión de Obleas - Vivatec</h2>
+    <h2>Vivatec - Impresión de Obleas</h2>
 
     <div class="form-group">
         <label for="clienteSelect">Cliente (Opcional):</label>
@@ -63,7 +68,7 @@
         </select>
     </div>
 
-    <!-- Estructura del Visor de cámara -->
+    <!-- Visor de cámara -->
     <div id="visorCamara">
         <div class="marco-video">
             <video id="videoEnVivo" autoplay playsinline muted></video>
@@ -78,59 +83,116 @@
     <div class="search-row">
         <div class="form-group">
             <label for="nroExtintorInput">N° de Extintor:</label>
-            <input type="number" id="nroExtintorInput" placeholder="Ej: 105">
+            <input type="number" id="nroExtintorInput" placeholder="Ej: 180560">
         </div>
         <div class="form-group">
             <label for="nroDpsInput">N° de DPS:</label>
             <div class="input-with-cam">
-                <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-                <!-- Acá le mandamos el ID del input ('nroDpsInput') a la función de la cámara -->
+                <input type="text" id="nroDpsInput" placeholder="Ej: 5503020">
                 <button type="button" class="btn-cam-icon" onclick="encenderCamara('nroDpsInput')" title="Abrir visor">📷</button>
             </div>
         </div>
     </div>
 
-    <button class="btn-search" onclick="buscarExtintor()">Buscar Extintor</button>
+    <button class="btn-search" onclick="buscarExtintor()">⚡ Buscar Extintor</button>
 
+    <!-- FORMULARIO EDITABLE -->
     <div id="obleaPreview" class="oblea-preview">
-        <div class="oblea-header">VIVATEC - CONTROL DE EXTINTORES</div>
+        <div class="oblea-header">DATOS DEL EXTINTOR</div>
+        
+        <input type="hidden" id="editId">
+
         <div class="oblea-grid">
-            <div><span>Cliente:</span> <span id="lblCliente">-</span></div>
-            <div><span>Extintor N°:</span> <span id="lblExtintor">-</span></div>
-            <div><span>Tipo y Capacidad:</span> <span id="lblTipoCap">-</span></div>
-            <div><span>Marca:</span> <span id="lblMarca">-</span></div>
-            <div><span>Venc. Carga:</span> <span id="lblVencCarga">-</span></div>
-            <div><span>Venc. P.H.:</span> <span id="lblVencPH">-</span></div>
-            <div><span>N° DPS:</span> <span id="lblDps">-</span></div>
-            <div><span>Puesto / Ubicación:</span> <span id="lblUbicacion">-</span></div>
+            <div class="form-group">
+                <label>Cliente:</label>
+                <input type="text" id="editCliente">
+            </div>
+            <div class="form-group">
+                <label>Tipo de Oblea:</label>
+                <select id="editOblea">
+                    <option value="">(En blanco)</option>
+                    <option value="Uso Gral">Uso Gral</option>
+                    <option value="Vehicular 1K">Vehicular 1K</option>
+                    <option value="Vehicular">Vehicular</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>N° Extintor:</label>
+                <input type="text" id="editExtintor">
+            </div>
+            <div class="form-group">
+                <label>Tipo:</label>
+                <input type="text" id="editTipo">
+            </div>
+            <div class="form-group">
+                <label>Capacidad (Kg/Lt):</label>
+                <input type="text" id="editCapacidad">
+            </div>
+            <div class="form-group">
+                <label>Año Fabricación:</label>
+                <input type="text" id="editAFabricacion">
+            </div>
+            <div class="form-group">
+                <label>Marca:</label>
+                <input type="text" id="editMarca">
+            </div>
+            <div class="form-group">
+                <label>Venc. Prueba Hidráulica:</label>
+                <input type="date" id="editVencPH">
+            </div>
+            <div class="form-group">
+                <label>Vencimiento Carga:</label>
+                <input type="date" id="editVencCarga">
+            </div>
+            <div class="form-group">
+                <label>N° DPS:</label>
+                <input type="text" id="editDps">
+            </div>
+            <div class="form-group">
+                <label>Puesto:</label>
+                <input type="text" id="editPuesto">
+            </div>
+            <div class="form-group">
+                <label>Ubicación:</label>
+                <input type="text" id="editUbicacion">
+            </div>
         </div>
-        <button class="btn-print" onclick="window.print()">Imprimir Oblea</button>
+
+        <div class="action-buttons">
+            <button class="btn-save" onclick="guardarCambios()">💾 Guardar Cambios</button>
+            <button class="btn-print" onclick="window.print()">🖨️ Imprimir Oblea</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const URL_API = "https://script.google.com/macros/s/AKfycbzMhJq8_VBrldsh5tH0QxjRbGEkYL8418Lf_XEvExJRnR52G6IEpK-7DB-L6A6KIMFL/exec";
+    // CREDENCIALES CONFIGURADAS CON SUPABASE
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
 
-    // Cargar clientes al inicio
-    window.addEventListener("load", function() {
-        fetch(URL_API + "?accion=obtenerClientes")
-            .then(response => response.json())
-            .then(data => {
-                let select = document.getElementById("clienteSelect");
-                if (data.clientes) {
-                    data.clientes.forEach(cliente => {
-                        let opt = document.createElement("option");
-                        opt.value = cliente;
-                        opt.textContent = cliente;
-                        select.appendChild(opt);
-                    });
-                }
-            })
-            .catch(err => console.error("Error al cargar clientes:", err));
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Cargar clientes al iniciar
+    window.addEventListener("load", async function() {
+        const { data, error } = await _supabase
+            .from('extintores')
+            .select('cliente')
+            .not('cliente', 'is', null);
+
+        if (!error && data) {
+            const clientesUnicos = [...new Set(data.map(item => item.cliente).filter(Boolean))].sort();
+            let select = document.getElementById("clienteSelect");
+            clientesUnicos.forEach(cliente => {
+                let opt = document.createElement("option");
+                opt.value = cliente;
+                opt.textContent = cliente;
+                select.appendChild(opt);
+            });
+        }
     });
 
-    // Buscar Extintor en Base de Datos
-    function buscarExtintor() {
+    // BUSCAR EXTINTOR EN SUPABASE
+    async function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
         let nroDps = document.getElementById("nroDpsInput").value.trim();
@@ -140,30 +202,78 @@
             return;
         }
 
-        let url = `${URL_API}?accion=buscarParaImpresion&cliente=${encodeURIComponent(cliente)}&extintor=${encodeURIComponent(nroExtintor)}&dps=${encodeURIComponent(nroDps)}`;
+        let query = _supabase.from('extintores').select('*');
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.encontrado) {
-                    document.getElementById("lblCliente").textContent = data.extintor.cliente || cliente || "N/D";
-                    document.getElementById("lblExtintor").textContent = data.extintor.extintor;
-                    document.getElementById("lblTipoCap").textContent = `${data.extintor.tipo} - ${data.extintor.capacidad}`;
-                    document.getElementById("lblMarca").textContent = data.extintor.marca;
-                    document.getElementById("lblVencCarga").textContent = data.extintor.vencCarga;
-                    document.getElementById("lblVencPH").textContent = data.extintor.vencPH;
-                    document.getElementById("lblDps").textContent = data.extintor.nroDps;
-                    document.getElementById("lblUbicacion").textContent = `${data.extintor.puesto} (${data.extintor.ubicacion})`;
-                    document.getElementById("obleaPreview").style.display = "block";
-                } else {
-                    alert("No se encontró ningún extintor con los datos indicados.");
-                    document.getElementById("obleaPreview").style.display = "none";
-                }
-            })
-            .catch(err => {
-                console.error("Error en la búsqueda:", err);
-                alert("Error al comunicarse con la base de datos.");
-            });
+        if (cliente) query = query.eq('cliente', cliente);
+        if (nroExtintor) query = query.eq('extintor_nro', nroExtintor);
+        if (nroDps) query = query.eq('nro_dps', nroDps);
+
+        // Trae el último registro guardado
+        const { data, error } = await query.order('id', { ascending: false }).limit(1);
+
+        if (error) {
+            console.error("Error al buscar:", error);
+            alert("Ocurrió un error al consultar Supabase.");
+            return;
+        }
+
+        if (data && data.length > 0) {
+            let ex = data[0];
+            document.getElementById("editId").value = ex.id;
+            document.getElementById("editCliente").value = ex.cliente || "";
+            document.getElementById("editOblea").value = ex.oblea || "";
+            document.getElementById("editExtintor").value = ex.extintor_nro || "";
+            document.getElementById("editTipo").value = ex.tipo || "";
+            document.getElementById("editCapacidad").value = ex.capacidad || "";
+            document.getElementById("editAFabricacion").value = ex.a_fabricacion || "";
+            document.getElementById("editMarca").value = ex.marca || "";
+            document.getElementById("editVencPH").value = ex.venc_ph || "";
+            document.getElementById("editVencCarga").value = ex.venc_carga || "";
+            document.getElementById("editDps").value = ex.nro_dps || "";
+            document.getElementById("editPuesto").value = ex.puesto || "";
+            document.getElementById("editUbicacion").value = ex.ubicacion || "";
+
+            document.getElementById("obleaPreview").style.display = "block";
+        } else {
+            alert("No se encontró ningún extintor con los datos indicados.");
+            document.getElementById("obleaPreview").style.display = "none";
+        }
+    }
+
+    // GUARDAR CAMBIOS EN SUPABASE
+    async function guardarCambios() {
+        let id = document.getElementById("editId").value;
+        if (!id) {
+            alert("No hay ningún extintor seleccionado.");
+            return;
+        }
+
+        const actualizacion = {
+            cliente: document.getElementById("editCliente").value,
+            oblea: document.getElementById("editOblea").value,
+            extintor_nro: document.getElementById("editExtintor").value,
+            tipo: document.getElementById("editTipo").value,
+            capacidad: document.getElementById("editCapacidad").value,
+            a_fabricacion: document.getElementById("editAFabricacion").value,
+            marca: document.getElementById("editMarca").value,
+            venc_ph: document.getElementById("editVencPH").value || null,
+            venc_carga: document.getElementById("editVencCarga").value || null,
+            nro_dps: document.getElementById("editDps").value,
+            puesto: document.getElementById("editPuesto").value,
+            ubicacion: document.getElementById("editUbicacion").value
+        };
+
+        const { error } = await _supabase
+            .from('extintores')
+            .update(actualizacion)
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error al actualizar:", error);
+            alert("No se pudieron guardar los cambios.");
+        } else {
+            alert("¡Extintor actualizado instantáneamente en Supabase!");
+        }
     }
 </script>
 
