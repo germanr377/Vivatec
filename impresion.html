@@ -144,11 +144,13 @@
             </div>
             <div class="form-group">
                 <label>Venc. Prueba Hidráulica:</label>
-                <input type="date" id="editVencPH">
+                <!-- Modificados a text con placeholder -->
+                <input type="text" id="editVencPH" placeholder="DD/MM/AAAA">
             </div>
             <div class="form-group">
                 <label>Vencimiento Carga:</label>
-                <input type="date" id="editVencCarga">
+                <!-- Modificados a text con placeholder -->
+                <input type="text" id="editVencCarga" placeholder="DD/MM/AAAA">
             </div>
             <div class="form-group">
                 <label>N° DPS:</label>
@@ -178,6 +180,29 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (DD/MM/AAAA)
+    function formatearFechaWeb(fechaSQL) {
+        if (!fechaSQL) return "";
+        let partes = fechaSQL.split("-");
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return fechaSQL;
+    }
+
+    // TRADUCTOR DE FECHAS: Pantalla (DD/MM/AAAA) -> Supabase (AAAA-MM-DD)
+    function formatearFechaSQL(fechaWeb) {
+        if (!fechaWeb) return null;
+        let partes = fechaWeb.split("/");
+        if (partes.length === 3) {
+            let dia = partes[0].padStart(2, '0');
+            let mes = partes[1].padStart(2, '0');
+            let anio = partes[2];
+            return `${anio}-${mes}-${dia}`;
+        }
+        return null;
+    }
 
     // Cargar clientes al iniciar
     window.addEventListener("load", async function() {
@@ -233,8 +258,11 @@
             document.getElementById("editCapacidad").value = ex.capacidad || "";
             document.getElementById("editAFabricacion").value = ex.ano_fab || "";
             document.getElementById("editMarca").value = ex.marca || "";
-            document.getElementById("editVencPH").value = ex.vto_prueb_hidr || "";
-            document.getElementById("editVencCarga").value = ex.vto_carga || "";
+            
+            // Usamos el traductor de fechas para mostrar en DD/MM/AAAA
+            document.getElementById("editVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
+            document.getElementById("editVencCarga").value = formatearFechaWeb(ex.vto_carga);
+            
             document.getElementById("editDps").value = ex.numero_dps || "";
             document.getElementById("editPuesto").value = ex.identificacion_puesto || "";
             document.getElementById("editUbicacion").value = ex.ubicacion || "";
@@ -265,8 +293,11 @@
             capacidad: document.getElementById("editCapacidad").value,
             ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
             marca: document.getElementById("editMarca").value,
-            vto_prueb_hidr: document.getElementById("editVencPH").value || null,
-            vto_carga: document.getElementById("editVencCarga").value || null,
+            
+            // Usamos el traductor de fechas para enviarlas a Supabase en AAAA-MM-DD
+            vto_prueb_hidr: formatearFechaSQL(document.getElementById("editVencPH").value),
+            vto_carga: formatearFechaSQL(document.getElementById("editVencCarga").value),
+            
             numero_dps: document.getElementById("editDps").value,
             identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
             ubicacion: document.getElementById("editUbicacion").value
@@ -287,15 +318,10 @@
 
     // VOLVER (CERRAR EDICIÓN Y LIMPIAR CAMPOS)
     function volverABuscar() {
-        // Ocultar el recuadro del extintor
         document.getElementById("obleaPreview").style.display = "none";
-        
-        // Limpiar los campos de búsqueda
         document.getElementById("clienteSelect").value = "";
         document.getElementById("nroExtintorInput").value = "";
         document.getElementById("nroDpsInput").value = "";
-        
-        // Subir la pantalla al tope
         window.scrollTo(0, 0);
     }
 </script>
