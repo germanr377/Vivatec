@@ -83,7 +83,7 @@
     <div class="search-row">
         <div class="form-group">
             <label for="nroExtintorInput">N° de Extintor:</label>
-            <input type="number" id="nroExtintorInput" placeholder="Ej: 180560">
+            <input type="text" id="nroExtintorInput" placeholder="Ej: 6389130">
         </div>
         <div class="form-group">
             <label for="nroDpsInput">N° de DPS:</label>
@@ -130,7 +130,7 @@
             </div>
             <div class="form-group">
                 <label>Año Fabricación:</label>
-                <input type="text" id="editAFabricacion">
+                <input type="number" id="editAFabricacion">
             </div>
             <div class="form-group">
                 <label>Marca:</label>
@@ -150,7 +150,7 @@
             </div>
             <div class="form-group">
                 <label>Puesto:</label>
-                <input type="text" id="editPuesto">
+                <input type="number" id="editPuesto">
             </div>
             <div class="form-group">
                 <label>Ubicación:</label>
@@ -191,7 +191,7 @@
         }
     });
 
-    // BUSCAR EXTINTOR EN SUPABASE
+    // BUSCAR EXTINTOR EN SUPABASE (MAPEO EXACTO CON TU TABLA)
     async function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
@@ -205,8 +205,8 @@
         let query = _supabase.from('extintores').select('*');
 
         if (cliente) query = query.eq('cliente', cliente);
-        if (nroExtintor) query = query.eq('extintor_nro', nroExtintor);
-        if (nroDps) query = query.eq('nro_dps', nroDps);
+        if (nroExtintor) query = query.eq('extintor_numero', nroExtintor);
+        if (nroDps) query = query.eq('numero_dps', nroDps);
 
         // Trae el último registro guardado
         const { data, error } = await query.order('id', { ascending: false }).limit(1);
@@ -222,15 +222,15 @@
             document.getElementById("editId").value = ex.id;
             document.getElementById("editCliente").value = ex.cliente || "";
             document.getElementById("editOblea").value = ex.oblea || "";
-            document.getElementById("editExtintor").value = ex.extintor_nro || "";
+            document.getElementById("editExtintor").value = ex.extintor_numero || "";
             document.getElementById("editTipo").value = ex.tipo || "";
             document.getElementById("editCapacidad").value = ex.capacidad || "";
-            document.getElementById("editAFabricacion").value = ex.a_fabricacion || "";
+            document.getElementById("editAFabricacion").value = ex.ano_fab || "";
             document.getElementById("editMarca").value = ex.marca || "";
-            document.getElementById("editVencPH").value = ex.venc_ph || "";
-            document.getElementById("editVencCarga").value = ex.venc_carga || "";
-            document.getElementById("editDps").value = ex.nro_dps || "";
-            document.getElementById("editPuesto").value = ex.puesto || "";
+            document.getElementById("editVencPH").value = ex.vto_prueb_hidr || "";
+            document.getElementById("editVencCarga").value = ex.vto_carga || "";
+            document.getElementById("editDps").value = ex.numero_dps || "";
+            document.getElementById("editPuesto").value = ex.identificacion_puesto || "";
             document.getElementById("editUbicacion").value = ex.ubicacion || "";
 
             document.getElementById("obleaPreview").style.display = "block";
@@ -240,7 +240,7 @@
         }
     }
 
-    // GUARDAR CAMBIOS EN SUPABASE
+    // GUARDAR CAMBIOS EN SUPABASE (CONVERTIR NÚMEROS A ENTEROS SI CORRESPONDE)
     async function guardarCambios() {
         let id = document.getElementById("editId").value;
         if (!id) {
@@ -248,18 +248,21 @@
             return;
         }
 
+        let valAnoFab = document.getElementById("editAFabricacion").value;
+        let valPuesto = document.getElementById("editPuesto").value;
+
         const actualizacion = {
             cliente: document.getElementById("editCliente").value,
             oblea: document.getElementById("editOblea").value,
-            extintor_nro: document.getElementById("editExtintor").value,
+            extintor_numero: document.getElementById("editExtintor").value,
             tipo: document.getElementById("editTipo").value,
             capacidad: document.getElementById("editCapacidad").value,
-            a_fabricacion: document.getElementById("editAFabricacion").value,
+            ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
             marca: document.getElementById("editMarca").value,
-            venc_ph: document.getElementById("editVencPH").value || null,
-            venc_carga: document.getElementById("editVencCarga").value || null,
-            nro_dps: document.getElementById("editDps").value,
-            puesto: document.getElementById("editPuesto").value,
+            vto_prueb_hidr: document.getElementById("editVencPH").value || null,
+            vto_carga: document.getElementById("editVencCarga").value || null,
+            numero_dps: document.getElementById("editDps").value,
+            identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
             ubicacion: document.getElementById("editUbicacion").value
         };
 
