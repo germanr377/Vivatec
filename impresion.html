@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
-    <!-- Tesseract para leer el texto -->
+    <!-- 1. Cargamos Tesseract -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
+    <!-- 2. Cargamos tu nuevo módulo de escáner -->
+    <script src="escaner.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 700px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
@@ -17,34 +19,17 @@
         .search-row { display: flex; gap: 15px; }
         .search-row .form-group { flex: 1; }
         
-        /* Input con botón de cámara */
         .input-with-cam { position: relative; display: flex; align-items: center; }
         .input-with-cam input { padding-right: 50px; }
-        .btn-cam-icon { 
-            position: absolute; right: 5px; background: #3498db; border: none; 
-            color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 18px;
-        }
+        .btn-cam-icon { position: absolute; right: 5px; background: #3498db; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 18px; }
         
-        /* VISOR TIPO CÓDIGO DE BARRAS */
-        #visorCamara {
-            display: none; margin-top: 15px; padding: 15px; background: #222; 
-            border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        .marco-video {
-            position: relative; width: 100%; height: 140px;
-            overflow: hidden; border: 3px solid #3498db; border-radius: 6px; background: #000;
-        }
+        /* Visor de Cámara */
+        #visorCamara { display: none; margin-top: 15px; padding: 15px; background: #222; border-radius: 8px; text-align: center; }
+        .marco-video { position: relative; width: 100%; height: 140px; overflow: hidden; border: 3px solid #3498db; border-radius: 6px; background: #000; }
         #videoEnVivo { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* Línea roja tipo láser animada */
-        .laser {
-            position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; 
-            background: rgba(255,0,0,0.8); box-shadow: 0 0 10px red; transform: translateY(-50%);
-            animation: parpadeo 1.5s infinite;
-        }
+        .laser { position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; background: rgba(255,0,0,0.8); box-shadow: 0 0 10px red; transform: translateY(-50%); animation: parpadeo 1.5s infinite; }
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        .controles-visor { display: flex; gap: 10px; margin-top: 15px; }
+        .controles-visor { margin-top: 15px; }
         .btn-cerrar { background: #e74c3c; color: white; border: none; padding: 12px; width: 100%; font-weight: bold; font-size: 16px; border-radius: 4px; cursor: pointer; }
         #estadoLectura { color: #2ecc71; font-weight: bold; margin-top: 10px; font-size: 14px; }
 
@@ -78,7 +63,7 @@
         </select>
     </div>
 
-    <!-- Visor de cámara automático -->
+    <!-- Estructura del Visor de cámara -->
     <div id="visorCamara">
         <div class="marco-video">
             <video id="videoEnVivo" autoplay playsinline muted></video>
@@ -99,7 +84,8 @@
             <label for="nroDpsInput">N° de DPS:</label>
             <div class="input-with-cam">
                 <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-                <button type="button" class="btn-cam-icon" onclick="encenderCamara()" title="Abrir visor">📷</button>
+                <!-- Acá le mandamos el ID del input ('nroDpsInput') a la función de la cámara -->
+                <button type="button" class="btn-cam-icon" onclick="encenderCamara('nroDpsInput')" title="Abrir visor">📷</button>
             </div>
         </div>
     </div>
@@ -124,13 +110,9 @@
 
 <script>
     const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
-    let streamVideo = null;
-    let scanInterval = null;
-    let isReading = false;
-    let workerOCR = null;
 
-    // Cargar clientes e inicializar OCR en segundo plano al abrir la página
-    window.addEventListener("load", async function() {
+    // Cargar clientes al inicio
+    window.addEventListener("load", function() {
         fetch(URL_API + "?accion=obtenerClientes")
             .then(response => response.json())
             .then(data => {
@@ -145,103 +127,9 @@
                 }
             })
             .catch(err => console.error("Error al cargar clientes:", err));
-
-        // Preparar el motor de lectura para que sea rapidísimo al abrir la cámara
-        try {
-            workerOCR = await Tesseract.createWorker('eng');
-            await workerOCR.setParameters({
-                tessedit_char_whitelist: '0123456789', // Solo busca números, no letras
-            });
-        } catch (e) {
-            console.error("Error iniciando OCR:", e);
-        }
     });
 
-    // ==========================================
-    // LÓGICA DEL VISOR AUTOMÁTICO
-    // ==========================================
-    function encenderCamara() {
-        let visor = document.getElementById("visorCamara");
-        let video = document.getElementById("videoEnVivo");
-        document.getElementById("estadoLectura").textContent = "Buscando número automáticamente... Mantené firme.";
-        visor.style.display = "block";
-
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(stream => {
-                streamVideo = stream;
-                video.srcObject = stream;
-                
-                // Arrancar el escaneo automático: saca 1 foto cada 1 segundo (1000ms)
-                scanInterval = setInterval(escanearAutomaticamente, 1000);
-            })
-            .catch(err => {
-                console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo iniciar la cámara.");
-                visor.style.display = "none";
-            });
-    }
-
-    function apagarCamara() {
-        if (scanInterval) clearInterval(scanInterval);
-        isReading = false;
-        
-        if (streamVideo) {
-            streamVideo.getTracks().forEach(track => track.stop());
-            streamVideo = null;
-        }
-        document.getElementById("visorCamara").style.display = "none";
-    }
-
-    async function escanearAutomaticamente() {
-        // Si ya está leyendo una foto, si no hay video o si el OCR no cargó, saltear este turno
-        if (!streamVideo || isReading || !workerOCR) return;
-        
-        let video = document.getElementById("videoEnVivo");
-        // Asegurarse de que el video ya esté reproduciendo frames
-        if (video.videoWidth === 0) return; 
-
-        isReading = true;
-
-        // Crear canvas temporal de todo el video
-        let canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        let ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        // Recortar solo la franja central (donde está el láser) para que analice más rápido
-        let canvasRecorte = document.createElement("canvas");
-        canvasRecorte.width = canvas.width;
-        canvasRecorte.height = canvas.height * 0.3;
-        let ctxRecorte = canvasRecorte.getContext("2d");
-        
-        ctxRecorte.drawImage(
-            canvas, 
-            0, canvas.height * 0.35, canvas.width, canvas.height * 0.3, 
-            0, 0, canvasRecorte.width, canvasRecorte.height
-        );
-
-        try {
-            // Analizar la imagen recortada
-            let result = await workerOCR.recognize(canvasRecorte);
-            let numeros = result.data.text.replace(/[^0-9]/g, '').trim();
-            
-            // Asumimos que un DPS tiene que tener al menos 4 números seguidos
-            if (numeros.length >= 4) {
-                document.getElementById("nroDpsInput").value = numeros;
-                apagarCamara(); // Cierra todo porque ya lo encontró
-            }
-        } catch(err) {
-            console.error("Error OCR:", err);
-        }
-        
-        // Liberar para que el próximo segundo pueda tomar otra foto si esta falló
-        isReading = false; 
-    }
-
-    // ==========================================
-    // BÚSQUEDA EN BASE DE DATOS
-    // ==========================================
+    // Buscar Extintor en Base de Datos
     function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
@@ -266,7 +154,6 @@
                     document.getElementById("lblVencPH").textContent = data.extintor.vencPH;
                     document.getElementById("lblDps").textContent = data.extintor.nroDps;
                     document.getElementById("lblUbicacion").textContent = `${data.extintor.puesto} (${data.extintor.ubicacion})`;
-
                     document.getElementById("obleaPreview").style.display = "block";
                 } else {
                     alert("No se encontró ningún extintor con los datos indicados.");
