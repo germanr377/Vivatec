@@ -93,22 +93,21 @@
 
         .badge-nuevo { background: #2ecc71; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (CENTRADOO TOTAL Y REPETIR ENCABEZADO) */
+        /* CONFIGURACIÓN DE IMPRESIÓN (Márgenes de 2cm exactos y centrado) */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 10mm; /* Margen general de la hoja de impresión */
+                margin: 2cm; /* Márgenes de 2 cm arriba, abajo, izq y derecha */
             }
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
             
-            /* Centrado absoluto de la tabla en la hoja */
             .container { 
                 position: absolute; 
                 left: 0; 
                 right: 0;
                 top: 0; 
-                width: 96% !important; 
+                width: 100% !important; 
                 margin: auto !important;
                 box-shadow: none; 
                 padding: 0; 
@@ -116,7 +115,7 @@
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
             .planilla-wrapper { display: block !important; }
 
-            /* Esto repite TODO el thead (membrete + títulos de columnas) en cada hoja nueva */
+            /* Repite el thead (membrete + columnas) en cada página nueva */
             thead { display: table-header-group; }
             tr { page-break-inside: avoid; }
         }
@@ -148,12 +147,12 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="fechaDesde">Desde la fecha:</label>
-            <input type="date" id="fechaDesde">
+            <label for="fechaDesde">Desde (DD/MM/AAAA):</label>
+            <input type="text" id="fechaDesde" placeholder="01/01/2026">
         </div>
         <div class="form-group">
-            <label for="fechaHasta">Hasta la fecha:</label>
-            <input type="date" id="fechaHasta">
+            <label for="fechaHasta">Hasta (DD/MM/AAAA):</label>
+            <input type="text" id="fechaHasta" placeholder="31/12/2026">
         </div>
         <button class="btn-search" onclick="generarInforme()">📊 Actualizar Vista</button>
         <button class="btn-print" onclick="window.print()">🖨️ Imprimir Planilla A4</button>
@@ -161,7 +160,7 @@
 
     <div id="mensajeEstado">Por favor, seleccioná un cliente para ver la planilla.</div>
 
-    <!-- PLANILLA UNIFICADA EN UNA SOLA TABLA PARA QUE EL ENCABEZADO SE REPITA -->
+    <!-- PLANILLA UNIFICADA -->
     <div id="planillaWrapper" class="planilla-wrapper">
         <table id="tablaPlanilla">
             <thead>
@@ -206,6 +205,7 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // TRADUCTOR DE FECHAS: AAAA-MM-DD a DD/MM/AAAA (para mostrar en tabla)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
         let partes = fechaSQL.split("-");
@@ -213,6 +213,19 @@
             return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
         return fechaSQL;
+    }
+
+    // TRADUCTOR DE FECHAS: DD/MM/AAAA a AAAA-MM-DD (para consultar en Supabase)
+    function formatearFechaSQL(fechaWeb) {
+        if (!fechaWeb) return null;
+        let partes = fechaWeb.trim().split("/");
+        if (partes.length === 3) {
+            let dia = partes[0].padStart(2, '0');
+            let mes = partes[1].padStart(2, '0');
+            let anio = partes[2];
+            return `${anio}-${mes}-${dia}`;
+        }
+        return null;
     }
 
     window.addEventListener("load", async function() {
@@ -238,15 +251,16 @@
         const anio = hoy.getFullYear();
         document.getElementById("lblFechaHoy").textContent = `${dia}/${mes}/${anio}`;
 
-        document.getElementById("fechaDesde").value = `${anio}-01-01`;
-        document.getElementById("fechaHasta").value = `${anio}-12-31`;
+        // Valores por defecto en formato DD/MM/AAAA para el año actual
+        document.getElementById("fechaDesde").value = `01/01/${anio}`;
+        document.getElementById("fechaHasta").value = `31/12/${anio}`;
     });
 
     async function generarInforme() {
         const cliente = document.getElementById("filtroCliente").value.trim();
         const campoFecha = document.getElementById("tipoFecha").value;
-        const fechaDesde = document.getElementById("fechaDesde").value;
-        const fechaHasta = document.getElementById("fechaHasta").value;
+        const inputDesde = document.getElementById("fechaDesde").value;
+        const inputHasta = document.getElementById("fechaHasta").value;
         
         const tbody = document.getElementById("cuerpoTabla");
         const mensaje = document.getElementById("mensajeEstado");
@@ -258,6 +272,15 @@
             return;
         }
 
+        // Traducir las fechas ingresadas en formato DD/MM/AAAA a formato SQL (AAAA-MM-DD)
+        const fechaDesdeSQL = formatearFechaSQL(inputDesde);
+        const fechaHastaSQL = formatearFechaSQL(inputHasta);
+
+        if ((inputDesde && !fechaDesdeSQL) || (inputHasta && !fechaHastaSQL)) {
+            alert("El formato de fecha ingresado no es válido. Utilizá el formato DD/MM/AAAA.");
+            return;
+        }
+
         mensaje.textContent = "Generando planilla...";
         tbody.innerHTML = "";
 
@@ -265,8 +288,8 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        if (fechaDesde && fechaHasta) {
-            query = query.gte(campoFecha, fechaDesde).lte(campoFecha, fechaHasta);
+        if (fechaDesdeSQL && fechaHastaSQL) {
+            query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         }
 
         query = query.order('extintor_numero', { ascending: true });
