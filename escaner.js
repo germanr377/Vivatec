@@ -1,141 +1,97 @@
-let html5QrCode;
+// escaner.js - Módulo reutilizable de lectura OCR para Vivatec
 
-function mostrarPantalla(idPantalla) {
-    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
-    document.getElementById(idPantalla).classList.add('activa');
-}
+let streamVideo = null;
+let scanInterval = null;
+let isReading = false;
+let workerOCR = null;
+let inputDestino = null; // Variable para saber en qué casillero escribir el resultado
 
-function volverAlInicio() {
-    mostrarPantalla('pantalla-inicio');
-}
-
-function obtenerFechaHoy() {
-    let hoy = new Date();
-    let anio = hoy.getFullYear();
-    let mes = String(hoy.getMonth() + 1).padStart(2, '0');
-    let dia = String(hoy.getDate()).padStart(2, '0');
-    return `${anio}-${mes}-${dia}`;
-}
-
-// LÓGICA DE LA CÁMARA
-function abrirCamara() {
-    mostrarPantalla('pantalla-camara');
-    
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("lector-contenedor");
+// Iniciar OCR en segundo plano al cargar la web
+window.addEventListener("load", async function() {
+    try {
+        workerOCR = await Tesseract.createWorker('eng');
+        await workerOCR.setParameters({
+            tessedit_char_whitelist: '0123456789', // Solo números
+        });
+        console.log("Motor de escaneo OCR listo.");
+    } catch (e) {
+        console.error("Error iniciando OCR:", e);
     }
-    
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+});
 
-    html5QrCode.start({ facingMode: "environment" }, config, 
-        (textoDecodificado) => {
-            html5QrCode.stop().then(() => {
-                if(navigator.vibrate) navigator.vibrate(200);
-                
-                // Abrimos directo la pantalla de edición con la oblea ya cargada
-                abrirPantallaEdicion(textoDecodificado);
-            });
-        },
-        (mensajeError) => {}
-    ).catch(err => {
-        alert("Error al prender la cámara. Revisá los permisos del navegador.");
-        volverAlInicio();
-    });
+// Función para prender la cámara. Recibe como parámetro el ID del casillero.
+function encenderCamara(idCasillero) {
+    inputDestino = idCasillero; // Guardamos dónde tiene que ir el número
+    
+    let visor = document.getElementById("visorCamara");
+    let video = document.getElementById("videoEnVivo");
+    document.getElementById("estadoLectura").textContent = "Buscando número automáticamente... Mantené firme.";
+    visor.style.display = "block";
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+            streamVideo = stream;
+            video.srcObject = stream;
+            
+            // Arranca a sacar una foto por segundo
+            scanInterval = setInterval(escanearAutomaticamente, 1000);
+        })
+        .catch(err => {
+            console.error("Error al acceder a la cámara:", err);
+            alert("No se pudo iniciar la cámara. Verificá los permisos.");
+            visor.style.display = "none";
+        });
 }
 
-function cancelarCamara() {
-    if (html5QrCode && typeof html5QrCode.getState === "function" && html5QrCode.getState() === 2) {
-        html5QrCode.stop().then(volverAlInicio).catch(volverAlInicio);
-    } else {
-        volverAlInicio();
+function apagarCamara() {
+    if (scanInterval) clearInterval(scanInterval);
+    isReading = false;
+    
+    if (streamVideo) {
+        streamVideo.getTracks().forEach(track => track.stop());
+        streamVideo = null;
     }
+    document.getElementById("visorCamara").style.display = "none";
 }
 
-function ingresoManual() {
-    // Abrimos directo la pantalla de edición con la oblea vacía para tipear
-    abrirPantallaEdicion('');
-}
-
-// PREPARA LA PANTALLA DE EDICIÓN DIRECTA
-function abrirPantallaEdicion(obleaValor) {
-    document.getElementById('conf-oblea').value = obleaValor;
-    document.getElementById('conf-extintor').value = '';
+async function escanearAutomaticamente() {
+    if (!streamVideo || isReading || !workerOCR) return;
     
-    // Seteamos la fecha de hoy por defecto
-    let fechaHoy = obtenerFechaHoy();
-    document.getElementById('conf-recarga').value = fechaHoy;
+    let video = document.getElementById("videoEnVivo");
+    if (video.videoWidth === 0) return; 
+
+    isReading = true;
+
+    let canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Recortar la franja central
+    let canvasRecorte = document.createElement("canvas");
+    canvasRecorte.width = canvas.width;
+    canvasRecorte.height = canvas.height * 0.3;
+    let ctxRecorte = canvasRecorte.getContext("2d");
     
-    // Calculamos el vencimiento inicial
-    calcularVencimientoPrevio();
-    
-    // Mostramos la pantalla única de edición
-    mostrarPantalla('pantalla-confirmacion');
-    
-    // Si entró manual, le damos foco a la oblea; si escaneó, al extintor
-    if(obleaValor === "") {
-        document.getElementById('conf-oblea').focus();
-    } else {
-        document.getElementById('conf-extintor').focus();
-    }
-}
+    ctxRecorte.drawImage(
+        canvas, 
+        0, canvas.height * 0.35, canvas.width, canvas.height * 0.3, 
+        0, 0, canvasRecorte.width, canvasRecorte.height
+    );
 
-// CALCULA AUTOMÁTICAMENTE EL VENCIMIENTO SEGÚN LA FECHA DE RECARGA
-function calcularVencimientoPrevio() {
-    let fechaRecargaStr = document.getElementById('conf-recarga').value;
-    if (!fechaRecargaStr) return;
-
-    let partes = fechaRecargaStr.split('-');
-    let anio = parseInt(partes[0]) + 1; // Sumamos 1 año
-    let mes = partes[1];
-    let dia = partes[2];
-
-    let fechaVencStr = `${anio}-${mes}-${dia}`;
-    document.getElementById('conf-vencimiento').value = fechaVencStr;
-}
-
-// GUARDADO DEFINITIVO EN GOOGLE SHEETS
-function guardarDefinitivo() {
-    let oblea = document.getElementById('conf-oblea').value;
-    let extintor = document.getElementById('conf-extintor').value;
-    let fechaRecarga = document.getElementById('conf-recarga').value;
-
-    if (oblea === "" || extintor === "" || fechaRecarga === "") {
-        alert("Por favor, completá todos los campos antes de guardar.");
-        return;
-    }
-
-    let botonGuardar = document.querySelector('#pantalla-confirmacion .btn-azul');
-    botonGuardar.innerText = "GUARDANDO...";
-    botonGuardar.disabled = true;
-
-    const URL_DE_GOOGLE = "https://script.google.com/macros/s/AKfycbwDi-mtRlx3GGvXnqKeyGqpspiiJzhc_qMWad9oD2Hi4Y0CgZ50qRsDWonlk0lPtL2p/exec";
-
-    let datos = new URLSearchParams();
-    datos.append("oblea", oblea);
-    datos.append("extintor", extintor);
-    datos.append("fechaRecarga", fechaRecarga);
-
-    fetch(URL_DE_GOOGLE, {
-        method: 'POST',
-        body: datos,
-        mode: 'no-cors',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+    try {
+        let result = await workerOCR.recognize(canvasRecorte);
+        let numeros = result.data.text.replace(/[^0-9]/g, '').trim();
+        
+        if (numeros.length >= 4) {
+            // Escribe el número en el casillero que le indicamos al encender la cámara
+            document.getElementById(inputDestino).value = numeros;
+            apagarCamara(); 
         }
-    })
-    .then(() => {
-        botonGuardar.innerText = "GUARDAR RECARGA";
-        botonGuardar.disabled = false;
-        
-        mostrarPantalla('pantalla-exito');
-        
-        setTimeout(() => {
-            volverAlInicio();
-        }, 2000);
-    })
-    .catch(error => {
-        alert("Hubo un error de conexión. Revisá el WiFi o tus datos móviles.");
-        botonGuardar.innerText = "GUARDAR RECARGA";
-        botonGuardar.disabled = false;
-    });
+    } catch(err) {
+        console.error("Error OCR:", err);
+    }
+    
+    isReading = false; 
 }
