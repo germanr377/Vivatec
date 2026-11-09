@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Impresión de Obleas</title>
-    <!-- Librería OCR liviana -->
+    <!-- Tesseract para leer el texto -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
@@ -17,18 +17,37 @@
         .search-row { display: flex; gap: 15px; }
         .search-row .form-group { flex: 1; }
         
-        /* Contenedor del input con el botón de cámara adentro */
+        /* Input con botón de cámara */
         .input-with-cam { position: relative; display: flex; align-items: center; }
         .input-with-cam input { padding-right: 50px; }
         .btn-cam-icon { 
             position: absolute; right: 5px; background: #3498db; border: none; 
             color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 18px;
-            display: flex; align-items: center; justify-content: center;
         }
-        .btn-cam-icon:hover { background: #2980b9; }
+        
+        /* VISOR TIPO CÓDIGO DE BARRAS */
+        #visorCamara {
+            display: none; margin-top: 15px; padding: 15px; background: #222; 
+            border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .marco-video {
+            position: relative; width: 100%; height: 140px; /* Rectángulo chato */
+            overflow: hidden; border: 3px solid #3498db; border-radius: 6px; background: #000;
+        }
+        #videoEnVivo { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Línea roja tipo láser */
+        .laser {
+            position: absolute; top: 50%; left: 10%; right: 10%; height: 2px; 
+            background: rgba(255,0,0,0.8); box-shadow: 0 0 10px red; transform: translateY(-50%);
+        }
+
+        .controles-visor { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-capturar { background: #27ae60; color: white; border: none; padding: 12px; flex: 1; font-weight: bold; font-size: 16px; border-radius: 4px; cursor: pointer; }
+        .btn-cerrar { background: #e74c3c; color: white; border: none; padding: 12px; flex: 1; font-weight: bold; font-size: 16px; border-radius: 4px; cursor: pointer; }
+        #estadoLectura { color: #f1c40f; font-weight: bold; margin-top: 10px; font-size: 14px; }
 
         .btn-search { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        .btn-search:hover { background: #1f618d; }
         
         /* Oblea Preview */
         .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; }
@@ -58,6 +77,19 @@
         </select>
     </div>
 
+    <!-- Visor de cámara (Oculto por defecto) -->
+    <div id="visorCamara">
+        <div class="marco-video">
+            <video id="videoEnVivo" autoplay playsinline muted></video>
+            <div class="laser"></div>
+        </div>
+        <div id="estadoLectura">Ubicá el número en la línea roja y presioná Capturar</div>
+        <div class="controles-visor">
+            <button class="btn-capturar" onclick="tomarFotoYLeer()">📸 Capturar</button>
+            <button class="btn-cerrar" onclick="apagarCamara()">❌ Cerrar</button>
+        </div>
+    </div>
+
     <div class="search-row">
         <div class="form-group">
             <label for="nroExtintorInput">N° de Extintor:</label>
@@ -67,11 +99,7 @@
             <label for="nroDpsInput">N° de DPS:</label>
             <div class="input-with-cam">
                 <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-                <!-- Botón de cámara que abre la cámara nativa del celular -->
-                <label class="btn-cam-icon" title="Escanear con cámara">
-                    📷
-                    <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="procesarFoto(event)">
-                </label>
+                <button type="button" class="btn-cam-icon" onclick="encenderCamara()" title="Abrir visor">📷</button>
             </div>
         </div>
     </div>
@@ -96,6 +124,7 @@
 
 <script>
     const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
+    let streamVideo = null;
 
     // Cargar clientes al inicio
     window.addEventListener("load", function() {
@@ -115,35 +144,86 @@
             .catch(err => console.error("Error al cargar clientes:", err));
     });
 
-    // Función simple para procesar la foto
-    function procesarFoto(event) {
-        let file = event.target.files[0];
-        if (!file) return;
+    // ==========================================
+    // LÓGICA DEL VISOR TIPO CÓDIGO DE BARRAS
+    // ==========================================
+    function encenderCamara() {
+        let visor = document.getElementById("visorCamara");
+        let video = document.getElementById("videoEnVivo");
+        document.getElementById("estadoLectura").textContent = "Ubicá el número en la línea roja y presioná Capturar";
+        visor.style.display = "block";
 
-        let inputDps = document.getElementById("nroDpsInput");
-        let valorAnterior = inputDps.value;
-        inputDps.value = "Leyendo foto..."; // Mensaje de espera
-
-        Tesseract.recognize(
-            file,
-            'eng',
-            { logger: m => console.log(m) }
-        ).then(({ data: { text } }) => {
-            // Extraer solo los números de lo que leyó la cámara
-            let numeros = text.replace(/[^0-9]/g, '').trim();
-            if (numeros) {
-                inputDps.value = numeros;
-            } else {
-                inputDps.value = valorAnterior;
-                alert("No se detectó un número claro en la foto. Intentá sacar la foto más de cerca.");
-            }
-        }).catch(err => {
-            console.error(err);
-            inputDps.value = valorAnterior;
-            alert("Error al procesar la foto.");
-        });
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                streamVideo = stream;
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error al acceder a la cámara:", err);
+                alert("No se pudo iniciar la cámara.");
+                visor.style.display = "none";
+            });
     }
 
+    function apagarCamara() {
+        if (streamVideo) {
+            streamVideo.getTracks().forEach(track => track.stop());
+            streamVideo = null;
+        }
+        document.getElementById("visorCamara").style.display = "none";
+    }
+
+    function tomarFotoYLeer() {
+        let video = document.getElementById("videoEnVivo");
+        let estado = document.getElementById("estadoLectura");
+        
+        if (!streamVideo) return;
+        estado.textContent = "⏳ Procesando número... por favor esperá.";
+
+        // Crear un canvas para tomar una foto del video
+        let canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        let ctx = canvas.getContext("2d");
+        
+        // Dibujar el video completo en el canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Para hacerlo MUCHO más rápido y preciso, recortamos solo la franja central (donde está el láser)
+        let canvasRecorte = document.createElement("canvas");
+        canvasRecorte.width = canvas.width;
+        canvasRecorte.height = canvas.height * 0.3; // Cortamos el 30% del alto (la franja central)
+        let ctxRecorte = canvasRecorte.getContext("2d");
+        
+        ctxRecorte.drawImage(
+            canvas, 
+            0, canvas.height * 0.35, canvas.width, canvas.height * 0.3, // Origen (franja del medio)
+            0, 0, canvasRecorte.width, canvasRecorte.height // Destino
+        );
+
+        let imgData = canvasRecorte.toDataURL("image/jpeg");
+
+        // Leer la foto recortada
+        Tesseract.recognize(imgData, 'eng')
+            .then(({ data: { text } }) => {
+                let numeros = text.replace(/[^0-9]/g, '').trim(); // Dejar solo números
+                
+                if (numeros.length >= 4) { // Asumimos que un DPS tiene al menos 4 números
+                    document.getElementById("nroDpsInput").value = numeros;
+                    apagarCamara(); // Éxito, cerramos la cámara
+                } else {
+                    estado.textContent = "❌ No se leyó bien. Acomodalo en la línea y probá de nuevo.";
+                }
+            })
+            .catch(err => {
+                console.error("Error OCR:", err);
+                estado.textContent = "Error al procesar. Intentá de nuevo.";
+            });
+    }
+
+    // ==========================================
+    // BÚSQUEDA EN BASE DE DATOS
+    // ==========================================
     function buscarExtintor() {
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
