@@ -68,7 +68,7 @@
             width: 100%;
             border-collapse: collapse;
             border: 2px solid #000;
-            margin-top: -1.5px; /* Unir con la tabla de arriba sin doble línea */
+            margin-top: -1.5px;
         }
         .tabla-datos th, .tabla-datos td {
             border: 1.5px solid #000;
@@ -81,8 +81,7 @@
             color: #000;
             font-weight: bold;
             vertical-align: middle;
-            height: 75px; /* Altura para simular el texto vertical o en bloque */
-            writing-mode: horizontal-tb;
+            height: 75px;
         }
         .tabla-datos td {
             font-size: 13px;
@@ -94,19 +93,28 @@
 
         .badge-nuevo { background: #2ecc71; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (A4 APAISADO + REPETIR ENCABEZADOS) */
+        /* CONFIGURACIÓN DE IMPRESIÓN (CENTRADOO Y MÁRGENES ADECUADOS) */
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 10mm;
+                margin: 12mm 15mm; /* Margen superior/inferior 12mm, Izquierdo/Derecho 15mm para centrar perfecto */
             }
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
-            .container { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; margin: 0; }
+            
+            /* Forzar centrado absoluto de la planilla en el papel */
+            .container { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                box-shadow: none; 
+                padding: 0; 
+                margin: 0; 
+            }
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
-            .planilla-wrapper { display: block !important; }
+            .planilla-wrapper { display: block !important; margin: 0 auto; }
 
-            /* Esto hace que la cabecera de la tabla se repita automáticamente en cada hoja nueva */
             thead { display: table-header-group; }
             tr { page-break-inside: avoid; }
         }
@@ -151,7 +159,7 @@
 
     <div id="mensajeEstado">Por favor, seleccioná un cliente para ver la planilla.</div>
 
-    <!-- PLANILLA ESTILO EXCEL (Aparece al generar) -->
+    <!-- PLANILLA ESTILO EXCEL -->
     <div id="planillaWrapper" class="planilla-wrapper">
         
         <!-- MEMBRETE SUPERIOR -->
@@ -226,14 +234,12 @@
             });
         }
 
-        // Poner fecha de hoy formateada en el membrete
         const hoy = new Date();
         const dia = String(hoy.getDate()).padStart(2, '0');
         const mes = String(hoy.getMonth() + 1).padStart(2, '0');
         const anio = hoy.getFullYear();
         document.getElementById("lblFechaHoy").textContent = `${dia}/${mes}/${anio}`;
 
-        // Fechas por defecto amplio
         document.getElementById("fechaDesde").value = `${anio}-01-01`;
         document.getElementById("fechaHasta").value = `${anio}-12-31`;
     });
@@ -257,7 +263,6 @@
         mensaje.textContent = "Generando planilla...";
         tbody.innerHTML = "";
 
-        // Actualizar el nombre del cliente en el membrete superior
         document.getElementById("lblClienteHeader").textContent = cliente.toUpperCase();
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
