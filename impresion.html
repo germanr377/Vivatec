@@ -1,913 +1,136 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vivatec - Impresión de Obleas</title>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@v5/dist/tesseract.min.js"></script>
-
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f9;
-    margin: 0;
-    padding: 20px;
-    color: #333;
-}
-
-.container {
-    max-width: 700px;
-    margin: auto;
-    background: #fff;
-    padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,.1);
-}
-
-h2 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #555;
-}
-
-select, input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-    box-sizing: border-box;
-}
-
-.search-row {
-    display: flex;
-    gap: 15px;
-}
-
-.search-row .form-group {
-    flex: 1;
-    min-width: 0;
-}
-
-.input-with-cam {
-    display: flex;
-    align-items: center;
-    position: relative;
-}
-
-.input-with-cam input {
-    padding-right: 45px;
-}
-
-.btn-cam-icon {
-    position: absolute;
-    right: 5px;
-    background: #3498db;
-    border: none;
-    color: white;
-    padding: 8px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-/* VISOR */
-
-#scannerContainer {
-    display: none;
-    margin: 12px auto;
-    max-width: 420px;
-    text-align: center;
-    background: #111;
-    padding: 9px;
-    border-radius: 10px;
-    box-shadow: 0 3px 12px rgba(0,0,0,.2);
-}
-
-.video-wrapper {
-    position: relative;
-    width: 100%;
-    height: 130px;
-    overflow: hidden;
-    border-radius: 7px;
-    border: 2px solid #3498db;
-    box-sizing: border-box;
-}
-
-#videoElement {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* GUIA PARA NUMERO VERTICAL */
-
-.scanner-guide {
-    position: absolute;
-    top: 9%;
-    bottom: 9%;
-    left: 29%;
-    width: 42%;
-    border: 2px dashed #2ecc71;
-    border-radius: 5px;
-    pointer-events: none;
-    background: rgba(46,204,113,.05);
-    box-sizing: border-box;
-}
-
-#loadingScan {
-    display: none;
-    color: #f39c12;
-    font-weight: bold;
-    font-size: 13px;
-    margin-top: 8px;
-}
-
-.scanner-controls {
-    margin-top: 8px;
-}
-
-.btn-close-cam {
-    background: #e74c3c;
-    color: white;
-    border: none;
-    padding: 9px;
-    width: 100%;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.btn-search {
-    background: #2980b9;
-    color: white;
-    border: none;
-    padding: 12px;
-    width: 100%;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-search:hover {
-    background: #1f618d;
-}
-
-/* VISTA PREVIA */
-
-.oblea-preview {
-    margin-top: 30px;
-    border: 2px dashed #3498db;
-    padding: 20px;
-    border-radius: 6px;
-    background: #fafbfc;
-    display: none;
-}
-
-.oblea-header {
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-    color: #2c3e50;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-}
-
-.oblea-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    font-size: 14px;
-}
-
-.oblea-grid div span {
-    font-weight: bold;
-}
-
-.btn-print {
-    background: #27ae60;
-    margin-top: 15px;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-@media print {
-    body * {
-        visibility: hidden;
-    }
-
-    .oblea-preview, .oblea-preview * {
-        visibility: visible;
-    }
-
-    .oblea-preview {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        border: none;
-        background: white;
-    }
-
-    .btn-print, .container > *:not(.oblea-preview) {
-        display: none;
-    }
-}
-
-@media (max-width: 480px) {
-    .container {
-        padding: 15px;
-    }
-
-    .search-row {
-        gap: 8px;
-    }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Impresión de Obleas</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 700px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        .search-row { display: flex; gap: 15px; }
+        .search-row .form-group { flex: 1; }
+        
+        .btn-search { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .btn-search:hover { background: #1f618d; }
+        
+        /* Oblea Preview */
+        .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; }
+        .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; }
+        .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; }
+        .oblea-grid div span { font-weight: bold; }
+        .btn-print { background: #27ae60; margin-top: 15px; width: 100%; padding: 12px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            .oblea-preview, .oblea-preview * { visibility: visible; }
+            .oblea-preview { position: absolute; left: 0; top: 0; width: 100%; border: none; background: white; }
+            .btn-print, .container > *:not(.oblea-preview) { display: none; }
+        }
+        @media (max-width: 480px) { .search-row { flex-direction: column; gap: 0; } }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-
-<h2>Impresión de Obleas - Vivatec</h2>
-
-<div class="form-group">
-    <label for="clienteSelect">Cliente (Opcional):</label>
-    <select id="clienteSelect">
-        <option value="">-- Todos los clientes / No filtrar --</option>
-    </select>
-</div>
-
-<!-- CAMARA -->
-
-<div id="scannerContainer">
-
-    <div class="video-wrapper">
-        <video id="videoElement" autoplay playsinline muted></video>
-        <div class="scanner-guide"></div>
-    </div>
-
-    <div id="loadingScan">
-        Preparando lector...
-    </div>
-
-    <div class="scanner-controls">
-        <button type="button"
-            class="btn-close-cam"
-            onclick="cerrarCamara()">
-            ❌ Cancelar
-        </button>
-    </div>
-
-</div>
-
-<!-- BUSQUEDA -->
-
-<div class="search-row">
+    <h2>Impresión de Obleas - Vivatec</h2>
 
     <div class="form-group">
-        <label for="nroExtintorInput">N° de Extintor:</label>
-        <input type="text" id="nroExtintorInput" placeholder="Ej: 105">
+        <label for="clienteSelect">Cliente (Opcional):</label>
+        <select id="clienteSelect">
+            <option value="">-- Todos los clientes / No filtrar --</option>
+        </select>
     </div>
 
-    <div class="form-group">
-        <label for="nroDpsInput">N° de DPS:</label>
-
-        <div class="input-with-cam">
-            <input type="text" id="nroDpsInput" placeholder="Ej: 4521">
-
-            <button type="button"
-                class="btn-cam-icon"
-                onclick="iniciarCamara()"
-                title="Abrir cámara">
-                📷
-            </button>
+    <div class="search-row">
+        <div class="form-group">
+            <label for="nroExtintorInput">N° de Extintor:</label>
+            <input type="number" id="nroExtintorInput" placeholder="Ej: 105">
+        </div>
+        <div class="form-group">
+            <label for="nroDpsInput">N° de DPS:</label>
+            <input type="text" id="nroDpsInput" placeholder="Toca aquí para escribir o escanear">
         </div>
     </div>
 
-</div>
+    <button class="btn-search" onclick="buscarExtintor()">Buscar Extintor</button>
 
-<button class="btn-search" onclick="buscarExtintor()">
-    Buscar Extintor
-</button>
-
-<!-- OBLEA -->
-
-<div id="obleaPreview" class="oblea-preview">
-
-    <div class="oblea-header">
-        VIVATEC - CONTROL DE EXTINTORES
+    <div id="obleaPreview" class="oblea-preview">
+        <div class="oblea-header">VIVATEC - CONTROL DE EXTINTORES</div>
+        <div class="oblea-grid">
+            <div><span>Cliente:</span> <span id="lblCliente">-</span></div>
+            <div><span>Extintor N°:</span> <span id="lblExtintor">-</span></div>
+            <div><span>Tipo y Capacidad:</span> <span id="lblTipoCap">-</span></div>
+            <div><span>Marca:</span> <span id="lblMarca">-</span></div>
+            <div><span>Venc. Carga:</span> <span id="lblVencCarga">-</span></div>
+            <div><span>Venc. P.H.:</span> <span id="lblVencPH">-</span></div>
+            <div><span>N° DPS:</span> <span id="lblDps">-</span></div>
+            <div><span>Puesto / Ubicación:</span> <span id="lblUbicacion">-</span></div>
+        </div>
+        <button class="btn-print" onclick="window.print()">Imprimir Oblea</button>
     </div>
-
-    <div class="oblea-grid">
-
-        <div><span>Cliente:</span> <span id="lblCliente">-</span></div>
-        <div><span>Extintor N°:</span> <span id="lblExtintor">-</span></div>
-        <div><span>Tipo y Capacidad:</span> <span id="lblTipoCap">-</span></div>
-        <div><span>Marca:</span> <span id="lblMarca">-</span></div>
-        <div><span>Venc. Carga:</span> <span id="lblVencCarga">-</span></div>
-        <div><span>Venc. P.H.:</span> <span id="lblVencPH">-</span></div>
-        <div><span>N° DPS:</span> <span id="lblDps">-</span></div>
-        <div><span>Puesto / Ubicación:</span> <span id="lblUbicacion">-</span></div>
-
-    </div>
-
-    <button class="btn-print" onclick="window.print()">
-        Imprimir Oblea
-    </button>
-
-</div>
-
 </div>
 
 <script>
+    const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
 
-// ========================================
-// CONFIGURACION
-// ========================================
-
-const URL_API = "https://script.google.com/macros/s/TU_SCRIPT_ID/exec";
-
-let mediaStream = null;
-let workerOCR = null;
-let promesaOCR = null;
-
-let temporizadorOCR = null;
-let leyendo = false;
-let iniciandoCamara = false;
-
-let ultimoNumero = "";
-let lecturasIguales = 0;
-let sesionCamara = 0;
-
-
-// ========================================
-// PREPARAR TESSERACT
-// ========================================
-
-async function prepararOCR() {
-
-    if (workerOCR) return workerOCR;
-
-    if (!promesaOCR) {
-
-        promesaOCR = (async () => {
-
-            const worker = await Tesseract.createWorker("eng");
-
-            await worker.setParameters({
-                tessedit_char_whitelist: "0123456789",
-                tessedit_pageseg_mode: "7"
-            });
-
-            workerOCR = worker;
-
-            console.log("OCR preparado");
-
-            return worker;
-
-        })().catch(err => {
-            promesaOCR = null;
-            throw err;
-        });
-
-    }
-
-    return promesaOCR;
-}
-
-
-// ========================================
-// CARGAR CLIENTES
-// ========================================
-
-window.addEventListener("load", function() {
-
-    prepararOCR().catch(err => {
-        console.error("Error preparando OCR:", err);
+    // Cargar clientes al inicio
+    window.addEventListener("load", function() {
+        fetch(URL_API + "?accion=obtenerClientes")
+            .then(response => response.json())
+            .then(data => {
+                let select = document.getElementById("clienteSelect");
+                if (data.clientes) {
+                    data.clientes.forEach(cliente => {
+                        let opt = document.createElement("option");
+                        opt.value = cliente;
+                        opt.textContent = cliente;
+                        select.appendChild(opt);
+                    });
+                }
+            })
+            .catch(err => console.error("Error al cargar clientes:", err));
     });
 
-    fetch(URL_API + "?accion=obtenerClientes")
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        let select = document.getElementById("clienteSelect");
-
-        if (data.clientes) {
-
-            data.clientes.forEach(cliente => {
-
-                let opt = document.createElement("option");
-
-                opt.value = cliente;
-                opt.textContent = cliente;
-
-                select.appendChild(opt);
-
-            });
-
-        }
-
-    })
-
-    .catch(err => console.error("Error al cargar clientes:", err));
-
-});
-
-
-// ========================================
-// PREPROCESAR IMAGEN
-// ========================================
-
-function prepararImagen(video, sentido) {
-
-    const anchoVideo = video.videoWidth;
-    const altoVideo = video.videoHeight;
-
-    // Recortar la zona central indicada por el recuadro verde
-
-    const sx = Math.floor(anchoVideo * 0.29);
-    const sy = Math.floor(altoVideo * 0.09);
-
-    const sw = Math.floor(anchoVideo * 0.42);
-    const sh = Math.floor(altoVideo * 0.82);
-
-    // Ampliar la imagen para facilitar la lectura
-
-    const escala = Math.min(2, 1400 / Math.max(sw, sh));
-
-    const ancho = Math.floor(sw * escala);
-    const alto = Math.floor(sh * escala);
-
-    // Crear canvas rotado
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = alto;
-    canvas.height = ancho;
-
-    const ctx = canvas.getContext("2d", {
-        willReadFrequently: true
-    });
-
-    ctx.save();
-
-    if (sentido === 1) {
-
-        ctx.translate(canvas.width, 0);
-        ctx.rotate(Math.PI / 2);
-
-    } else {
-
-        ctx.translate(0, canvas.height);
-        ctx.rotate(-Math.PI / 2);
-
-    }
-
-    ctx.drawImage(
-        video,
-        sx, sy, sw, sh,
-        0, 0, ancho, alto
-    );
-
-    ctx.restore();
-
-    // Convertir a escala de grises
-
-    const image = ctx.getImageData(
-        0, 0, canvas.width, canvas.height
-    );
-
-    const pixels = image.data;
-    const histograma = new Array(256).fill(0);
-
-    for (let i = 0; i < pixels.length; i += 4) {
-
-        const gris = Math.round(
-            0.299 * pixels[i] +
-            0.587 * pixels[i + 1] +
-            0.114 * pixels[i + 2]
-        );
-
-        histograma[gris]++;
-
-        pixels[i] = gris;
-        pixels[i + 1] = gris;
-        pixels[i + 2] = gris;
-
-    }
-
-    // Calcular umbral automático de Otsu
-
-    const total = pixels.length / 4;
-
-    let sumaTotal = 0;
-
-    for (let i = 0; i < 256; i++) {
-        sumaTotal += i * histograma[i];
-    }
-
-    let sumaFondo = 0;
-    let pesoFondo = 0;
-    let mejorVarianza = 0;
-    let umbral = 150;
-
-    for (let i = 0; i < 256; i++) {
-
-        pesoFondo += histograma[i];
-
-        if (pesoFondo === 0) continue;
-
-        const pesoObjeto = total - pesoFondo;
-
-        if (pesoObjeto === 0) break;
-
-        sumaFondo += i * histograma[i];
-
-        const mediaFondo = sumaFondo / pesoFondo;
-        const mediaObjeto = (sumaTotal - sumaFondo) / pesoObjeto;
-
-        const varianza =
-            pesoFondo * pesoObjeto *
-            Math.pow(mediaFondo - mediaObjeto, 2);
-
-        if (varianza > mejorVarianza) {
-            mejorVarianza = varianza;
-            umbral = i;
-        }
-
-    }
-
-    // Separar letras oscuras del fondo claro
-
-    for (let i = 0; i < pixels.length; i += 4) {
-
-        const gris = pixels[i];
-
-        const valor = gris < umbral ? 0 : 255;
-
-        pixels[i] = valor;
-        pixels[i + 1] = valor;
-        pixels[i + 2] = valor;
-        pixels[i + 3] = 255;
-
-    }
-
-    ctx.putImageData(image, 0, 0);
-
-    return canvas;
-}
-
-
-// ========================================
-// INICIAR CAMARA
-// ========================================
-
-async function iniciarCamara() {
-
-    if (mediaStream || iniciandoCamara) return;
-
-    iniciandoCamara = true;
-
-    const container = document.getElementById("scannerContainer");
-    const video = document.getElementById("videoElement");
-    const loading = document.getElementById("loadingScan");
-
-    container.style.display = "block";
-    loading.style.display = "block";
-    loading.textContent = "Activando cámara y lector...";
-
-    ultimoNumero = "";
-    lecturasIguales = 0;
-
-    const miSesion = ++sesionCamara;
-
-    try {
-
-        if (!navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia) {
-            throw new Error("Se necesita HTTPS para utilizar la cámara.");
-        }
-
-        // Preparar lector y cámara simultáneamente
-
-        const promesaLector = prepararOCR();
-
-        const promesaCamara = navigator.mediaDevices.getUserMedia({
-
-            video: {
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
-
-        });
-
-        const stream = await promesaCamara;
-
-        if (miSesion !== sesionCamara) {
-
-            stream.getTracks().forEach(track => track.stop());
+    function buscarExtintor() {
+        let cliente = document.getElementById("clienteSelect").value.trim();
+        let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
+        let nroDps = document.getElementById("nroDpsInput").value.trim();
+
+        if (!cliente && !nroExtintor && !nroDps) {
+            alert("Por favor, completá al menos un campo de búsqueda.");
             return;
-
         }
 
-        mediaStream = stream;
-        video.srcObject = stream;
+        let url = `${URL_API}?accion=buscarParaImpresion&cliente=${encodeURIComponent(cliente)}&extintor=${encodeURIComponent(nroExtintor)}&dps=${encodeURIComponent(nroDps)}`;
 
-        await video.play();
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.encontrado) {
+                    document.getElementById("lblCliente").textContent = data.extintor.cliente || cliente || "N/D";
+                    document.getElementById("lblExtintor").textContent = data.extintor.extintor;
+                    document.getElementById("lblTipoCap").textContent = `${data.extintor.tipo} - ${data.extintor.capacidad}`;
+                    document.getElementById("lblMarca").textContent = data.extintor.marca;
+                    document.getElementById("lblVencCarga").textContent = data.extintor.vencCarga;
+                    document.getElementById("lblVencPH").textContent = data.extintor.vencPH;
+                    document.getElementById("lblDps").textContent = data.extintor.nroDps;
+                    document.getElementById("lblUbicacion").textContent = `${data.extintor.puesto} (${data.extintor.ubicacion})`;
 
-        await promesaLector;
-
-        if (miSesion !== sesionCamara) return;
-
-        loading.textContent = "Enfocá el número vertical dentro del recuadro...";
-
-        // Comenzar lectura inmediatamente
-
-        leerAutomaticamente();
-
+                    document.getElementById("obleaPreview").style.display = "block";
+                } else {
+                    alert("No se encontró ningún extintor con los datos indicados.");
+                    document.getElementById("obleaPreview").style.display = "none";
+                }
+            })
+            .catch(err => {
+                console.error("Error en la búsqueda:", err);
+                alert("Error al comunicarse con la base de datos.");
+            });
     }
-
-    catch(err) {
-
-        console.error("Error iniciando cámara:", err);
-
-        if (miSesion === sesionCamara) {
-            alert("No se pudo iniciar la cámara o el lector OCR.");
-            cerrarCamara();
-        }
-
-    }
-
-    finally {
-        iniciandoCamara = false;
-    }
-
-}
-
-
-// ========================================
-// LECTURA OCR
-// ========================================
-
-async function leerAutomaticamente() {
-
-    if (leyendo || !mediaStream || !workerOCR) return;
-
-    const video = document.getElementById("videoElement");
-
-    if (!video.videoWidth || video.readyState < 2) {
-
-        temporizadorOCR = setTimeout(leerAutomaticamente, 200);
-        return;
-
-    }
-
-    leyendo = true;
-
-    const miSesion = sesionCamara;
-
-    try {
-
-        // Probar primero un sentido de rotación
-
-        let imagen = prepararImagen(video, 1);
-
-        let resultado = await workerOCR.recognize(imagen);
-
-        if (miSesion !== sesionCamara || !mediaStream) return;
-
-        let numeros = resultado.data.text
-            .replace(/[^0-9]/g, "");
-
-        let confianza = resultado.data.confidence;
-
-        // Si no obtiene un número válido, probar el otro sentido
-
-        if (numeros.length < 7 ||
-            numeros.length > 10 ||
-            confianza < 45) {
-
-            imagen = prepararImagen(video, -1);
-
-            resultado = await workerOCR.recognize(imagen);
-
-            if (miSesion !== sesionCamara || !mediaStream) return;
-
-            numeros = resultado.data.text
-                .replace(/[^0-9]/g, "");
-
-            confianza = resultado.data.confidence;
-
-        }
-
-        console.log(
-            "OCR:",
-            numeros,
-            "Confianza:",
-            confianza
-        );
-
-        // Validar cantidad de dígitos
-
-        if (
-            numeros.length >= 7 &&
-            numeros.length <= 10 &&
-            confianza >= 45
-        ) {
-
-            if (numeros === ultimoNumero) {
-                lecturasIguales++;
-            } else {
-                ultimoNumero = numeros;
-                lecturasIguales = 1;
-            }
-
-            // Dos lecturas idénticas
-
-            if (lecturasIguales >= 2) {
-
-                document.getElementById("nroDpsInput").value = numeros;
-
-                cerrarCamara();
-
-                document.getElementById("nroDpsInput").focus();
-
-                console.log("Número confirmado:", numeros);
-
-            }
-
-        } else {
-
-            ultimoNumero = "";
-            lecturasIguales = 0;
-
-        }
-
-    }
-
-    catch(err) {
-
-        console.error("Error leyendo número:", err);
-
-    }
-
-    finally {
-
-        leyendo = false;
-
-        if (mediaStream && miSesion === sesionCamara) {
-
-            temporizadorOCR = setTimeout(
-                leerAutomaticamente,
-                350
-            );
-
-        }
-
-    }
-
-}
-
-
-// ========================================
-// CERRAR CAMARA
-// ========================================
-
-function cerrarCamara() {
-
-    sesionCamara++;
-
-    if (temporizadorOCR) {
-        clearTimeout(temporizadorOCR);
-        temporizadorOCR = null;
-    }
-
-    leyendo = false;
-
-    ultimoNumero = "";
-    lecturasIguales = 0;
-
-    if (mediaStream) {
-
-        mediaStream.getTracks().forEach(track => track.stop());
-
-        mediaStream = null;
-
-    }
-
-    const video = document.getElementById("videoElement");
-
-    video.pause();
-    video.srcObject = null;
-
-    document.getElementById("scannerContainer").style.display = "none";
-    document.getElementById("loadingScan").style.display = "none";
-
-}
-
-
-// ========================================
-// BUSCAR EXTINTOR
-// ========================================
-
-function buscarExtintor() {
-
-    let cliente = document.getElementById("clienteSelect").value.trim();
-
-    let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
-
-    let nroDps = document.getElementById("nroDpsInput").value.trim();
-
-    if (!cliente && !nroExtintor && !nroDps) {
-
-        alert("Por favor, completá al menos un campo de búsqueda.");
-
-        return;
-
-    }
-
-    let url = `${URL_API}?accion=buscarParaImpresion&cliente=${encodeURIComponent(cliente)}&extintor=${encodeURIComponent(nroExtintor)}&dps=${encodeURIComponent(nroDps)}`;
-
-    fetch(url)
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        if (data.encontrado) {
-
-            document.getElementById("lblCliente").textContent =
-                data.extintor.cliente || cliente || "N/D";
-
-            document.getElementById("lblExtintor").textContent =
-                data.extintor.extintor;
-
-            document.getElementById("lblTipoCap").textContent =
-                `${data.extintor.tipo} - ${data.extintor.capacidad}`;
-
-            document.getElementById("lblMarca").textContent =
-                data.extintor.marca;
-
-            document.getElementById("lblVencCarga").textContent =
-                data.extintor.vencCarga;
-
-            document.getElementById("lblVencPH").textContent =
-                data.extintor.vencPH;
-
-            document.getElementById("lblDps").textContent =
-                data.extintor.nroDps;
-
-            document.getElementById("lblUbicacion").textContent =
-                `${data.extintor.puesto} (${data.extintor.ubicacion})`;
-
-            document.getElementById("obleaPreview").style.display = "block";
-
-        } else {
-
-            alert("No se encontró ningún extintor con los datos indicados.");
-
-            document.getElementById("obleaPreview").style.display = "none";
-
-        }
-
-    })
-
-    .catch(err => {
-
-        console.error("Error en la búsqueda:", err);
-
-        alert("Error al comunicarse con la base de datos.");
-
-    });
-
-}
-
 </script>
 
 </body>
