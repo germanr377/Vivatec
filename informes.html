@@ -25,10 +25,11 @@
         /* Contenedor general de las páginas impresas */
         .planilla-wrapper { display: none; background: white; width: 100%; }
 
-        /* Estilo de cada Bloque / Hoja individual */
+        /* Estilo de cada Bloque / Hoja individual (con ancho más compacto) */
         .pagina-hoja {
             width: 100%;
-            margin-bottom: 30px;
+            max-width: 950px; /* Ancho acotado para centrar y compactar la tabla */
+            margin: 0 auto 30px auto;
         }
         
         table {
@@ -72,23 +73,24 @@
             font-size: 12px;
         }
 
-        /* Cabeceras de columnas de datos */
+        /* Cabeceras de columnas de datos con anchos optimizados */
         .th-columna {
             border: 1.5px solid #000;
-            padding: 7px 5px;
+            padding: 6px 3px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             background-color: #fff;
             color: #000;
             font-weight: bold;
             vertical-align: middle;
             height: 55px;
+            line-height: 1.2;
         }
 
         /* Celdas de datos */
         td {
             border: 1.5px solid #000;
-            padding: 6px 5px;
+            padding: 6px 4px;
             text-align: center;
             font-size: 12px;
         }
@@ -99,7 +101,7 @@
 
         .badge-nuevo { background: #2ecc71; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (Salto de página obligatorio por bloque y márgenes de 2cm) */
+        /* CONFIGURACIÓN DE IMPRESIÓN */
         @media print {
             @page {
                 size: A4 landscape;
@@ -121,11 +123,11 @@
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
             .planilla-wrapper { display: block !important; }
 
-            /* Salto de página automático estricto por cada 20 registros */
             .pagina-hoja {
                 page-break-after: always;
                 break-after: page;
                 margin-bottom: 0;
+                max-width: 100% !important;
             }
         }
 
@@ -171,7 +173,7 @@
 
     <!-- CONTENEDOR DE PÁGINAS DINÁMICAS -->
     <div id="planillaWrapper" class="planilla-wrapper">
-        <!-- Las páginas de 20 registros se arman solas acá -->
+        <!-- Las páginas de 20 registros con anchos achicados se arman solas acá -->
     </div>
 
 </div>
@@ -281,7 +283,6 @@
         mensaje.textContent = `Planilla lista con ${data.length} registros divididos en páginas de 20. Hacé clic en 'Imprimir Planilla A4'.`;
         wrapper.style.display = "block";
 
-        // DIVIDIR LOS REGISTROS EN BLOQUES DE EXACTAMENTE 20
         const registrosPorPagina = 20;
         const totalPaginas = Math.ceil(data.length / registrosPorPagina);
 
@@ -291,11 +292,9 @@
             const loteRegistros = data.slice(inicio, fin);
             const numeroHoja = i + 1;
 
-            // Crear el bloque de la página
             const divPagina = document.createElement("div");
             divPagina.className = "pagina-hoja";
 
-            // Armar la tabla de esta página específica con su propio membrete y número de hoja
             let htmlTabla = `
                 <table>
                     <thead>
@@ -313,16 +312,16 @@
                             </th>
                         </tr>
                         <tr>
-                            <th class="th-columna" style="width: 8%;">EXTINTOR N°</th>
-                            <th class="th-columna" style="width: 6%;">TIPO</th>
-                            <th class="th-columna" style="width: 6%;">CAPACIDAD</th>
-                            <th class="th-columna" style="width: 7%;">A. FABRICACION</th>
+                            <th class="th-columna" style="width: 7%;">EXTINTOR<br>N°</th>
+                            <th class="th-columna" style="width: 5%;">TIPO</th>
+                            <th class="th-columna" style="width: 5%;">CAPAC.</th>
+                            <th class="th-columna" style="width: 6%;">A. FABRIC</th>
                             <th class="th-columna" style="width: 14%;">MARCA</th>
-                            <th class="th-columna" style="width: 10%;">VENC. P. HIDRAULICA</th>
-                            <th class="th-columna" style="width: 10%;">VENCIMIENTO CARGA</th>
-                            <th class="th-columna" style="width: 11%;">NUMERO - DPS</th>
-                            <th class="th-columna" style="width: 8%;">IDENTIFICACION PUESTO</th>
-                            <th class="th-columna" style="width: 20%;">UBICACIÓN DEL PUESTO</th>
+                            <th class="th-columna" style="width: 9%;">VENC. P. HIDRAULICA</th>
+                            <th class="th-columna" style="width: 9%;">VENC CARGA</th>
+                            <th class="th-columna" style="width: 9%;">N°-DPS</th>
+                            <th class="th-columna" style="width: 6%;">PUESTO</th>
+                            <th class="th-columna" style="width: 30%;">UBICACIÓN DEL PUESTO</th>
                         </tr>
                     </thead>
                     <tbody>
