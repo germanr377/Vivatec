@@ -72,7 +72,7 @@
             font-size: 11px;
         }
 
-        /* Cabeceras de columnas de datos compactas */
+        /* Cabeceras de columnas interactivas para ordenar */
         .th-columna {
             border: 1.5px solid #000;
             padding: 5px 2px;
@@ -84,9 +84,15 @@
             vertical-align: middle;
             height: 45px;
             line-height: 1.1;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .th-columna:hover {
+            background-color: #e2e8f0;
         }
 
-        /* Celdas de datos compactas para que entren más filas por hoja */
+        /* Celdas de datos compactas */
         td {
             border: 1.5px solid #000;
             padding: 4px 3px;
@@ -104,7 +110,7 @@
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 1.5cm 2cm; /* Márgenes optimizados */
+                margin: 1.5cm 2cm;
             }
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
@@ -122,7 +128,6 @@
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
             .planilla-wrapper { display: block !important; }
 
-            /* Salto de página estricto por cada hoja generada */
             .pagina-hoja {
                 page-break-after: always;
                 break-after: page;
@@ -172,7 +177,7 @@
 
     <!-- CONTENEDOR DE PÁGINAS DINÁMICAS -->
     <div id="planillaWrapper" class="planilla-wrapper">
-        <!-- Las páginas se arman solas con su paginación exacta -->
+        <!-- Las páginas se arman solas -->
     </div>
 
 </div>
@@ -181,6 +186,10 @@
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let datosGlobales = []; // Almacena el resultado actual para poder reordenarlo al hacer clic
+    let columnaOrdenActual = 'extintor_numero';
+    let ascendenteActual = true;
 
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
@@ -236,8 +245,8 @@
         const inputDesde = document.getElementById("fechaDesde").value;
         const inputHasta = document.getElementById("fechaHasta").value;
         
-        const wrapper = document.getElementById("planillaWrapper");
         const mensaje = document.getElementById("mensajeEstado");
+        const wrapper = document.getElementById("planillaWrapper");
 
         if (!cliente) {
             mensaje.textContent = "Por favor, seleccioná un cliente para generar la planilla.";
@@ -262,8 +271,6 @@
             query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         }
 
-        query = query.order('extintor_numero', { ascending: true });
-
         const { data, error } = await query.limit(500);
 
         if (error) {
@@ -279,21 +286,69 @@
             return;
         }
 
-        mensaje.textContent = `Planilla lista con ${data.length} registros. Hacé clic en 'Imprimir Planilla A4'.`;
+        datosGlobales = data;
+        renderizarPlanilla();
+    }
+
+    // FUNCIÓN PARA ORDENAR AL HACER CLIC EN LOS TÍTULOS
+    function ordenarPor(columna) {
+        if (columnaOrdenActual === columna) {
+            ascendenteActual = !ascendenteActual; // Invierte el orden
+        } else {
+            columnaOrdenActual = columna;
+            ascendenteActual = true; // Por defecto ascendente al cambiar de columna
+        }
+        renderizarPlanilla();
+    }
+
+    // RENDERIZA LAS HOJAS DIVIDIDAS DE 25 CON EL ORDEN SELECCIONADO
+    function renderizarPlanilla() {
+        const cliente = document.getElementById("filtroCliente").value.trim();
+        const wrapper = document.getElementById("planillaWrapper");
+        const mensaje = document.getElementById("mensajeEstado");
+
+        if (datosGlobales.length === 0) return;
+
+        // Ordenar el arreglo en memoria
+        datosGlobales.sort((a, b) => {
+            let valA = a[columnaOrdenActual];
+            let valB = b[columnaOrdenActual];
+
+            if (valA === null || valA === undefined) valA = "";
+            if (valB === null || valB === undefined) valB = "";
+
+            // Manejo numérico para extintor_numero o capacidad si corresponde
+            if (!isNaN(valA) && !isNaN(valB) && valA !== "" && valB !== "") {
+                valA = Number(valA);
+                valB = Number(valB);
+            }
+
+            if (valA < valB) return ascendenteActual ? -1 : 1;
+            if (valA > valB) return ascendenteActual ? 1 : -1;
+            return 0;
+        });
+
+        wrapper.innerHTML = "";
+        mensaje.textContent = `Planilla lista con ${datosGlobales.length} registros. Hacé clic en 'Imprimir Planilla A4'.`;
         wrapper.style.display = "block";
 
-        // Definimos 25 registros por página para aprovechar bien el espacio vertical de la hoja horizontal
         const registrosPorPagina = 25;
-        const totalPaginas = Math.ceil(data.length / registrosPorPagina);
+        const totalPaginas = Math.ceil(datosGlobales.length / registrosPorPagina);
 
         for (let i = 0; i < totalPaginas; i++) {
             const inicio = i * registrosPorPagina;
             const fin = inicio + registrosPorPagina;
-            const loteRegistros = data.slice(inicio, fin);
+            const loteRegistros = datosGlobales.slice(inicio, fin);
             const numeroHoja = i + 1;
 
             const divPagina = document.createElement("div");
             divPagina.className = "pagina-hoja";
+
+            // Flechitas dinámicas según la columna activa
+            const flecha = (col) => {
+                if (columnaOrdenActual !== col) return " ↕";
+                return ascendenteActual ? " ▲" : " ▼";
+            };
 
             let htmlTabla = `
                 <table>
@@ -312,16 +367,16 @@
                             </th>
                         </tr>
                         <tr>
-                            <th class="th-columna" style="width: 7%;">EXTINTOR<br>N°</th>
-                            <th class="th-columna" style="width: 5%;">TIPO</th>
-                            <th class="th-columna" style="width: 5%;">CAPAC.</th>
-                            <th class="th-columna" style="width: 6%;">A. FABRIC</th>
-                            <th class="th-columna" style="width: 12%;">MARCA</th>
-                            <th class="th-columna" style="width: 9%;">VENC. P. HIDRAULICA</th>
-                            <th class="th-columna" style="width: 9%;">VENC CARGA</th>
-                            <th class="th-columna" style="width: 9%;">N°-DPS</th>
-                            <th class="th-columna" style="width: 6%;">PUESTO</th>
-                            <th class="th-columna" style="width: 22%;">UBICACIÓN DEL PUESTO</th>
+                            <th class="th-columna" style="width: 7%;" onclick="ordenarPor('extintor_numero')">EXTINTOR<br>N°${flecha('extintor_numero')}</th>
+                            <th class="th-columna" style="width: 5%;" onclick="ordenarPor('tipo')">TIPO${flecha('tipo')}</th>
+                            <th class="th-columna" style="width: 5%;" onclick="ordenarPor('capacidad')">CAPAC.${flecha('capacidad')}</th>
+                            <th class="th-columna" style="width: 6%;" onclick="ordenarPor('ano_fab')">A. FABRIC${flecha('ano_fab')}</th>
+                            <th class="th-columna" style="width: 12%;" onclick="ordenarPor('marca')">MARCA${flecha('marca')}</th>
+                            <th class="th-columna" style="width: 9%;" onclick="ordenarPor('vto_prueb_hidr')">VENC. P. HIDRAULICA${flecha('vto_prueb_hidr')}</th>
+                            <th class="th-columna" style="width: 9%;" onclick="ordenarPor('vto_carga')">VENC CARGA${flecha('vto_carga')}</th>
+                            <th class="th-columna" style="width: 9%;" onclick="ordenarPor('numero_dps')">N°-DPS${flecha('numero_dps')}</th>
+                            <th class="th-columna" style="width: 6%;" onclick="ordenarPor('identificacion_puesto')">PUESTO${flecha('identificacion_puesto')}</th>
+                            <th class="th-columna" style="width: 22%;" onclick="ordenarPor('ubicacion')">UBICACIÓN DEL PUESTO${flecha('ubicacion')}</th>
                         </tr>
                     </thead>
                     <tbody>
