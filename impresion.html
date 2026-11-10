@@ -16,7 +16,7 @@
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; transition: background 0.3s; }
         
         .search-row { display: flex; gap: 15px; }
         .search-row .form-group { flex: 1; }
@@ -38,21 +38,26 @@
         .btn-search { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
         
         /* Formulario Editable y Preview */
-        .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; }
+        .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; }
         .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         
+        /* Estilos para el modo RECARGA (Fondo Amarillo) */
+        .modo-recarga { background-color: #fff9c4 !important; border-color: #f1c40f !important; }
+        .modo-recarga input, .modo-recarga select { background-color: #fffde7; border-color: #f1c40f; }
+
         /* Botones de acción */
-        .action-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-save { background: #d35400; flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        .btn-print { background: #27ae60; flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        .btn-cancel { background: #7f8c8d; flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .btn-save { background: #d35400; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-print { background: #27ae60; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-cancel { background: #7f8c8d; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-warning { background: #f1c40f; flex: 1; min-width: 120px; padding: 12px; border: none; color: #333; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         
         @media print {
             body * { visibility: hidden; }
             .oblea-preview, .oblea-preview * { visibility: visible; }
-            .oblea-preview { position: absolute; left: 0; top: 0; width: 100%; border: none; background: white; }
-            .action-buttons, input, select { border: none; background: transparent; }
+            .oblea-preview { position: absolute; left: 0; top: 0; width: 100%; border: none; background: white !important; }
+            .oblea-preview input, .oblea-preview select { background: transparent !important; border: none !important; }
             .action-buttons, .container > *:not(.oblea-preview) { display: none; }
         }
         @media (max-width: 600px) { 
@@ -124,7 +129,7 @@
             </div>
             <div class="form-group">
                 <label>N° Extintor:</label>
-                <input type="text" id="editExtintor">
+                <input type="text" id="editExtintor" readonly style="background: #e9ecef; cursor: not-allowed;">
             </div>
             <div class="form-group">
                 <label>Tipo:</label>
@@ -144,13 +149,13 @@
             </div>
             <div class="form-group">
                 <label>Venc. Prueba Hidráulica:</label>
-                <!-- Modificados a text con placeholder -->
-                <input type="text" id="editVencPH" placeholder="DD/MM/AAAA">
+                <!-- Modificado el placeholder a MM/AAAA -->
+                <input type="text" id="editVencPH" placeholder="MM/AAAA">
             </div>
             <div class="form-group">
                 <label>Vencimiento Carga:</label>
-                <!-- Modificados a text con placeholder -->
-                <input type="text" id="editVencCarga" placeholder="DD/MM/AAAA">
+                <!-- Modificado el placeholder a MM/AAAA -->
+                <input type="text" id="editVencCarga" placeholder="MM/AAAA">
             </div>
             <div class="form-group">
                 <label>N° DPS:</label>
@@ -168,6 +173,7 @@
 
         <div class="action-buttons">
             <button class="btn-cancel" onclick="volverABuscar()">↩️ Volver</button>
+            <button class="btn-warning" onclick="iniciarRecarga()">🔄 RECARGA</button>
             <button class="btn-save" onclick="guardarCambios()">💾 Guardar Cambios</button>
             <button class="btn-print" onclick="window.print()">🖨️ Imprimir Oblea</button>
         </div>
@@ -181,26 +187,38 @@
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (DD/MM/AAAA)
+    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (MM/AAAA)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
         if (partes.length === 3) {
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+            // Retorna solo el MES (partes[1]) y el AÑO (partes[0])
+            return `${partes[1]}/${partes[0]}`;
         }
         return fechaSQL;
     }
 
-    // TRADUCTOR DE FECHAS: Pantalla (DD/MM/AAAA) -> Supabase (AAAA-MM-DD)
+    // TRADUCTOR DE FECHAS: Pantalla (MM/AAAA) -> Supabase (AAAA-MM-DD)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
-        let partes = fechaWeb.split("/");
-        if (partes.length === 3) {
+        let partes = fechaWeb.trim().split("/");
+        
+        // Si ingresaron formato MM/AAAA (2 partes)
+        if (partes.length === 2) {
+            let mes = partes[0].padStart(2, '0');
+            let anio = partes[1];
+            // Supabase necesita un día válido para guardar la fecha en la base de datos, 
+            // así que le asignamos el día '01' internamente por defecto.
+            return `${anio}-${mes}-01`;
+        } 
+        // Por las dudas si alguien ingresa formato completo DD/MM/AAAA
+        else if (partes.length === 3) {
             let dia = partes[0].padStart(2, '0');
             let mes = partes[1].padStart(2, '0');
             let anio = partes[2];
             return `${anio}-${mes}-${dia}`;
         }
+        
         return null;
     }
 
@@ -225,6 +243,9 @@
 
     // BUSCAR EXTINTOR EN SUPABASE
     async function buscarExtintor() {
+        // Limpiamos estilos de recarga si existían de una búsqueda previa
+        document.getElementById("obleaPreview").classList.remove("modo-recarga");
+
         let cliente = document.getElementById("clienteSelect").value.trim();
         let nroExtintor = document.getElementById("nroExtintorInput").value.trim();
         let nroDps = document.getElementById("nroDpsInput").value.trim();
@@ -259,7 +280,6 @@
             document.getElementById("editAFabricacion").value = ex.ano_fab || "";
             document.getElementById("editMarca").value = ex.marca || "";
             
-            // Usamos el traductor de fechas para mostrar en DD/MM/AAAA
             document.getElementById("editVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
             document.getElementById("editVencCarga").value = formatearFechaWeb(ex.vto_carga);
             
@@ -272,6 +292,31 @@
             alert("No se encontró ningún extintor con los datos indicados.");
             document.getElementById("obleaPreview").style.display = "none";
         }
+    }
+
+    // INICIAR PROCESO DE RECARGA
+    function iniciarRecarga() {
+        let nuevoDps = prompt("Ingrese el nuevo número de DPS (Deje en blanco si es 'NUEVO'):");
+        
+        if (nuevoDps === null) {
+            alert("Operación de recarga cancelada.");
+            return;
+        }
+
+        // Calcula exactamente 1 año desde hoy y genera el formato MM/AAAA
+        let hoy = new Date();
+        let anio = hoy.getFullYear() + 1;
+        let mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        let nuevaFechaCarga = `${mes}/${anio}`;
+
+        // Actualiza los campos en pantalla
+        document.getElementById("editVencCarga").value = nuevaFechaCarga;
+        document.getElementById("editDps").value = nuevoDps.trim().toUpperCase();
+
+        // Pinta el recuadro de amarillo
+        document.getElementById("obleaPreview").classList.add("modo-recarga");
+
+        alert("Se actualizaron los datos en pantalla. Por favor, controlalos y luego hacé clic en 'Guardar Cambios' para confirmar.");
     }
 
     // GUARDAR CAMBIOS EN SUPABASE
@@ -294,7 +339,6 @@
             ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
             marca: document.getElementById("editMarca").value,
             
-            // Usamos el traductor de fechas para enviarlas a Supabase en AAAA-MM-DD
             vto_prueb_hidr: formatearFechaSQL(document.getElementById("editVencPH").value),
             vto_carga: formatearFechaSQL(document.getElementById("editVencCarga").value),
             
@@ -312,13 +356,15 @@
             console.error("Error al actualizar:", error);
             alert("No se pudieron guardar los cambios.");
         } else {
-            alert("¡Extintor actualizado instantáneamente en Supabase!");
+            document.getElementById("obleaPreview").classList.remove("modo-recarga");
+            alert("¡Extintor actualizado exitosamente!");
         }
     }
 
     // VOLVER (CERRAR EDICIÓN Y LIMPIAR CAMPOS)
     function volverABuscar() {
         document.getElementById("obleaPreview").style.display = "none";
+        document.getElementById("obleaPreview").classList.remove("modo-recarga");
         document.getElementById("clienteSelect").value = "";
         document.getElementById("nroExtintorInput").value = "";
         document.getElementById("nroDpsInput").value = "";
