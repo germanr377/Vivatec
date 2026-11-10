@@ -22,15 +22,8 @@
 
         #mensajeEstado { margin-top: 15px; font-weight: bold; color: #e67e22; text-align: center; }
 
-        /* Contenedor general de las páginas impresas */
-        .planilla-wrapper { display: none; background: white; width: 100%; }
-
-        /* Estilo de cada Bloque / Hoja individual */
-        .pagina-hoja {
-            width: 100%;
-            max-width: 900px; /* Ancho acotado para centrar y compactar la tabla */
-            margin: 0 auto 30px auto;
-        }
+        /* Contenedor general de la planilla */
+        .planilla-wrapper { display: none; background: white; width: 100%; max-width: 900px; margin: 0 auto; }
         
         table {
             width: 100%;
@@ -73,7 +66,7 @@
             font-size: 12px;
         }
 
-        /* Cabeceras de columnas de datos con anchos optimizados y achicados */
+        /* Cabeceras de columnas de datos */
         .th-columna {
             border: 1.5px solid #000;
             padding: 6px 3px;
@@ -101,7 +94,7 @@
 
         .badge-nuevo { background: #2ecc71; color: white; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN */
+        /* CONFIGURACIÓN DE IMPRESIÓN PROFESIONAL */
         @media print {
             @page {
                 size: A4 landscape;
@@ -121,14 +114,11 @@
                 padding: 0; 
             }
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
-            .planilla-wrapper { display: block !important; }
+            .planilla-wrapper { display: block !important; max-width: 100% !important; }
 
-            .pagina-hoja {
-                page-break-after: always;
-                break-after: page;
-                margin-bottom: 0;
-                max-width: 100% !important;
-            }
+            /* Hace que el encabezado completo se repita automáticamente en cada hoja nueva */
+            thead { display: table-header-group; }
+            tr { page-break-inside: avoid; break-inside: avoid; }
         }
 
         @media (max-width: 768px) { 
@@ -171,9 +161,40 @@
 
     <div id="mensajeEstado">Por favor, seleccioná un cliente para ver la planilla.</div>
 
-    <!-- CONTENEDOR DE PÁGINAS DINÁMICAS -->
+    <!-- CONTENEDOR DE LA PLANILLA UNICA -->
     <div id="planillaWrapper" class="planilla-wrapper">
-        <!-- Las páginas de 20 registros se arman solas acá -->
+        <table id="tablaPlanilla">
+            <thead>
+                <tr>
+                    <th colspan="3" class="th-membrete titulo-cliente" id="lblClienteHeader">CLIENTE</th>
+                    <th colspan="4" class="th-membrete titulo-control">CONTROL DE EXTINTORES</th>
+                    <th colspan="3" class="th-membrete titulo-planilla">PLANILLA DE REVISION N° 1</th>
+                </tr>
+                <tr>
+                    <th colspan="7" class="th-membrete" style="text-align: left; padding-left: 10px;">
+                        <span class="lbl-campo">FECHA DE REVISION:</span> <span id="lblFechaHoy">--/--/----</span>
+                    </th>
+                    <th colspan="3" class="th-membrete" style="text-align: left; padding-left: 10px;">
+                        <span class="lbl-campo">CONTROL DE PLANILLA</span>
+                    </th>
+                </tr>
+                <tr>
+                    <th class="th-columna" style="width: 7%;">EXTINTOR<br>N°</th>
+                    <th class="th-columna" style="width: 5%;">TIPO</th>
+                    <th class="th-columna" style="width: 5%;">CAPAC.</th>
+                    <th class="th-columna" style="width: 6%;">A. FABRIC</th>
+                    <th class="th-columna" style="width: 12%;">MARCA</th>
+                    <th class="th-columna" style="width: 9%;">VENC. P. HIDRAULICA</th>
+                    <th class="th-columna" style="width: 9%;">VENC CARGA</th>
+                    <th class="th-columna" style="width: 9%;">N°-DPS</th>
+                    <th class="th-columna" style="width: 6%;">PUESTO</th>
+                    <th class="th-columna" style="width: 22%;">UBICACIÓN DEL PUESTO</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <!-- Se llena dinámicamente -->
+            </tbody>
+        </table>
     </div>
 
 </div>
@@ -225,7 +246,7 @@
         const dia = String(hoy.getDate()).padStart(2, '0');
         const mes = String(hoy.getMonth() + 1).padStart(2, '0');
         const anio = hoy.getFullYear();
-        window.fechaHoyStr = `${dia}/${mes}/${anio}`;
+        document.getElementById("lblFechaHoy").textContent = `${dia}/${mes}/${anio}`;
 
         document.getElementById("fechaDesde").value = `01/01/${anio}`;
         document.getElementById("fechaHasta").value = `31/12/${anio}`;
@@ -237,8 +258,9 @@
         const inputDesde = document.getElementById("fechaDesde").value;
         const inputHasta = document.getElementById("fechaHasta").value;
         
-        const wrapper = document.getElementById("planillaWrapper");
+        const tbody = document.getElementById("cuerpoTabla");
         const mensaje = document.getElementById("mensajeEstado");
+        const wrapper = document.getElementById("planillaWrapper");
 
         if (!cliente) {
             mensaje.textContent = "Por favor, seleccioná un cliente para generar la planilla.";
@@ -255,7 +277,9 @@
         }
 
         mensaje.textContent = "Generando planilla...";
-        wrapper.innerHTML = "";
+        tbody.innerHTML = "";
+
+        document.getElementById("lblClienteHeader").textContent = cliente.toUpperCase();
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
@@ -280,83 +304,31 @@
             return;
         }
 
-        mensaje.textContent = `Planilla lista con ${data.length} registros divididos en páginas de 20. Hacé clic en 'Imprimir Planilla A4'.`;
+        mensaje.textContent = `Planilla lista con ${data.length} registros. Hacé clic en 'Imprimir Planilla A4'.`;
         wrapper.style.display = "block";
 
-        const registrosPorPagina = 20;
-        const totalPaginas = Math.ceil(data.length / registrosPorPagina);
+        data.forEach(ex => {
+            let tr = document.createElement("tr");
 
-        for (let i = 0; i < totalPaginas; i++) {
-            const inicio = i * registrosPorPagina;
-            const fin = inicio + registrosPorPagina;
-            const loteRegistros = data.slice(inicio, fin);
-            const numeroHoja = i + 1;
+            let formatoDps = ex.numero_dps || "-";
+            if (formatoDps === "NUEVO") {
+                formatoDps = `<span class="badge badge-nuevo">NUEVO</span>`;
+            }
 
-            const divPagina = document.createElement("div");
-            divPagina.className = "pagina-hoja";
-
-            let htmlTabla = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th colspan="3" class="th-membrete titulo-cliente">${cliente.toUpperCase()}</th>
-                            <th colspan="4" class="th-membrete titulo-control">CONTROL DE EXTINTORES</th>
-                            <th colspan="3" class="th-membrete titulo-planilla">PLANILLA DE REVISION N° 1</th>
-                        </tr>
-                        <tr>
-                            <th colspan="7" class="th-membrete" style="text-align: left; padding-left: 10px;">
-                                <span class="lbl-campo">FECHA DE REVISION:</span> ${window.fechaHoyStr}
-                            </th>
-                            <th colspan="3" class="th-membrete" style="text-align: left; padding-left: 10px;">
-                                <span class="lbl-campo">HOJA - ${numeroHoja} de ${totalPaginas}</span>
-                            </th>
-                        </tr>
-                        <tr>
-                            <th class="th-columna" style="width: 7%;">EXTINTOR<br>N°</th>
-                            <th class="th-columna" style="width: 5%;">TIPO</th>
-                            <th class="th-columna" style="width: 5%;">CAPAC.</th>
-                            <th class="th-columna" style="width: 6%;">A. FABRIC</th>
-                            <th class="th-columna" style="width: 12%;">MARCA</th>
-                            <th class="th-columna" style="width: 9%;">VENC. P. HIDRAULICA</th>
-                            <th class="th-columna" style="width: 9%;">VENC CARGA</th>
-                            <th class="th-columna" style="width: 9%;">N°-DPS</th>
-                            <th class="th-columna" style="width: 6%;">PUESTO</th>
-                            <th class="th-columna" style="width: 22%;">UBICACIÓN DEL PUESTO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            tr.innerHTML = `
+                <td><strong>${ex.extintor_numero || "-"}</strong></td>
+                <td>${ex.tipo || "-"}</td>
+                <td>${ex.capacidad || "-"}</td>
+                <td>${ex.ano_fab || "-"}</td>
+                <td>${ex.marca || "-"}</td>
+                <td>${formatearFechaWeb(ex.vto_prueb_hidr)}</td>
+                <td>${formatearFechaWeb(ex.vto_carga)}</td>
+                <td>${formatoDps}</td>
+                <td>${ex.identificacion_puesto || "-"}</td>
+                <td class="texto-izq">${ex.ubicacion || "-"}</td>
             `;
-
-            loteRegistros.forEach(ex => {
-                let formatoDps = ex.numero_dps || "-";
-                if (formatoDps === "NUEVO") {
-                    formatoDps = `<span class="badge badge-nuevo">NUEVO</span>`;
-                }
-
-                htmlTabla += `
-                    <tr>
-                        <td><strong>${ex.extintor_numero || "-"}</strong></td>
-                        <td>${ex.tipo || "-"}</td>
-                        <td>${ex.capacidad || "-"}</td>
-                        <td>${ex.ano_fab || "-"}</td>
-                        <td>${ex.marca || "-"}</td>
-                        <td>${formatearFechaWeb(ex.vto_prueb_hidr)}</td>
-                        <td>${formatearFechaWeb(ex.vto_carga)}</td>
-                        <td>${formatoDps}</td>
-                        <td>${ex.identificacion_puesto || "-"}</td>
-                        <td class="texto-izq">${ex.ubicacion || "-"}</td>
-                    </tr>
-                `;
-            });
-
-            htmlTabla += `
-                    </tbody>
-                </table>
-            `;
-
-            divPagina.innerHTML = htmlTabla;
-            wrapper.appendChild(divPagina);
-        }
+            tbody.appendChild(tr);
+        });
     }
 </script>
 
