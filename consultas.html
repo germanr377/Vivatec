@@ -1,57 +1,56 @@
-// CREDENCIALES DE SUPABASE
-const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
-const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
-const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<script>
+    // CREDENCIALES DE SUPABASE
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function consultarFechas() {
-    let desde = document.getElementById('fecha-desde').value;
-    let hasta = document.getElementById('fecha-hasta').value;
+    async function consultarFechas() {
+        let desde = document.getElementById('fecha-desde').value;
+        let hasta = document.getElementById('fecha-hasta').value;
 
-    let tbody = document.querySelector('#tabla-resultados tbody');
-    
-    // Ajustamos el colspan a 5 porque ahora tenemos 5 columnas en la tabla
-    if (!desde || !hasta) {
-        alert("Por favor, seleccioná ambas fechas.");
-        return;
-    }
-
-    tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
-
-    try {
-        // Consultamos incluyendo 'agente_extintor' y 'capacidad'
-        const { data, error } = await _supabase
-            .from('extintores')
-            .select('oblea, extintor_numero, capacidad, agente_extintor, vto_carga')
-            .gte('vto_carga', desde)
-            .lte('vto_carga', hasta)
-            .order('vto_carga', { ascending: true });
-
-        if (error) {
-            throw error;
-        }
-
-        tbody.innerHTML = "";
-
-        if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">No se encontraron registros en ese período.</td></tr>`;
+        let tbody = document.querySelector('#tabla-resultados tbody');
+        
+        if (!desde || !hasta) {
+            alert("Por favor, seleccioná ambas fechas.");
             return;
         }
 
-        // Recorremos cada fila y armamos la estructura respetando el orden: Capacidad -> Ag. Extin.
-        data.forEach(fila => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${fila.oblea || "-"}</td>
-                <td>${fila.extintor_numero || "-"}</td>
-                <td>${fila.capacidad || "-"}</td>
-                <td>${fila.agente_extintor || "-"}</td>
-                <td>${fila.vto_carga || "-"}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
 
-    } catch (error) {
-        console.error("Error al consultar Supabase:", error);
-        tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
+        try {
+            const { data, error } = await _supabase
+                .from('extintores')
+                .select('oblea, extintor_numero, capacidad, agente_extintor, vto_carga')
+                .gte('vto_carga', desde)
+                .lte('vto_carga', hasta)
+                .order('vto_carga', { ascending: true });
+
+            if (error) {
+                throw error;
+            }
+
+            tbody.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">No se encontraron registros en ese período.</td></tr>`;
+                return;
+            }
+
+            data.forEach(fila => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${fila.oblea || "-"}</td>
+                    <td>${fila.extintor_numero || "-"}</td>
+                    <td>${fila.capacidad || "-"}</td>
+                    <td>${fila.agente_extintor || "-"}</td>
+                    <td>${fila.vto_carga || "-"}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.error("Error al consultar Supabase:", error);
+            tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
+        }
     }
-}
+</script>
