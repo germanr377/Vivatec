@@ -38,9 +38,16 @@
         .btn-search { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 10px; }
         
         /* Formulario Editable y Preview */
-        .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; transition: all 0.3s; }
+        .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 15px 20px; border-radius: 6px; background: #fafbfc; display: none; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; }
-        .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        /* NUEVO DISEÑO COMPACTO POR FILAS */
+        .form-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .form-row .form-group { margin-bottom: 0; flex: 1; } /* El flex: 1 hace que ocupen el ancho sobrante por defecto */
+        
+        /* Ajuste de tamaño visual para que sea más sutil */
+        .oblea-preview label { font-size: 12px; margin-bottom: 4px; color: #444; }
+        .oblea-preview input, .oblea-preview select { padding: 8px; font-size: 14px; }
         
         /* Estilos para el modo RECARGA (Fondo Amarillo) */
         .modo-recarga { background-color: #fff9c4 !important; border-color: #f1c40f !important; }
@@ -61,9 +68,9 @@
             .action-buttons, .container > *:not(.oblea-preview) { display: none; }
         }
         @media (max-width: 600px) { 
-            .oblea-grid { grid-template-columns: 1fr; } 
             .search-row { flex-direction: column; gap: 0; } 
             .action-buttons { flex-direction: column; }
+            .form-row .form-group { min-width: 100%; } /* En celulares se apilan */
         }
     </style>
 </head>
@@ -113,12 +120,27 @@
         
         <input type="hidden" id="editId">
 
-        <div class="oblea-grid">
-            <div class="form-group">
+        <!-- FILA 1: Cliente, N° Extintor, DPS -->
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
                 <label>Cliente:</label>
                 <input type="text" id="editCliente">
             </div>
-            <div class="form-group">
+            <!-- 15ch = ancho aproximado exacto para 15 caracteres -->
+            <div class="form-group" style="flex: none; width: 15ch;">
+                <label>N° Extintor:</label>
+                <input type="text" id="editExtintor" readonly style="background: #e9ecef; cursor: not-allowed;">
+            </div>
+            <div class="form-group" style="flex: none; width: 15ch;">
+                <label>N° DPS:</label>
+                <input type="text" id="editDps">
+            </div>
+        </div>
+
+        <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Capacidad -->
+        <div class="form-row">
+            <!-- 16ch = ancho aproximado para 16 caracteres -->
+            <div class="form-group" style="flex: none; width: 16ch;">
                 <label>Tipo de Oblea:</label>
                 <select id="editOblea">
                     <option value="">(En blanco)</option>
@@ -127,45 +149,39 @@
                     <option value="Vehicular">Vehicular</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>N° Extintor:</label>
-                <input type="text" id="editExtintor" readonly style="background: #e9ecef; cursor: not-allowed;">
-            </div>
-            <div class="form-group">
-                <label>Tipo:</label>
-                <input type="text" id="editTipo">
-            </div>
-            <div class="form-group">
-                <label>Capacidad (Kg/Lt):</label>
-                <input type="text" id="editCapacidad">
-            </div>
-            <div class="form-group">
-                <label>Año Fabricación:</label>
-                <input type="number" id="editAFabricacion">
-            </div>
-            <div class="form-group">
+            <div class="form-group" style="flex: 1;">
                 <label>Marca:</label>
                 <input type="text" id="editMarca">
             </div>
-            <div class="form-group">
-                <label>Venc. Prueba Hidráulica:</label>
-                <!-- Modificado el placeholder a MM/AAAA -->
+            <div class="form-group" style="flex: 1;">
+                <label>Tipo:</label>
+                <input type="text" id="editTipo">
+            </div>
+            <div class="form-group" style="flex: none; width: 12ch;">
+                <label>Capacidad:</label>
+                <input type="text" id="editCapacidad">
+            </div>
+        </div>
+
+        <!-- FILA 3: Año Fab, Vencimientos y Ubicación -->
+        <div class="form-row">
+            <div class="form-group" style="flex: none; width: 10ch;">
+                <label>Año Fab.:</label>
+                <input type="number" id="editAFabricacion">
+            </div>
+            <div class="form-group" style="flex: none; width: 12ch;">
+                <label>Venc. P.H.:</label>
                 <input type="text" id="editVencPH" placeholder="MM/AAAA">
             </div>
-            <div class="form-group">
-                <label>Vencimiento Carga:</label>
-                <!-- Modificado el placeholder a MM/AAAA -->
+            <div class="form-group" style="flex: none; width: 12ch;">
+                <label>Venc. Carga:</label>
                 <input type="text" id="editVencCarga" placeholder="MM/AAAA">
             </div>
-            <div class="form-group">
-                <label>N° DPS:</label>
-                <input type="text" id="editDps">
-            </div>
-            <div class="form-group">
+            <div class="form-group" style="flex: none; width: 10ch;">
                 <label>Puesto:</label>
                 <input type="number" id="editPuesto">
             </div>
-            <div class="form-group">
+            <div class="form-group" style="flex: 1;">
                 <label>Ubicación:</label>
                 <input type="text" id="editUbicacion">
             </div>
@@ -192,7 +208,6 @@
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
         if (partes.length === 3) {
-            // Retorna solo el MES (partes[1]) y el AÑO (partes[0])
             return `${partes[1]}/${partes[0]}`;
         }
         return fechaSQL;
@@ -203,15 +218,11 @@
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
         
-        // Si ingresaron formato MM/AAAA (2 partes)
         if (partes.length === 2) {
             let mes = partes[0].padStart(2, '0');
             let anio = partes[1];
-            // Supabase necesita un día válido para guardar la fecha en la base de datos, 
-            // así que le asignamos el día '01' internamente por defecto.
             return `${anio}-${mes}-01`;
         } 
-        // Por las dudas si alguien ingresa formato completo DD/MM/AAAA
         else if (partes.length === 3) {
             let dia = partes[0].padStart(2, '0');
             let mes = partes[1].padStart(2, '0');
@@ -243,7 +254,6 @@
 
     // BUSCAR EXTINTOR EN SUPABASE
     async function buscarExtintor() {
-        // Limpiamos estilos de recarga si existían de una búsqueda previa
         document.getElementById("obleaPreview").classList.remove("modo-recarga");
 
         let cliente = document.getElementById("clienteSelect").value.trim();
@@ -303,17 +313,14 @@
             return;
         }
 
-        // Calcula exactamente 1 año desde hoy y genera el formato MM/AAAA
         let hoy = new Date();
         let anio = hoy.getFullYear() + 1;
         let mes = String(hoy.getMonth() + 1).padStart(2, '0');
         let nuevaFechaCarga = `${mes}/${anio}`;
 
-        // Actualiza los campos en pantalla
         document.getElementById("editVencCarga").value = nuevaFechaCarga;
         document.getElementById("editDps").value = nuevoDps.trim().toUpperCase();
 
-        // Pinta el recuadro de amarillo
         document.getElementById("obleaPreview").classList.add("modo-recarga");
 
         alert("Se actualizaron los datos en pantalla. Por favor, controlalos y luego hacé clic en 'Guardar Cambios' para confirmar.");
