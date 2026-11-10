@@ -61,7 +61,7 @@
 <body>
 
 <div class="container">
-    <h2>Vivatec - Impresión de Obleas</h2>
+    <h2>Vivatec - Gestión e Impresión de Obleas</h2>
 
     <div class="form-group">
         <label for="clienteSelect">Cliente (Opcional):</label>
@@ -96,7 +96,6 @@
                 <label>Cliente:</label>
                 <input type="text" id="editCliente">
             </div>
-            <!-- Campo N° de Extintor desbloqueado -->
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° Extintor:</label>
                 <input type="text" id="editExtintor">
@@ -107,7 +106,7 @@
             </div>
         </div>
 
-        <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Capacidad -->
+        <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Agente Extintor, Capacidad -->
         <div class="form-row">
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>Tipo de Oblea:</label>
@@ -125,6 +124,10 @@
             <div class="form-group" style="flex: 1;">
                 <label>Tipo:</label>
                 <input type="text" id="editTipo">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Agente Extintor:</label>
+                <input type="text" id="editAgente" placeholder="Ej: ABC / CO2">
             </div>
             <div class="form-group" style="flex: none; width: 12ch;">
                 <label>Capacidad:</label>
@@ -166,13 +169,11 @@
 </div>
 
 <script>
-    // CREDENCIALES CONFIGURADAS CON SUPABASE
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (MM/AAAA)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
@@ -182,7 +183,6 @@
         return fechaSQL;
     }
 
-    // TRADUCTOR DE FECHAS: Pantalla (MM/AAAA) -> Supabase (AAAA-MM-DD)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
@@ -202,7 +202,6 @@
         return null;
     }
 
-    // Cargar clientes al iniciar
     window.addEventListener("load", async function() {
         const { data, error } = await _supabase
             .from('extintores')
@@ -221,7 +220,6 @@
         }
     });
 
-    // BUSCAR EXTINTOR EN SUPABASE
     async function buscarExtintor() {
         document.getElementById("obleaPreview").classList.remove("modo-recarga");
 
@@ -255,6 +253,7 @@
             document.getElementById("editOblea").value = ex.oblea || "";
             document.getElementById("editExtintor").value = ex.extintor_numero || "";
             document.getElementById("editTipo").value = ex.tipo || "";
+            document.getElementById("editAgente").value = ex.agente_extintor || ""; // Cargamos el agente
             document.getElementById("editCapacidad").value = ex.capacidad || "";
             document.getElementById("editAFabricacion").value = ex.ano_fab || "";
             document.getElementById("editMarca").value = ex.marca || "";
@@ -273,11 +272,10 @@
         }
     }
 
-    // INICIAR PROCESO DE RECARGA (Sin alertas molestos)
     function iniciarRecarga() {
         let nuevoDps = prompt("Ingrese el nuevo número de DPS (Deje en blanco si es 'NUEVO'):");
         
-        if (nuevoDps === null) return; // Si el usuario cancela, no hace nada
+        if (nuevoDps === null) return;
 
         let hoy = new Date();
         let anio = hoy.getFullYear() + 1;
@@ -290,7 +288,6 @@
         document.getElementById("obleaPreview").classList.add("modo-recarga");
     }
 
-    // GUARDAR CAMBIOS EN SUPABASE (Notificación en el botón)
     async function guardarCambios() {
         let id = document.getElementById("editId").value;
         if (!id) return;
@@ -303,6 +300,7 @@
             oblea: document.getElementById("editOblea").value,
             extintor_numero: document.getElementById("editExtintor").value,
             tipo: document.getElementById("editTipo").value,
+            agente_extintor: document.getElementById("editAgente").value, // Guardamos el agente
             capacidad: document.getElementById("editCapacidad").value,
             ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
             marca: document.getElementById("editMarca").value,
@@ -324,10 +322,8 @@
             console.error("Error al actualizar:", error);
             alert("No se pudieron guardar los cambios.");
         } else {
-            // Elimina el fondo amarillo
             document.getElementById("obleaPreview").classList.remove("modo-recarga");
             
-            // Animación sutil en el botón
             const btn = document.getElementById("btnGuardar");
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = "✅ ¡Guardado!";
@@ -340,7 +336,6 @@
         }
     }
 
-    // VOLVER (CERRAR EDICIÓN Y LIMPIAR CAMPOS)
     function volverABuscar() {
         document.getElementById("obleaPreview").style.display = "none";
         document.getElementById("obleaPreview").classList.remove("modo-recarga");
