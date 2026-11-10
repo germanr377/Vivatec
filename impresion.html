@@ -38,7 +38,8 @@
 
         /* Botones de acción */
         .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-        .btn-save { background: #d35400; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-save { background: #d35400; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
+        .btn-save.success { background: #2ecc71 !important; }
         .btn-print { background: #27ae60; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .btn-cancel { background: #7f8c8d; flex: 1; min-width: 120px; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .btn-warning { background: #f1c40f; flex: 1; min-width: 120px; padding: 12px; border: none; color: #333; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; }
@@ -95,7 +96,6 @@
                 <label>Cliente:</label>
                 <input type="text" id="editCliente">
             </div>
-            <!-- 15ch = ancho aproximado exacto para 15 caracteres -->
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° Extintor:</label>
                 <input type="text" id="editExtintor" readonly style="background: #e9ecef; cursor: not-allowed;">
@@ -108,7 +108,6 @@
 
         <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Capacidad -->
         <div class="form-row">
-            <!-- 16ch = ancho aproximado para 16 caracteres -->
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>Tipo de Oblea:</label>
                 <select id="editOblea">
@@ -159,7 +158,7 @@
         <div class="action-buttons">
             <button class="btn-cancel" onclick="volverABuscar()">↩️ Volver</button>
             <button class="btn-warning" onclick="iniciarRecarga()">🔄 RECARGA</button>
-            <button class="btn-save" onclick="guardarCambios()">💾 Guardar Cambios</button>
+            <button id="btnGuardar" class="btn-save" onclick="guardarCambios()">💾 Guardar Cambios</button>
             <button class="btn-print" onclick="window.print()">🖨️ Imprimir Oblea</button>
         </div>
     </div>
@@ -273,14 +272,11 @@
         }
     }
 
-    // INICIAR PROCESO DE RECARGA
+    // INICIAR PROCESO DE RECARGA (Sin alertas molestos)
     function iniciarRecarga() {
         let nuevoDps = prompt("Ingrese el nuevo número de DPS (Deje en blanco si es 'NUEVO'):");
         
-        if (nuevoDps === null) {
-            alert("Operación de recarga cancelada.");
-            return;
-        }
+        if (nuevoDps === null) return; // Si el usuario cancela, no hace nada
 
         let hoy = new Date();
         let anio = hoy.getFullYear() + 1;
@@ -291,17 +287,12 @@
         document.getElementById("editDps").value = nuevoDps.trim().toUpperCase();
 
         document.getElementById("obleaPreview").classList.add("modo-recarga");
-
-        alert("Se actualizaron los datos en pantalla. Por favor, controlalos y luego hacé clic en 'Guardar Cambios' para confirmar.");
     }
 
-    // GUARDAR CAMBIOS EN SUPABASE
+    // GUARDAR CAMBIOS EN SUPABASE (Notificación en el botón)
     async function guardarCambios() {
         let id = document.getElementById("editId").value;
-        if (!id) {
-            alert("No hay ningún extintor seleccionado.");
-            return;
-        }
+        if (!id) return;
 
         let valAnoFab = document.getElementById("editAFabricacion").value;
         let valPuesto = document.getElementById("editPuesto").value;
@@ -332,8 +323,19 @@
             console.error("Error al actualizar:", error);
             alert("No se pudieron guardar los cambios.");
         } else {
+            // Elimina el fondo amarillo
             document.getElementById("obleaPreview").classList.remove("modo-recarga");
-            alert("¡Extintor actualizado exitosamente!");
+            
+            // Animación sutil en el botón
+            const btn = document.getElementById("btnGuardar");
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = "✅ ¡Guardado!";
+            btn.classList.add("success");
+            
+            setTimeout(() => {
+                btn.innerHTML = textoOriginal;
+                btn.classList.remove("success");
+            }, 2000);
         }
     }
 
