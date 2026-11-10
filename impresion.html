@@ -40,22 +40,8 @@
         /* Formulario Editable y Preview */
         .oblea-preview { margin-top: 30px; border: 2px dashed #3498db; padding: 20px; border-radius: 6px; background: #fafbfc; display: none; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; }
-        
-        /* Grilla y Títulos de Sección */
         .oblea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .seccion-titulo {
-            grid-column: 1 / -1;
-            background: #ecf0f1;
-            padding: 8px 12px;
-            font-weight: bold;
-            color: #2c3e50;
-            border-left: 4px solid #3498db;
-            margin-top: 10px;
-            font-size: 14px;
-            border-radius: 3px;
-            text-transform: uppercase;
-        }
-
+        
         /* Estilos para el modo RECARGA (Fondo Amarillo) */
         .modo-recarga { background-color: #fff9c4 !important; border-color: #f1c40f !important; }
         .modo-recarga input, .modo-recarga select { background-color: #fffde7; border-color: #f1c40f; }
@@ -72,7 +58,6 @@
             .oblea-preview, .oblea-preview * { visibility: visible; }
             .oblea-preview { position: absolute; left: 0; top: 0; width: 100%; border: none; background: white !important; }
             .oblea-preview input, .oblea-preview select { background: transparent !important; border: none !important; }
-            .seccion-titulo { background: #f2f2f2 !important; border-left: 4px solid #000 !important; color: #000 !important; }
             .action-buttons, .container > *:not(.oblea-preview) { display: none; }
         }
         @media (max-width: 600px) { 
@@ -122,24 +107,13 @@
 
     <button class="btn-search" onclick="buscarExtintor()">⚡ Buscar Extintor</button>
 
-    <!-- FORMULARIO EDITABLE ORDENADO -->
+    <!-- FORMULARIO EDITABLE -->
     <div id="obleaPreview" class="oblea-preview">
         <div class="oblea-header">DATOS DEL EXTINTOR</div>
         
         <input type="hidden" id="editId">
 
         <div class="oblea-grid">
-            
-            <!-- Bloque 1: Identificación -->
-            <div class="seccion-titulo">🏢 Identificación y Asignación</div>
-            <div class="form-group">
-                <label>N° DPS:</label>
-                <input type="text" id="editDps" style="font-weight: bold; font-size: 16px; color: #d35400;">
-            </div>
-            <div class="form-group">
-                <label>N° Extintor:</label>
-                <input type="text" id="editExtintor" readonly style="background: #e9ecef; cursor: not-allowed; font-weight: bold;">
-            </div>
             <div class="form-group">
                 <label>Cliente:</label>
                 <input type="text" id="editCliente">
@@ -153,12 +127,9 @@
                     <option value="Vehicular">Vehicular</option>
                 </select>
             </div>
-
-            <!-- Bloque 2: Especificaciones -->
-            <div class="seccion-titulo">🔥 Especificaciones del Equipo</div>
             <div class="form-group">
-                <label>Marca:</label>
-                <input type="text" id="editMarca">
+                <label>N° Extintor:</label>
+                <input type="text" id="editExtintor" readonly style="background: #e9ecef; cursor: not-allowed;">
             </div>
             <div class="form-group">
                 <label>Tipo:</label>
@@ -172,29 +143,32 @@
                 <label>Año Fabricación:</label>
                 <input type="number" id="editAFabricacion">
             </div>
-
-            <!-- Bloque 3: Vencimientos -->
-            <div class="seccion-titulo">📅 Vencimientos</div>
             <div class="form-group">
-                <label>Vencimiento Carga:</label>
-                <input type="text" id="editVencCarga" placeholder="MM/AAAA" style="font-weight: bold;">
+                <label>Marca:</label>
+                <input type="text" id="editMarca">
             </div>
             <div class="form-group">
                 <label>Venc. Prueba Hidráulica:</label>
+                <!-- Modificado el placeholder a MM/AAAA -->
                 <input type="text" id="editVencPH" placeholder="MM/AAAA">
             </div>
-
-            <!-- Bloque 4: Ubicación -->
-            <div class="seccion-titulo">📍 Ubicación en Planta</div>
+            <div class="form-group">
+                <label>Vencimiento Carga:</label>
+                <!-- Modificado el placeholder a MM/AAAA -->
+                <input type="text" id="editVencCarga" placeholder="MM/AAAA">
+            </div>
+            <div class="form-group">
+                <label>N° DPS:</label>
+                <input type="text" id="editDps">
+            </div>
             <div class="form-group">
                 <label>Puesto:</label>
                 <input type="number" id="editPuesto">
             </div>
             <div class="form-group">
-                <label>Ubicación Física:</label>
+                <label>Ubicación:</label>
                 <input type="text" id="editUbicacion">
             </div>
-
         </div>
 
         <div class="action-buttons">
@@ -218,6 +192,7 @@
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
         if (partes.length === 3) {
+            // Retorna solo el MES (partes[1]) y el AÑO (partes[0])
             return `${partes[1]}/${partes[0]}`;
         }
         return fechaSQL;
@@ -228,11 +203,15 @@
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
         
+        // Si ingresaron formato MM/AAAA (2 partes)
         if (partes.length === 2) {
             let mes = partes[0].padStart(2, '0');
             let anio = partes[1];
+            // Supabase necesita un día válido para guardar la fecha en la base de datos, 
+            // así que le asignamos el día '01' internamente por defecto.
             return `${anio}-${mes}-01`;
         } 
+        // Por las dudas si alguien ingresa formato completo DD/MM/AAAA
         else if (partes.length === 3) {
             let dia = partes[0].padStart(2, '0');
             let mes = partes[1].padStart(2, '0');
@@ -264,6 +243,7 @@
 
     // BUSCAR EXTINTOR EN SUPABASE
     async function buscarExtintor() {
+        // Limpiamos estilos de recarga si existían de una búsqueda previa
         document.getElementById("obleaPreview").classList.remove("modo-recarga");
 
         let cliente = document.getElementById("clienteSelect").value.trim();
@@ -323,14 +303,17 @@
             return;
         }
 
+        // Calcula exactamente 1 año desde hoy y genera el formato MM/AAAA
         let hoy = new Date();
         let anio = hoy.getFullYear() + 1;
         let mes = String(hoy.getMonth() + 1).padStart(2, '0');
         let nuevaFechaCarga = `${mes}/${anio}`;
 
+        // Actualiza los campos en pantalla
         document.getElementById("editVencCarga").value = nuevaFechaCarga;
         document.getElementById("editDps").value = nuevoDps.trim().toUpperCase();
 
+        // Pinta el recuadro de amarillo
         document.getElementById("obleaPreview").classList.add("modo-recarga");
 
         alert("Se actualizaron los datos en pantalla. Por favor, controlalos y luego hacé clic en 'Guardar Cambios' para confirmar.");
