@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
-        .container { max-width: 1350px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 1450px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         
         /* Panel de filtros (Solo visible en pantalla) */
@@ -42,37 +42,40 @@
         
         th, td {
             border: 1.5px solid #000;
-            padding: 4px 3px;
+            padding: 3px 2px;
             text-align: center;
-            font-size: 9.5px;
+            font-size: 9px;
         }
 
         .th-principal {
             background-color: #fff;
             font-weight: bold;
-            font-size: 10px;
-            height: 35px;
-            vertical-align: middle;
+            font-size: 9.5px;
+            text-align: left;
+            padding-left: 6px;
         }
 
+        /* Cabeceras verticales de control a la derecha */
         .th-vertical {
             writing-mode: vertical-rl;
             transform: rotate(180deg);
-            height: 75px;
+            height: 95px;
             font-size: 9px;
             font-weight: bold;
-            padding: 4px 2px;
+            padding: 4px 1px;
+            background: #fff;
+            vertical-align: middle;
         }
 
         .celda-control {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border: 1px solid #000;
             background: #fff;
             margin: auto;
         }
 
-        .badge-nuevo { background: #2ecc71; color: white; padding: 2px 3px; border-radius: 3px; font-weight: bold; font-size: 8.5px; }
+        .badge-nuevo { background: #2ecc71; color: white; padding: 2px 3px; border-radius: 3px; font-weight: bold; font-size: 8px; }
 
         /* Pie de página corporativo por hoja */
         .footer-hoja {
@@ -81,24 +84,24 @@
             font-family: Arial, sans-serif;
             border: 1.5px solid #000;
             border-top: none;
-            padding: 6px;
+            padding: 5px;
             background: #fff;
         }
         .footer-titulo {
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 1px;
         }
         .footer-sub {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         @media print {
             @page {
                 size: A4 landscape;
-                margin: 1cm;
+                margin: 0.8cm;
             }
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
@@ -309,11 +312,30 @@
         mensaje.textContent = `Planilla lista con ${datosGlobales.length} registros. Hacé clic en 'Imprimir Planilla A4'.`;
         wrapper.style.display = "block";
 
-        const registrosPorPagina = 18; // Cantidad de extintores en columnas por hoja
+        const registrosPorPagina = 18; // Cantidad de columnas de extintores por hoja
         const totalPaginas = Math.ceil(datosGlobales.length / registrosPorPagina);
 
         const itemsControl = [
-            "CARGA", "PREC.", "BAL.", "RECIP.", "MANOM.", "MANG.", "TOB.", "GAB.", "ACCESO"
+            "CARGA", "PRECINTO", "BALIZA", "RECIPIENTE", 
+            "MANOMETRO", "MANGUERA", "TOBERA", "GABINETE", "ACCESO"
+        ];
+
+        const textosReferencias = [
+            "D - DESCARGADO",
+            "R - REEMPLAZAR",
+            "P - PINTAR",
+            "I - IDENTIFICAR",
+            "O - OBSTRUIDO",
+            "V - VENCIDO",
+            "N/A - NO APLICA",
+            "L - LIBRE",
+            "SERVICIO TERCERIZADO",
+            "VIVATEC",
+            "RESPONSABLE:",
+            "IGNACIO REPETTO",
+            "ING. INDUSTRIAL",
+            "C.I.P.B.A - MAT.51142",
+            "FIRMA:"
         ];
 
         for (let i = 0; i < totalPaginas; i++) {
@@ -329,17 +351,17 @@
                 <table>
                     <thead>
                         <tr>
-                            <th colspan="2" style="font-size: 14px; background: #f2f2f2; text-align: center;">${cliente.toUpperCase()}</th>
-                            <th colspan="${loteRegistros.length}" style="font-size: 13px; text-align: center;">CONTROL DE EXTINTORES</th>
-                            <th colspan="9" style="font-size: 10px; text-align: right; padding-right: 8px;">
+                            <th colspan="2" style="font-size: 13px; background: #f2f2f2; text-align: center;">${cliente.toUpperCase()}</th>
+                            <th colspan="${loteRegistros.length}" style="font-size: 12px; text-align: center;">CONTROL DE EXTINTORES</th>
+                            <th colspan="9" style="font-size: 9px; text-align: right; padding-right: 6px;">
                                 REVISION: 00 &nbsp;|&nbsp; VIGENCIA: 11/03/05 &nbsp;|&nbsp; FRECUENCIA: 30 DÍAS
                             </th>
                         </tr>
                         <tr>
-                            <th colspan="2" style="text-align: left; padding-left: 6px; font-size: 10px;">
+                            <th colspan="2" style="text-align: left; padding-left: 6px; font-size: 9.5px;">
                                 FECHA: ${window.fechaHoyStr}
                             </th>
-                            <th colspan="${loteRegistros.length + 9}" style="text-align: right; font-size: 10px; padding-right: 8px;">
+                            <th colspan="${loteRegistros.length + 9}" style="text-align: right; font-size: 9.5px; padding-right: 6px;">
                                 HOJA: ${numeroHoja} / ${totalPaginas}
                             </th>
                         </tr>
@@ -347,120 +369,58 @@
                     <tbody>
             `;
 
-            // Fila de Extintor N°
-            htmlTabla += `<tr><td colspan="2" class="th-principal">EXTINTOR N°</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td><strong>${ex.extintor_numero || "-"}</strong></td>`; });
-            // Celdas vacías para completar la grilla derecha de referencias
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Tipo
-            htmlTabla += `<tr><td colspan="2" class="th-principal">TIPO</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${ex.tipo || "-"}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Capacidad
-            htmlTabla += `<tr><td colspan="2" class="th-principal">CAPACIDAD</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${ex.capacidad || "-"}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // A. Fabricación
-            htmlTabla += `<tr><td colspan="2" class="th-principal">A. FABRICACION</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${ex.ano_fab || "-"}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Marca
-            htmlTabla += `<tr><td colspan="2" class="th-principal">MARCA</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${ex.marca || "-"}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Venc. P. Hidráulica
-            htmlTabla += `<tr><td colspan="2" class="th-principal">VENC. P. HIDRAULICA</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${formatearFechaWeb(ex.vto_prueb_hidr)}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Vencimiento Carga
-            htmlTabla += `<tr><td colspan="2" class="th-principal">VENCIMIENTO CARGA</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${formatearFechaWeb(ex.vto_carga)}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Número DPS
-            htmlTabla += `<tr><td colspan="2" class="th-principal">NUMERO - DPS</td>`;
-            loteRegistros.forEach(ex => {
-                let formatoDps = ex.numero_dps || "-";
-                if (formatoDps === "NUEVO") formatoDps = `<span class="badge badge-nuevo">NUEVO</span>`;
-                htmlTabla += `<td>${formatoDps}</td>`;
-            });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Identificación Puesto
-            htmlTabla += `<tr><td colspan="2" class="th-principal">IDENTIFICACION PUESTO</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td>${ex.identificacion_puesto || "-"}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // Ubicación
-            htmlTabla += `<tr><td colspan="2" class="th-principal">UBICACIÓN DEL PUESTO</td>`;
-            loteRegistros.forEach(ex => { htmlTabla += `<td style="text-align: left; font-size: 8px;">${ex.ubicacion || "-"}</td>`; });
-            for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
-            htmlTabla += `</tr>`;
-
-            // CABECERAS VERTICALES DE CONTROL (CARGA, PRECINTO, ETC.)
-            htmlTabla += `<tr><td colspan="2" style="background: #000; color: #fff; font-weight: bold; text-align: center;">CONTROL / ESTADO</td>`;
-            loteRegistros.forEach(() => { htmlTabla += `<td></td>`; }); // espacio sobre los extintores
-            
-            // Las 9 columnas verticales con los nombres de control
-            const nombresControlLargo = ["CARGA", "PRECINTO", "BALIZA", "RECIPIENTE", "MANOMETRO", "MANGUERA", "TOBERA", "GABINETE", "ACCESO"];
-            nombresControlLargo.forEach(nombre => {
-                htmlTabla += `<td class="th-vertical">${nombre}</td>`;
-            });
-            htmlTabla += `</tr>`;
-
-            // Filas de casilleros de control cruzados con las referencias a la derecha
-            const referenciasTexto = [
-                "D - DESCARGADO",
-                "R - REEMPLAZAR",
-                "P - PINTAR",
-                "I - IDENTIFICAR",
-                "O - OBSTRUIDO",
-                "V - VENCIDO",
-                "N/A - NO APLICA",
-                "L - LIBRE",
-                "SERVICIO TERCERIZADO",
-                "VIVATEC",
-                "RESPONSABLE:",
-                "IGNACIO REPETTO",
-                "ING. INDUSTRIAL",
-                "C.I.P.B.A - MAT.51142",
-                "FIRMA:"
+            // Filas de datos de los extintores (columnas hacia la derecha)
+            const camposTabla = [
+                { label: "EXTINTOR N°", fn: ex => `<strong>${ex.extintor_numero || "-"}</strong>` },
+                { label: "TIPO", fn: ex => ex.tipo || "-" },
+                { label: "CAPACIDAD", fn: ex => ex.capacidad || "-" },
+                { label: "A. FABRICACION", fn: ex => ex.ano_fab || "-" },
+                { label: "MARCA", fn: ex => ex.marca || "-" },
+                { label: "VENC. P. HIDRAULICA", fn: ex => formatearFechaWeb(ex.vto_prueb_hidr) },
+                { label: "VENCIMIENTO CARGA", fn: ex => formatearFechaWeb(ex.vto_carga) },
+                { label: "NUMERO - DPS", fn: ex => ex.numero_dps === "NUEVO" ? `<span class="badge badge-nuevo">NUEVO</span>` : (ex.numero_dps || "-") },
+                { label: "IDENTIFICACION PUESTO", fn: ex => ex.identificacion_puesto || "-" },
+                { label: "UBICACIÓN DEL PUESTO", fn: ex => `<span style="font-size: 8px;">${ex.ubicacion || "-"}</span>` }
             ];
 
-            // Generamos filas suficientes para completar la planilla de campo
-            for (let r = 0; r < 15; r++) {
+            camposTabla.forEach(campo => {
+                htmlTabla += `<tr><td colspan="2" class="th-principal">${campo.label}</td>`;
+                loteRegistros.forEach(ex => {
+                    htmlTabla += `<td>${campo.fn(ex)}</td>`;
+                });
+                // Rellenar las 9 columnas de la derecha en las filas de datos
+                for(let c=0; c<9; c++) htmlTabla += `<td></td>`;
+                htmlTabla += `</tr>`;
+            });
+
+            // Fila con los nombres verticales de los ítems de control (Carga, Precinto, etc.) a continuación de los extintores
+            htmlTabla += `<tr><td colspan="2" style="background: #000; color: #fff; font-weight: bold; text-align: center;">ESTADO / CONTROL</td>`;
+            loteRegistros.forEach(() => { htmlTabla += `<td></td>`; }); // Espacio arriba de los extintores
+            
+            itemsControl.forEach(item => {
+                htmlTabla += `<td class="th-vertical">${item}</td>`;
+            });
+            htmlTabla += `</tr>`;
+
+            // Filas de casilleros de control y cuadro de referencias a la derecha
+            for (let r = 0; r < textosReferencias.length; r++) {
                 htmlTabla += `<tr>`;
                 if (r === 0) {
-                    htmlTabla += `<td colspan="2" rowspan="15" style="vertical-align: top; text-align: left; font-weight: bold; font-size: 9px; background: #fafafa;">REFERENCIAS Y FIRMAS:</td>`;
+                    htmlTabla += `<td colspan="2" rowspan="${textosReferencias.length}" style="vertical-align: top; text-align: left; font-weight: bold; font-size: 8.5px; background: #fafafa; padding: 4px;">REFERENCIAS:</td>`;
                 }
-                
-                // Celdas de datos vacías para los extintores
+
+                // Celdas de casilleros vacíos debajo de cada extintor
                 loteRegistros.forEach(() => {
                     htmlTabla += `<td><div class="celda-control"></div></td>`;
                 });
 
-                // Los 9 casilleros verticales de control
+                // Celdas de casilleros vacíos debajo de las columnas verticales de control
                 for(let c=0; c<9; c++) {
                     htmlTabla += `<td><div class="celda-control"></div></td>`;
                 }
 
-                // Columna de texto de referencias a la derecha
-                htmlTabla += `<td colspan="9" style="text-align: left; padding-left: 6px; font-weight: bold; font-size: 8.5px; background: #fff;">${referenciasTexto[r] || ''}</td>`;
+                // Columna lateral derecha con el texto de referencias institucional
+                htmlTabla += `<td colspan="9" style="text-align: left; padding-left: 6px; font-weight: bold; font-size: 8.5px; background: #fff;">${textosReferencias[r]}</td>`;
                 htmlTabla += `</tr>`;
             }
 
@@ -469,7 +429,7 @@
                 </table>
             `;
 
-            // Pie de página exacto por hoja
+            // Pie de página institucional exacto por hoja
             let htmlFooter = `
                 <div class="footer-hoja">
                     <div class="footer-titulo">VIVATEC</div>
