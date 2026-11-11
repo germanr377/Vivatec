@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 1050px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         
         .filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; align-items: flex-end; }
@@ -20,7 +20,8 @@
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 9px; text-align: center; font-size: 13px; }
-        th { background-color: #2c3e50; color: white; }
+        th { background-color: #2c3e50; color: white; cursor: pointer; user-select: none; transition: background 0.2s; }
+        th:hover { background-color: #34495e; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .sin-resultados { text-align: center; color: #7f8c8d; font-style: italic; padding: 20px; }
     </style>
@@ -61,13 +62,13 @@
     <table id="tabla-resultados">
         <thead>
             <tr>
-                <th>Cliente</th>
-                <th>Oblea</th>
-                <th>Extintor N°</th>
-                <th>DPS</th>
-                <th>Capacidad</th>
-                <th>Ag. Extin.</th>
-                <th>Vencimiento</th>
+                <th onclick="ordenarTabla('cliente')">Cliente ↕</th>
+                <th onclick="ordenarTabla('oblea')">Oblea ↕</th>
+                <th onclick="ordenarTabla('extintor_numero')">Extintor N° ↕</th>
+                <th onclick="ordenarTabla('numero_dps')">DPS ↕</th>
+                <th onclick="ordenarTabla('capacidad')">Capacidad ↕</th>
+                <th onclick="ordenarTabla('agente_extintor')">Ag. Extin. ↕</th>
+                <th onclick="ordenarTabla('vto_carga')">Vencimiento ↕</th>
             </tr>
         </thead>
         <tbody>
@@ -79,12 +80,14 @@
 </div>
 
 <script>
-    // CREDENCIALES DE SUPABASE
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Cargar clientes en el desplegable al abrir la página
+    // Guardaremos los resultados actuales en memoria para ordenarlos al hacer clic
+    let resultadosGlobales = [];
+    let ordenActual = { columna: 'vto_carga', ascendente: true };
+
     window.addEventListener("load", async function() {
         const { data, error } = await _supabase
             .from('extintores')
@@ -114,10 +117,8 @@
         tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
 
         try {
-            // Armamos la consulta base a Supabase incluyendo agente_extintor
             let query = _supabase.from('extintores').select('cliente, oblea, extintor_numero, numero_dps, capacidad, agente_extintor, vto_carga');
 
-            // Aplicamos filtros dinámicos solo si el usuario los completó
             if (cliente) query = query.eq('cliente', cliente);
             if (extintor) query = query.eq('extintor_numero', extintor);
             if (dps) query = query.eq('numero_dps', dps);
@@ -128,32 +129,67 @@
 
             if (error) throw error;
 
-            tbody.innerHTML = "";
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
-                return;
-            }
-
-            // Dibujamos las filas en la tabla incluyendo la celda del Agente Extintor
-            data.forEach(fila => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${fila.cliente || "-"}</td>
-                    <td>${fila.oblea || "-"}</td>
-                    <td>${fila.extintor_numero || "-"}</td>
-                    <td>${fila.numero_dps || "-"}</td>
-                    <td>${fila.capacidad || "-"}</td>
-                    <td><strong>${fila.agente_extintor || "-"}</strong></td>
-                    <td>${fila.vto_carga || "-"}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+            resultadosGlobales = data || [];
+            mostrarResultados(resultadosGlobales);
 
         } catch (error) {
             console.error("Error al consultar Supabase:", error);
             tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
         }
+    }
+
+    function mostrarResultados(datos) {
+        let tbody = document.querySelector('#tabla-resultados tbody');
+        tbody.innerHTML = "";
+
+        if (datos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
+            return;
+        }
+
+        datos.forEach(fila => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${fila.cliente || "-"}</td>
+                <td>${fila.oblea || "-"}</td>
+                <td>${fila.extintor_numero || "-"}</td>
+                <td>${fila.numero_dps || "-"}</td>
+                <td>${fila.capacidad || "-"}</td>
+                <td><strong>${fila.agente_extintor || "-"}</strong></td>
+                <td>${fila.vto_carga || "-"}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Función para ordenar al hacer clic en las cabeceras
+    function ordenarTabla(columna) {
+        if (ordenActual.columna === columna) {
+            ordenActual.ascendente = !ordenActual.ascendente; // Invierte el orden si hace clic de nuevo
+        } else {
+            ordenActual.columna = columna;
+            ordenActual.ascendente = true; // Por defecto ascendente al cambiar de columna
+        }
+
+        resultadosGlobales.sort((a, b) => {
+            let valA = a[columna] !== null && a[columna] !== undefined ? String(a[columna]).toLowerCase() : "";
+            let valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna]).toLowerCase() : "";
+
+            // Intento ordenar numéricamente si ambos valores son números puros
+            let numA = parseFloat(valA);
+            let numB = parseFloat(valB);
+            
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return ordenActual.ascendente ? numA - numB : numB - numA;
+            }
+
+            // Ordenamiento por texto estándar
+            if (valA < valB) return ordenActual.ascendente ? -1 : 1;
+            if (valA > valB) return ordenActual.ascendente ? 1 : -1;
+            return 0;
+        });
+
+        mostrarResultados(resultadosGlobales);
     }
 </script>
 
