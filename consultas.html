@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivatec - Consultas de Fechas</title>
+    <title>Vivatec - Consultas de Extintores</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         
-        .filtros-row { display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end; }
-        .form-group { flex: 1; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; }
+        .filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
+        input, select { padding: 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
         
-        .btn-consultar { background: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
+        .btn-consultar { background: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 9px; text-align: center; font-size: 13px; }
         th { background-color: #2c3e50; color: white; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .sin-resultados { text-align: center; color: #7f8c8d; font-style: italic; padding: 20px; }
@@ -28,27 +28,43 @@
 <body>
 
 <div class="container">
-    <h2>📊 Consulta de Registros por Fecha</h2>
+    <h2>📊 Panel de Consultas de Extintores</h2>
 
-    <!-- FILTROS DE FECHA -->
-    <div class="filtros-row">
+    <!-- FILTROS DE BÚSQUEDA -->
+    <div class="filtros-grid">
         <div class="form-group">
-            <label for="fecha-desde">Desde:</label>
+            <label for="filtroCliente">Cliente:</label>
+            <select id="filtroCliente">
+                <option value="">-- Todos --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filtroExtintor">N° Extintor:</label>
+            <input type="text" id="filtroExtintor" placeholder="Ej: 6389130">
+        </div>
+        <div class="form-group">
+            <label for="filtroDps">N° DPS:</label>
+            <input type="text" id="filtroDps" placeholder="Ej: 5503020">
+        </div>
+        <div class="form-group">
+            <label for="fecha-desde">Vto. Desde:</label>
             <input type="date" id="fecha-desde">
         </div>
         <div class="form-group">
-            <label for="fecha-hasta">Hasta:</label>
+            <label for="fecha-hasta">Vto. Hasta:</label>
             <input type="date" id="fecha-hasta">
         </div>
-        <button class="btn-consultar" onclick="consultarFechas()">🔍 Consultar</button>
+        <button class="btn-consultar" onclick="realizarConsulta()">🔍 Buscar</button>
     </div>
 
     <!-- TABLA DE RESULTADOS -->
     <table id="tabla-resultados">
         <thead>
             <tr>
+                <th>Cliente</th>
                 <th>Oblea</th>
                 <th>Extintor N°</th>
+                <th>DPS</th>
                 <th>Capacidad</th>
                 <th>Ag. Extin.</th>
                 <th>Vencimiento</th>
@@ -56,7 +72,7 @@
         </thead>
         <tbody>
             <tr>
-                <td colspan="5" class="sin-resultados">Seleccioná un rango de fechas y hacé clic en Consultar.</td>
+                <td colspan="7" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td>
             </tr>
         </tbody>
     </table>
@@ -68,45 +84,67 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function consultarFechas() {
+    // Cargar clientes en el desplegable al abrir la página
+    window.addEventListener("load", async function() {
+        const { data, error } = await _supabase
+            .from('extintores')
+            .select('cliente')
+            .not('cliente', 'is', null);
+
+        if (!error && data) {
+            const clientesUnicos = [...new Set(data.map(item => item.cliente).filter(Boolean))].sort();
+            let select = document.getElementById("filtroCliente");
+            clientesUnicos.forEach(cliente => {
+                let opt = document.createElement("option");
+                opt.value = cliente;
+                opt.textContent = cliente;
+                select.appendChild(opt);
+            });
+        }
+    });
+
+    async function realizarConsulta() {
+        let cliente = document.getElementById('filtroCliente').value.trim();
+        let extintor = document.getElementById('filtroExtintor').value.trim();
+        let dps = document.getElementById('filtroDps').value.trim();
         let desde = document.getElementById('fecha-desde').value;
         let hasta = document.getElementById('fecha-hasta').value;
 
         let tbody = document.querySelector('#tabla-resultados tbody');
-        
-        if (!desde || !hasta) {
-            alert("Por favor, seleccioná ambas fechas.");
-            return;
-        }
-
-        tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
 
         try {
-            const { data, error } = await _supabase
-                .from('extintores')
-                .select('oblea, extintor_numero, capacidad, agente_extintor, vto_carga')
-                .gte('vto_carga', desde)
-                .lte('vto_carga', hasta)
-                .order('vto_carga', { ascending: true });
+            // Armamos la consulta base a Supabase
+            let query = _supabase.from('extintores').select('cliente, oblea, extintor_numero, numero_dps, capacidad, agente_extintor, vto_carga');
 
-            if (error) {
-                throw error;
-            }
+            // Aplicamos filtros dinámicos solo si el usuario los completó
+            if (cliente) query = query.eq('cliente', cliente);
+            if (extintor) query = query.eq('extintor_numero', extintor);
+            if (dps) query = query.eq('numero_dps', dps);
+            if (desde) query = query.gte('vto_carga', desde);
+            if (hasta) query = query.lte('vto_carga', hasta);
+
+            const { data, error } = await query.order('vto_carga', { ascending: true });
+
+            if (error) throw error;
 
             tbody.innerHTML = "";
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">No se encontraron registros en ese período.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
                 return;
             }
 
+            // Dibujamos las filas en la tabla
             data.forEach(fila => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td>${fila.cliente || "-"}</td>
                     <td>${fila.oblea || "-"}</td>
                     <td>${fila.extintor_numero || "-"}</td>
+                    <td>${fila.numero_dps || "-"}</td>
                     <td>${fila.capacidad || "-"}</td>
-                    <td>${fila.agente_extintor || "-"}</td>
+                    <td><strong>${fila.agente_extintor || "-"}</strong></td>
                     <td>${fila.vto_carga || "-"}</td>
                 `;
                 tbody.appendChild(tr);
@@ -114,7 +152,7 @@
 
         } catch (error) {
             console.error("Error al consultar Supabase:", error);
-            tbody.innerHTML = `<tr><td colspan="5" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
         }
     }
 </script>
