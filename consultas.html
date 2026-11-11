@@ -114,7 +114,7 @@
         tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
 
         try {
-            // Armamos la consulta base a Supabase
+            // Armamos la consulta base a Supabase incluyendo agente_extintor
             let query = _supabase.from('extintores').select('cliente, oblea, extintor_numero, numero_dps, capacidad, agente_extintor, vto_carga');
 
             // Aplicamos filtros dinámicos solo si el usuario los completó
@@ -135,7 +135,7 @@
                 return;
             }
 
-            // Dibujamos las filas en la tabla
+            // Dibujamos las filas en la tabla incluyendo la celda del Agente Extintor
             data.forEach(fila => {
                 let tr = document.createElement('tr');
                 tr.innerHTML = `
