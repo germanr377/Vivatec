@@ -84,9 +84,18 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Guardaremos los resultados actuales en memoria para ordenarlos al hacer clic
     let resultadosGlobales = [];
     let ordenActual = { columna: 'vto_carga', ascendente: true };
+
+    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (MM/AAAA)
+    function formatearFechaWeb(fechaSQL) {
+        if (!fechaSQL) return "-";
+        let partes = fechaSQL.split("-");
+        if (partes.length === 3) {
+            return `${partes[1]}/${partes[0]}`; // Retorna MM/AAAA
+        }
+        return fechaSQL;
+    }
 
     window.addEventListener("load", async function() {
         const { data, error } = await _supabase
@@ -156,26 +165,24 @@
                 <td>${fila.numero_dps || "-"}</td>
                 <td>${fila.capacidad || "-"}</td>
                 <td><strong>${fila.agente_extintor || "-"}</strong></td>
-                <td>${fila.vto_carga || "-"}</td>
+                <td>${formatearFechaWeb(fila.vto_carga)}</td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // Función para ordenar al hacer clic en las cabeceras
     function ordenarTabla(columna) {
         if (ordenActual.columna === columna) {
-            ordenActual.ascendente = !ordenActual.ascendente; // Invierte el orden si hace clic de nuevo
+            ordenActual.ascendente = !ordenActual.ascendente;
         } else {
             ordenActual.columna = columna;
-            ordenActual.ascendente = true; // Por defecto ascendente al cambiar de columna
+            ordenActual.ascendente = true;
         }
 
         resultadosGlobales.sort((a, b) => {
             let valA = a[columna] !== null && a[columna] !== undefined ? String(a[columna]).toLowerCase() : "";
             let valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna]).toLowerCase() : "";
 
-            // Intento ordenar numéricamente si ambos valores son números puros
             let numA = parseFloat(valA);
             let numB = parseFloat(valB);
             
@@ -183,7 +190,6 @@
                 return ordenActual.ascendente ? numA - numB : numB - numA;
             }
 
-            // Ordenamiento por texto estándar
             if (valA < valB) return ordenActual.ascendente ? -1 : 1;
             if (valA > valB) return ordenActual.ascendente ? 1 : -1;
             return 0;
