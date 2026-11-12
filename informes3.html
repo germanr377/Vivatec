@@ -429,4 +429,39 @@
                 let txtNumero = ex.extintor_numero || "-";
                 if (String(txtNumero).length > 8) txtNumero = String(txtNumero).substring(0, 8);
 
-                html
+                htmlTabla += `
+                    <tr>
+                        <td><strong>${txtNumero}</strong></td>
+                        <td>${ex.tipo || "-"}</td>
+                        <td>${ex.capacidad || "-"}</td>
+                        <td>${ex.ano_fab || "-"}</td>
+                        <td>${ex.marca || "-"}</td>
+                        <td>${formatearFechaWeb(ex.vto_prueb_hidr)}</td>
+                        <td>${formatearFechaWeb(ex.vto_carga)}</td>
+                        <td>${formatoDps}</td>
+                        <td>${ex.identificacion_puesto || "-"}</td>
+                        <td class="texto-izq" title="${ex.ubicacion || ''}">${txtUbicacion}</td>
+                        
+                        <td><strong>${renderBool(ex.carga)}</strong></td>
+                        <td><strong>${renderBool(ex.precinto)}</strong></td>
+                        <td><strong>${renderBool(ex.baliza)}</strong></td>
+                        <td><strong>${renderBool(ex.recipiente)}</strong></td>
+                        <td><strong>${renderBool(ex.manometro)}</strong></td>
+                        <td><strong>${renderBool(ex.manguera)}</strong></td>
+                        <td><strong>${renderBool(ex.tobera)}</strong></td>
+                        <td><strong>${renderBool(ex.gabinete)}</strong></td>
+                        <td><strong>${renderBool(ex.acceso)}</strong></td>
+                    </tr>
+                `;
+            });
+
+            htmlTabla += `</tbody></table>`;
+            
+            // Inyectamos la tabla principal y al lado el panel de referencias
+            divPagina.innerHTML = htmlTabla + panelReferenciasHTML;
+            wrapper.appendChild(divPagina);
+        }
+    }
+</script>
+</body>
+</html>
