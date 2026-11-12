@@ -175,6 +175,11 @@
                 <option value="vto_prueb_hidr">Vencimiento Prueba Hidráulica (P.H.)</option>
             </select>
         </div>
+        <!-- NUEVO CAMPO DE FRECUENCIA -->
+        <div class="form-group">
+            <label for="frecuenciaDias">Frecuencia (Días):</label>
+            <input type="number" id="frecuenciaDias" value="30" min="1" step="1">
+        </div>
         <div class="form-group">
             <label for="fechaDesde">Desde (DD/MM/AAAA):</label>
             <input type="text" id="fechaDesde" placeholder="01/01/2026">
@@ -183,6 +188,7 @@
             <label for="fechaHasta">Hasta (DD/MM/AAAA):</label>
             <input type="text" id="fechaHasta" placeholder="31/12/2026">
         </div>
+        
         <button class="btn-search" onclick="generarInforme()">📊 Actualizar Vista</button>
         <button class="btn-print" onclick="window.print()">🖨️ Imprimir Planilla A4</button>
     </div>
@@ -297,8 +303,10 @@
 
     function renderizarPlanilla() {
         const cliente = document.getElementById("filtroCliente").value.trim();
+        const frecuenciaVal = document.getElementById("frecuenciaDias").value || "30"; // Captura el valor del input
         const wrapper = document.getElementById("planillaWrapper");
         const mensaje = document.getElementById("mensajeEstado");
+        
         if (datosGlobales.length === 0) return;
 
         datosGlobales.sort((a, b) => {
@@ -324,10 +332,10 @@
             return ascendenteActual ? " ▲" : " ▼";
         };
 
-        // ESTRUCTURA DEL PANEL LATERAL
+        // ESTRUCTURA DEL PANEL LATERAL CON LA FRECUENCIA DINÁMICA
         const panelReferenciasHTML = `
             <table class="tabla-referencias">
-                <tr><td class="ref-center" style="font-size:9px; padding:6px 0;">FRECUENCIA: 30 DIAS</td></tr>
+                <tr><td class="ref-center" style="font-size:9px; padding:6px 0;">FRECUENCIA: ${frecuenciaVal} DIAS</td></tr>
                 <tr><td class="ref-center"><div class="texto-vertical-ref">REFERENCIAS</div></td></tr>
                 <tr><td>D - DESCARGADO</td></tr>
                 <tr><td>R - REEMPLAZAR</td></tr>
