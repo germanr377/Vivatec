@@ -32,14 +32,16 @@
 
         .pagina-hoja { width: 100%; margin-bottom: 40px; }
         
+        /* LA TABLA AHORA OCUPA EL 80% DEL ESPACIO PARA QUE SOBRE HOJA */
         table { 
-            width: 100%; 
-            min-width: 1050px; 
+            width: 80%; 
+            min-width: 900px; 
+            margin: 0; /* Alineada a la izquierda */
             border-collapse: collapse; 
             border: 2px solid #000; 
             font-family: Arial, sans-serif; 
             background-color: #fff; 
-            table-layout: fixed; /* Fuerza a respetar los anchos del colgroup */
+            table-layout: fixed;
         }
         
         /* Estilos del Membrete */
@@ -72,7 +74,7 @@
             transform: rotate(180deg);
             white-space: nowrap;
             display: inline-block;
-            height: 75px; /* Altura suficiente para MANOMETRO / RECIPIENTE */
+            height: 75px; 
             font-size: 8.5px;
             padding: 2px 0;
         }
@@ -98,7 +100,10 @@
             .container { position: absolute; left: 0; top: 0; width: 100% !important; box-shadow: none; padding: 0; }
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
             .planilla-wrapper { display: block !important; overflow: visible; }
-            table { min-width: 100% !important; }
+            
+            /* SE RESPETA EL 80% EN LA IMPRESIÓN PARA QUE SOBRE ESPACIO A LA DERECHA */
+            table { width: 80% !important; min-width: 0 !important; }
+            
             .pagina-hoja { page-break-after: always; break-after: page; margin-bottom: 0; }
         }
         @media (max-width: 768px) { .filtros-panel { flex-direction: column; } .form-group, .btn-search, .btn-print { width: 100%; } }
@@ -149,10 +154,13 @@
     let columnaOrdenActual = 'extintor_numero';
     let ascendenteActual = true;
 
+    // FECHAS EN FORMATO MM/AAAA
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
         let partes = fechaSQL.split("-");
-        if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        if (partes.length === 3) {
+            return `${partes[1]}/${partes[0]}`; // Solo Mes y Año
+        }
         return fechaSQL;
     }
 
@@ -276,28 +284,27 @@
 
             let htmlTabla = `
                 <table>
-                    <!-- ESTO FUERZA AL NAVEGADOR A MANTENER EL ANCHO EXACTO DE LAS COLUMNAS -->
                     <colgroup>
                         <col style="width: 4%;">  <!-- N° -->
                         <col style="width: 4%;">  <!-- TIPO -->
                         <col style="width: 3.5%;"> <!-- KG -->
-                        <col style="width: 3.5%;"> <!-- FAB -->
-                        <col style="width: 10%;"> <!-- MARCA -->
+                        <col style="width: 4%;"> <!-- FAB -->
+                        <col style="width: 8%;"> <!-- MARCA -->
                         <col style="width: 6%;">  <!-- VTO PH -->
                         <col style="width: 6%;">  <!-- VTO C -->
                         <col style="width: 6%;">  <!-- N-DPS -->
                         <col style="width: 5%;">  <!-- PUESTO -->
-                        <col style="width: 30%;"> <!-- UBICACION -->
-                        <!-- 9 COLUMNAS BOOLEANAS MUY FINITAS -->
-                        <col style="width: 2.4%;"> 
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
-                        <col style="width: 2.4%;">
+                        <col style="width: 37.3%;"> <!-- UBICACION -->
+                        <!-- 9 COLUMNAS BOOLEANAS BIEN JUSTAS (1.8% CADA UNA) -->
+                        <col style="width: 1.8%;"> 
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
+                        <col style="width: 1.8%;">
                     </colgroup>
                     <thead>
                         <tr>
