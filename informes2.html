@@ -22,11 +22,25 @@
         #mensajeEstado { margin-top: 15px; font-weight: bold; color: #e67e22; text-align: center; }
 
         /* Contenedor general */
-        .planilla-wrapper { display: none; background: white; width: 100%; }
+        .planilla-wrapper { 
+            display: none; 
+            background: white; 
+            width: 100%; 
+            overflow-x: auto; /* Permite deslizar horizontalmente en celulares */
+            padding-bottom: 15px;
+        }
 
         .pagina-hoja { width: 100%; margin-bottom: 40px; }
         
-        table { width: 100%; border-collapse: collapse; border: 2px solid #000; font-family: Arial, sans-serif; background-color: #fff; table-layout: fixed; }
+        table { 
+            width: 100%; 
+            min-width: 1050px; /* Evita que se compacte en pantallas chicas */
+            border-collapse: collapse; 
+            border: 2px solid #000; 
+            font-family: Arial, sans-serif; 
+            background-color: #fff; 
+            table-layout: fixed; 
+        }
         
         /* Estilos del Membrete */
         .th-membrete { border: 1.5px solid #000; padding: 6px; font-size: 12px; vertical-align: middle; background-color: #fff !important; color: #000 !important; }
@@ -56,26 +70,33 @@
         .th-vertical {
             writing-mode: vertical-rl;
             transform: rotate(180deg);
-            height: 90px; /* Altura para acomodar el texto rotado */
+            height: 90px;
             font-size: 8.5px;
             padding: 4px 0;
             white-space: nowrap;
         }
 
         /* Celdas de datos */
-        td { border: 1.5px solid #000; padding: 3px 2px; text-align: center; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        td { 
+            border: 1.5px solid #000; 
+            padding: 4px 2px; 
+            text-align: center; 
+            font-size: 10px; 
+            word-wrap: break-word; /* Permite que el texto baje de línea en vez de cortarse */
+        }
         .texto-izq { text-align: left !important; padding-left: 4px !important; }
 
         .badge-nuevo { background: #2ecc71; color: white; padding: 2px 4px; border-radius: 3px; font-weight: bold; font-size: 9px;}
 
         /* CONFIGURACIÓN DE IMPRESIÓN */
         @media print {
-            @page { size: A4 landscape; margin: 1cm 1.2cm; }
+            @page { size: A4 landscape; margin: 1cm 1cm; }
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
             .container { position: absolute; left: 0; top: 0; width: 100% !important; box-shadow: none; padding: 0; }
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
-            .planilla-wrapper { display: block !important; }
+            .planilla-wrapper { display: block !important; overflow: visible; }
+            table { min-width: 100% !important; } /* Se adapta a la hoja A4 sin desbordar */
             .pagina-hoja { page-break-after: always; break-after: page; margin-bottom: 0; }
         }
         @media (max-width: 768px) { .filtros-panel { flex-direction: column; } .form-group, .btn-search, .btn-print { width: 100%; } }
@@ -145,7 +166,6 @@
         return null;
     }
 
-    // Helper para las booleanas
     function renderBool(valor) {
         return valor === true || valor === "true" || valor === 1 ? "X" : "";
     }
@@ -256,7 +276,6 @@
                 <table>
                     <thead>
                         <tr>
-                            <!-- Ajuste de colspans para 19 columnas totales -->
                             <th colspan="6" class="th-membrete titulo-cliente">${cliente.toUpperCase()}</th>
                             <th colspan="8" class="th-membrete titulo-control">CONTROL DE EXTINTORES</th>
                             <th colspan="5" class="th-membrete titulo-planilla">PLANILLA DE REVISION N° 1</th>
@@ -270,27 +289,26 @@
                             </th>
                         </tr>
                         <tr>
-                            <th class="th-columna" style="width: 4%;" onclick="ordenarPor('extintor_numero')">N°</th>
-                            <th class="th-columna" style="width: 4%;" onclick="ordenarPor('tipo')">TIPO</th>
+                            <th class="th-columna" style="width: 4.5%;" onclick="ordenarPor('extintor_numero')">N°</th>
+                            <th class="th-columna" style="width: 4.5%;" onclick="ordenarPor('tipo')">TIPO</th>
                             <th class="th-columna" style="width: 4%;" onclick="ordenarPor('capacidad')">KG</th>
                             <th class="th-columna" style="width: 4%;" onclick="ordenarPor('ano_fab')">FAB</th>
-                            <th class="th-columna" style="width: 7%;" onclick="ordenarPor('marca')">MARCA</th>
-                            <th class="th-columna" style="width: 6%;" onclick="ordenarPor('vto_prueb_hidr')">VTO. PH</th>
-                            <th class="th-columna" style="width: 6%;" onclick="ordenarPor('vto_carga')">VTO. C.</th>
-                            <th class="th-columna" style="width: 6%;" onclick="ordenarPor('numero_dps')">N°-DPS</th>
-                            <th class="th-columna" style="width: 5%;" onclick="ordenarPor('identificacion_puesto')">PUESTO</th>
-                            <th class="th-columna" style="width: 27%;" onclick="ordenarPor('ubicacion')">UBICACIÓN DEL PUESTO</th>
+                            <th class="th-columna" style="width: 8%;" onclick="ordenarPor('marca')">MARCA</th>
+                            <th class="th-columna" style="width: 6.5%;" onclick="ordenarPor('vto_prueb_hidr')">VTO. PH</th>
+                            <th class="th-columna" style="width: 6.5%;" onclick="ordenarPor('vto_carga')">VTO. C.</th>
+                            <th class="th-columna" style="width: 6.5%;" onclick="ordenarPor('numero_dps')">N°-DPS</th>
+                            <th class="th-columna" style="width: 5.5%;" onclick="ordenarPor('identificacion_puesto')">PUESTO</th>
+                            <th class="th-columna" style="width: 25%;" onclick="ordenarPor('ubicacion')">UBICACIÓN DEL PUESTO</th>
                             
-                            <!-- COLUMNAS BOOLEANAS VERTICALES AL EXTREMO DERECHO -->
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('carga')">CARGA</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('precinto')">PRECINTO</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('baliza')">BALIZA</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('recipiente')">RECIPIENTE</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('manometro')">MANOMETRO</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('manguera')">MANGUERA</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('tobera')">TOBERA</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('gabinete')">GABINETE</th>
-                            <th class="th-columna th-vertical" style="width: 3%;" onclick="ordenarPor('acceso')">ACCESO</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('carga')">CARGA</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('precinto')">PRECINTO</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('baliza')">BALIZA</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('recipiente')">RECIPIENTE</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('manometro')">MANOMETRO</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('manguera')">MANGUERA</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('tobera')">TOBERA</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('gabinete')">GABINETE</th>
+                            <th class="th-columna th-vertical" style="width: 2.7%;" onclick="ordenarPor('acceso')">ACCESO</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -313,7 +331,6 @@
                         <td>${ex.identificacion_puesto || "-"}</td>
                         <td class="texto-izq">${ex.ubicacion || "-"}</td>
                         
-                        <!-- CELDAS BOOLEANAS -->
                         <td><strong>${renderBool(ex.carga)}</strong></td>
                         <td><strong>${renderBool(ex.precinto)}</strong></td>
                         <td><strong>${renderBool(ex.baliza)}</strong></td>
