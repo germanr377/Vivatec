@@ -39,14 +39,14 @@
             border: 2px solid #000; 
             font-family: Arial, sans-serif; 
             background-color: #fff; 
-            table-layout: fixed; /* Mantiene fijos los porcentajes asignados */
+            table-layout: fixed; /* Fuerza a respetar los anchos del colgroup */
         }
         
         /* Estilos del Membrete */
         .th-membrete { border: 1.5px solid #000; padding: 6px; font-size: 12px; vertical-align: middle; background-color: #fff !important; color: #000 !important; }
-        .titulo-cliente { font-size: 16px; font-weight: bold; text-align: center; background-color: #f2f2f2 !important; width: 30%; }
-        .titulo-control { font-size: 14px; font-weight: bold; text-align: center; width: 50%; }
-        .titulo-planilla { font-size: 12px; font-weight: bold; text-align: center; width: 20%; }
+        .titulo-cliente { font-size: 16px; font-weight: bold; text-align: center; background-color: #f2f2f2 !important; }
+        .titulo-control { font-size: 14px; font-weight: bold; text-align: center; }
+        .titulo-planilla { font-size: 12px; font-weight: bold; text-align: center; }
         .lbl-campo { font-weight: bold; font-size: 11px; }
 
         /* Cabeceras normales */
@@ -54,7 +54,7 @@
             border: 1.5px solid #000;
             padding: 5px 2px;
             text-align: center;
-            font-size: 9.5px;
+            font-size: 9px;
             background-color: #fff;
             color: #000;
             font-weight: bold;
@@ -66,14 +66,15 @@
         }
         .th-columna:hover { background-color: #e2e8f0; }
 
-        /* CABECERAS CON ORIENTACIÓN VERTICAL A 90 GRADOS */
-        .th-vertical {
+        /* Contenedor interno para texto vertical a 90 GRADOS */
+        .texto-vertical {
             writing-mode: vertical-rl;
             transform: rotate(180deg);
-            height: 90px;
-            font-size: 8.5px;
-            padding: 4px 0;
             white-space: nowrap;
+            display: inline-block;
+            height: 75px; /* Altura suficiente para MANOMETRO / RECIPIENTE */
+            font-size: 8.5px;
+            padding: 2px 0;
         }
 
         /* Celdas de datos */
@@ -83,6 +84,7 @@
             text-align: center; 
             font-size: 10px; 
             word-wrap: break-word;
+            overflow: hidden;
         }
         
         .texto-izq { text-align: left !important; padding-left: 4px !important; }
@@ -274,11 +276,34 @@
 
             let htmlTabla = `
                 <table>
+                    <!-- ESTO FUERZA AL NAVEGADOR A MANTENER EL ANCHO EXACTO DE LAS COLUMNAS -->
+                    <colgroup>
+                        <col style="width: 4%;">  <!-- N° -->
+                        <col style="width: 4%;">  <!-- TIPO -->
+                        <col style="width: 3.5%;"> <!-- KG -->
+                        <col style="width: 3.5%;"> <!-- FAB -->
+                        <col style="width: 10%;"> <!-- MARCA -->
+                        <col style="width: 6%;">  <!-- VTO PH -->
+                        <col style="width: 6%;">  <!-- VTO C -->
+                        <col style="width: 6%;">  <!-- N-DPS -->
+                        <col style="width: 5%;">  <!-- PUESTO -->
+                        <col style="width: 30%;"> <!-- UBICACION -->
+                        <!-- 9 COLUMNAS BOOLEANAS MUY FINITAS -->
+                        <col style="width: 2.4%;"> 
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                        <col style="width: 2.4%;">
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th colspan="6" class="th-membrete titulo-cliente">${cliente.toUpperCase()}</th>
-                            <th colspan="8" class="th-membrete titulo-control">CONTROL DE EXTINTORES</th>
-                            <th colspan="5" class="th-membrete titulo-planilla">PLANILLA DE REVISION N° 1</th>
+                            <th colspan="5" class="th-membrete titulo-cliente">${cliente.toUpperCase()}</th>
+                            <th colspan="7" class="th-membrete titulo-control">CONTROL DE EXTINTORES</th>
+                            <th colspan="7" class="th-membrete titulo-planilla">PLANILLA DE REVISION N° 1</th>
                         </tr>
                         <tr>
                             <th colspan="12" class="th-membrete" style="text-align: left; padding-left: 10px;">
@@ -289,28 +314,26 @@
                             </th>
                         </tr>
                         <tr>
-                            <!-- ANCHOS PERSONALIZADOS -->
-                            <th class="th-columna" style="width: 4%;" onclick="ordenarPor('extintor_numero')">N°</th>
-                            <th class="th-columna" style="width: 4%;" onclick="ordenarPor('tipo')">TIPO</th>
-                            <th class="th-columna" style="width: 3%;" onclick="ordenarPor('capacidad')">KG</th>
-                            <th class="th-columna" style="width: 3.5%;" onclick="ordenarPor('ano_fab')">FAB</th>
-                            <th class="th-columna" style="width: 12%;" onclick="ordenarPor('marca')">MARCA</th>
-                            <th class="th-columna" style="width: 6.5%;" onclick="ordenarPor('vto_prueb_hidr')">VTO. PH</th>
-                            <th class="th-columna" style="width: 6.5%;" onclick="ordenarPor('vto_carga')">VTO. C.</th>
-                            <th class="th-columna" style="width: 6.5%;" onclick="ordenarPor('numero_dps')">N°-DPS</th>
-                            <th class="th-columna" style="width: 4%;" onclick="ordenarPor('identificacion_puesto')">PUESTO</th>
-                            <th class="th-columna" style="width: 32%;" onclick="ordenarPor('ubicacion')">UBICACIÓN DEL PUESTO</th>
+                            <th class="th-columna" onclick="ordenarPor('extintor_numero')">N°</th>
+                            <th class="th-columna" onclick="ordenarPor('tipo')">TIPO</th>
+                            <th class="th-columna" onclick="ordenarPor('capacidad')">KG</th>
+                            <th class="th-columna" onclick="ordenarPor('ano_fab')">FAB</th>
+                            <th class="th-columna" onclick="ordenarPor('marca')">MARCA</th>
+                            <th class="th-columna" onclick="ordenarPor('vto_prueb_hidr')">VTO. PH</th>
+                            <th class="th-columna" onclick="ordenarPor('vto_carga')">VTO. C.</th>
+                            <th class="th-columna" onclick="ordenarPor('numero_dps')">N°-DPS</th>
+                            <th class="th-columna" onclick="ordenarPor('identificacion_puesto')">PUESTO</th>
+                            <th class="th-columna" onclick="ordenarPor('ubicacion')">UBICACIÓN DEL PUESTO</th>
                             
-                            <!-- COLUMNAS BOOLEANAS (2% cada una) -->
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('carga')">CARGA</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('precinto')">PRECINTO</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('baliza')">BALIZA</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('recipiente')">RECIPIENTE</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('manometro')">MANOMETRO</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('manguera')">MANGUERA</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('tobera')">TOBERA</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('gabinete')">GABINETE</th>
-                            <th class="th-columna th-vertical" style="width: 2%;" onclick="ordenarPor('acceso')">ACCESO</th>
+                            <th class="th-columna" onclick="ordenarPor('carga')"><div class="texto-vertical">CARGA</div></th>
+                            <th class="th-columna" onclick="ordenarPor('precinto')"><div class="texto-vertical">PRECINTO</div></th>
+                            <th class="th-columna" onclick="ordenarPor('baliza')"><div class="texto-vertical">BALIZA</div></th>
+                            <th class="th-columna" onclick="ordenarPor('recipiente')"><div class="texto-vertical">RECIPIENTE</div></th>
+                            <th class="th-columna" onclick="ordenarPor('manometro')"><div class="texto-vertical">MANOMETRO</div></th>
+                            <th class="th-columna" onclick="ordenarPor('manguera')"><div class="texto-vertical">MANGUERA</div></th>
+                            <th class="th-columna" onclick="ordenarPor('tobera')"><div class="texto-vertical">TOBERA</div></th>
+                            <th class="th-columna" onclick="ordenarPor('gabinete')"><div class="texto-vertical">GABINETE</div></th>
+                            <th class="th-columna" onclick="ordenarPor('acceso')"><div class="texto-vertical">ACCESO</div></th>
                         </tr>
                     </thead>
                     <tbody>
