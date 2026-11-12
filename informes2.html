@@ -61,12 +61,13 @@
             color: #000;
             font-weight: bold;
             vertical-align: middle;
-            cursor: pointer;
             user-select: none;
             transition: background 0.2s;
             line-height: 1.1;
         }
-        .th-columna:hover { background-color: #e2e8f0; }
+        /* Solo las que tienen onclick muestran puntero */
+        .th-columna[onclick] { cursor: pointer; }
+        .th-columna[onclick]:hover { background-color: #e2e8f0; }
 
         /* Contenedor interno para texto vertical a 90 GRADOS */
         .texto-vertical {
@@ -275,6 +276,12 @@
         const registrosPorPagina = 25;
         const totalPaginas = Math.ceil(datosGlobales.length / registrosPorPagina);
 
+        // Flecha dinámica
+        const flecha = (col) => {
+            if (columnaOrdenActual !== col) return " ↕";
+            return ascendenteActual ? " ▲" : " ▼";
+        };
+
         for (let i = 0; i < totalPaginas; i++) {
             const inicio = i * registrosPorPagina;
             const loteRegistros = datosGlobales.slice(inicio, inicio + registrosPorPagina);
@@ -321,26 +328,27 @@
                             </th>
                         </tr>
                         <tr>
-                            <th class="th-columna" onclick="ordenarPor('extintor_numero')">N°</th>
-                            <th class="th-columna" onclick="ordenarPor('tipo')">TIPO</th>
-                            <th class="th-columna" onclick="ordenarPor('capacidad')">KG</th>
-                            <th class="th-columna" onclick="ordenarPor('ano_fab')">FAB</th>
-                            <th class="th-columna" onclick="ordenarPor('marca')">MARCA</th>
-                            <th class="th-columna" onclick="ordenarPor('vto_prueb_hidr')">VTO. PH</th>
-                            <th class="th-columna" onclick="ordenarPor('vto_carga')">VTO. C.</th>
-                            <th class="th-columna" onclick="ordenarPor('numero_dps')">N°-DPS</th>
-                            <th class="th-columna" onclick="ordenarPor('identificacion_puesto')">PUESTO</th>
-                            <th class="th-columna" onclick="ordenarPor('ubicacion')">UBICACIÓN DEL PUESTO</th>
+                            <th class="th-columna" onclick="ordenarPor('extintor_numero')">N°${flecha('extintor_numero')}</th>
+                            <th class="th-columna" onclick="ordenarPor('tipo')">TIPO${flecha('tipo')}</th>
+                            <th class="th-columna" onclick="ordenarPor('capacidad')">KG${flecha('capacidad')}</th>
+                            <th class="th-columna" onclick="ordenarPor('ano_fab')">FAB${flecha('ano_fab')}</th>
+                            <th class="th-columna" onclick="ordenarPor('marca')">MARCA${flecha('marca')}</th>
+                            <th class="th-columna" onclick="ordenarPor('vto_prueb_hidr')">VTO. PH${flecha('vto_prueb_hidr')}</th>
+                            <th class="th-columna" onclick="ordenarPor('vto_carga')">VTO. C.${flecha('vto_carga')}</th>
+                            <th class="th-columna" onclick="ordenarPor('numero_dps')">N°-DPS${flecha('numero_dps')}</th>
+                            <th class="th-columna" onclick="ordenarPor('identificacion_puesto')">PUESTO${flecha('identificacion_puesto')}</th>
+                            <th class="th-columna" onclick="ordenarPor('ubicacion')">UBICACIÓN${flecha('ubicacion')}</th>
                             
-                            <th class="th-columna" onclick="ordenarPor('carga')"><div class="texto-vertical">CARGA</div></th>
-                            <th class="th-columna" onclick="ordenarPor('precinto')"><div class="texto-vertical">PRECINTO</div></th>
-                            <th class="th-columna" onclick="ordenarPor('baliza')"><div class="texto-vertical">BALIZA</div></th>
-                            <th class="th-columna" onclick="ordenarPor('recipiente')"><div class="texto-vertical">RECIPIENTE</div></th>
-                            <th class="th-columna" onclick="ordenarPor('manometro')"><div class="texto-vertical">MANOMETRO</div></th>
-                            <th class="th-columna" onclick="ordenarPor('manguera')"><div class="texto-vertical">MANGUERA</div></th>
-                            <th class="th-columna" onclick="ordenarPor('tobera')"><div class="texto-vertical">TOBERA</div></th>
-                            <th class="th-columna" onclick="ordenarPor('gabinete')"><div class="texto-vertical">GABINETE</div></th>
-                            <th class="th-columna" onclick="ordenarPor('acceso')"><div class="texto-vertical">ACCESO</div></th>
+                            <!-- COLUMNAS BOOLEANAS (sin onclick ni flechas) -->
+                            <th class="th-columna"><div class="texto-vertical">CARGA</div></th>
+                            <th class="th-columna"><div class="texto-vertical">PRECINTO</div></th>
+                            <th class="th-columna"><div class="texto-vertical">BALIZA</div></th>
+                            <th class="th-columna"><div class="texto-vertical">RECIPIENTE</div></th>
+                            <th class="th-columna"><div class="texto-vertical">MANOMETRO</div></th>
+                            <th class="th-columna"><div class="texto-vertical">MANGUERA</div></th>
+                            <th class="th-columna"><div class="texto-vertical">TOBERA</div></th>
+                            <th class="th-columna"><div class="texto-vertical">GABINETE</div></th>
+                            <th class="th-columna"><div class="texto-vertical">ACCESO</div></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -349,6 +357,12 @@
             loteRegistros.forEach(ex => {
                 let formatoDps = ex.numero_dps || "-";
                 if (formatoDps === "NUEVO") formatoDps = `<span class="badge badge-nuevo">NUEVO</span>`;
+
+                // Recorte de Ubicación a 32 caracteres max
+                let txtUbicacion = ex.ubicacion || "-";
+                if (txtUbicacion.length > 32) {
+                    txtUbicacion = txtUbicacion.substring(0, 32) + "...";
+                }
 
                 htmlTabla += `
                     <tr>
@@ -361,7 +375,7 @@
                         <td>${formatearFechaWeb(ex.vto_carga)}</td>
                         <td>${formatoDps}</td>
                         <td>${ex.identificacion_puesto || "-"}</td>
-                        <td class="texto-izq">${ex.ubicacion || "-"}</td>
+                        <td class="texto-izq" title="${ex.ubicacion || ''}">${txtUbicacion}</td>
                         
                         <td><strong>${renderBool(ex.carga)}</strong></td>
                         <td><strong>${renderBool(ex.precinto)}</strong></td>
