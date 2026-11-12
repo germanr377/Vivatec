@@ -42,7 +42,7 @@
         
         /* TABLA PRINCIPAL */
         .tabla-principal { 
-            width: 920px; /* Ajuste milimétrico para que entre el panel derecho */
+            width: 920px; 
             min-width: 920px; 
             margin: 0; 
             border-collapse: collapse; 
@@ -131,6 +131,11 @@
         .ref-center { text-align: center !important; }
         .ref-box { height: 18px; } /* Cajas vacías para firma y espaciador */
         
+        /* CLASES PARA ELIMINAR BORDES INTERNOS EN EL BLOQUE DE FIRMA */
+        .no-b-bottom { border-bottom: none !important; padding-bottom: 2px !important; }
+        .no-b-mid { border-top: none !important; border-bottom: none !important; padding-top: 2px !important; padding-bottom: 2px !important; }
+        .no-b-top { border-top: none !important; padding-top: 2px !important; padding-bottom: 20px !important; }
+
         .texto-izq { text-align: left !important; padding-left: 4px !important; }
         .badge-nuevo { background: #2ecc71; color: white; padding: 2px 4px; border-radius: 3px; font-weight: bold; font-size: 9px;}
 
@@ -319,7 +324,7 @@
             return ascendenteActual ? " ▲" : " ▼";
         };
 
-        // ESTRUCTURA DEL PANEL LATERAL
+        // ESTRUCTURA DEL PANEL LATERAL CON BORDES ELIMINADOS EN EL BLOQUE
         const panelReferenciasHTML = `
             <table class="tabla-referencias">
                 <tr><td class="ref-center" style="font-size:9px; padding:6px 0;">FRECUENCIA: 30 DIAS</td></tr>
@@ -332,18 +337,27 @@
                 <tr><td>V - VENCIDO</td></tr>
                 <tr><td>N/A - NO APLICA</td></tr>
                 <tr><td>L - LIBRE</td></tr>
-                <tr><td class="ref-box"></td></tr> <!-- Espacio en blanco agregado -->
-                <tr><td class="ref-center">SERVICIO TERCERIZADO</td></tr>
-                <tr><td class="ref-center">VIVATEC</td></tr>
-                <tr><td class="ref-center">RESPONSABLE:</td></tr>
-                <tr><td class="ref-center">IGNACIO REPETTO</td></tr>
-                <tr><td class="ref-center">ING. INDUSTRIAL</td></tr>
-                <tr><td class="ref-center">C.I.P.B.A - MAT.51142</td></tr>
-                <tr><td>FIRMA:</td></tr> <!-- Se mantiene a la izquierda -->
+                
+                <tr><td class="ref-box"></td></tr>
+                
+                <!-- BLOQUE SIN BORDES HORIZONTALES -->
+                <tr><td class="ref-center no-b-bottom">SERVICIO TERCERIZADO</td></tr>
+                <tr><td class="ref-center no-b-mid">VIVATEC</td></tr>
+                <tr><td class="ref-center no-b-mid">RESPONSABLE:</td></tr>
+                <tr><td class="ref-center no-b-mid">IGNACIO REPETTO</td></tr>
+                <tr><td class="ref-center no-b-mid">ING. INDUSTRIAL</td></tr>
+                <tr><td class="ref-center no-b-mid">C.I.P.B.A - MAT.51142</td></tr>
+                <tr><td class="no-b-top">FIRMA:</td></tr> 
+                <!-- AQUÍ SE CIERRA LA LÍNEA DEL BORDES INFERIOR AUTOMÁTICAMENTE -->
+                
+                <!-- 3 RENGLONES VACÍOS -->
                 <tr><td class="ref-box"></td></tr>
                 <tr><td class="ref-box"></td></tr>
                 <tr><td class="ref-box"></td></tr>
-                <tr><td class="ref-box"></td></tr>
+                
+                <!-- RENGLONES FINALES -->
+                <tr><td class="ref-center" style="font-size: 11px; font-weight: 900;">VIVATEC</td></tr>
+                <tr><td class="ref-center">REGISTRO DPS 382</td></tr>
             </table>
         `;
 
