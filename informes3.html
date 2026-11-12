@@ -324,7 +324,7 @@
             return ascendenteActual ? " ▲" : " ▼";
         };
 
-        // ESTRUCTURA DEL PANEL LATERAL CON BORDES ELIMINADOS EN EL BLOQUE
+        // ESTRUCTURA DEL PANEL LATERAL
         const panelReferenciasHTML = `
             <table class="tabla-referencias">
                 <tr><td class="ref-center" style="font-size:9px; padding:6px 0;">FRECUENCIA: 30 DIAS</td></tr>
@@ -348,16 +348,15 @@
                 <tr><td class="ref-center no-b-mid">ING. INDUSTRIAL</td></tr>
                 <tr><td class="ref-center no-b-mid">C.I.P.B.A - MAT.51142</td></tr>
                 <tr><td class="no-b-top">FIRMA:</td></tr> 
-                <!-- AQUÍ SE CIERRA LA LÍNEA DEL BORDES INFERIOR AUTOMÁTICAMENTE -->
                 
                 <!-- 3 RENGLONES VACÍOS -->
                 <tr><td class="ref-box"></td></tr>
                 <tr><td class="ref-box"></td></tr>
                 <tr><td class="ref-box"></td></tr>
                 
-                <!-- RENGLONES FINALES -->
-                <tr><td class="ref-center" style="font-size: 11px; font-weight: 900;">VIVATEC</td></tr>
-                <tr><td class="ref-center">REGISTRO DPS 382</td></tr>
+                <!-- RENGLONES FINALES (Borde divisor eliminado con estilos en línea) -->
+                <tr><td class="ref-center" style="font-size: 11px; font-weight: 900; border-bottom: none !important;">VIVATEC</td></tr>
+                <tr><td class="ref-center" style="border-top: none !important;">REGISTRO DPS 382</td></tr>
             </table>
         `;
 
