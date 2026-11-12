@@ -32,16 +32,15 @@
 
         .pagina-hoja { width: 100%; margin-bottom: 40px; }
         
-        /* LA TABLA AHORA OCUPA EL 80% DEL ESPACIO PARA QUE SOBRE HOJA */
+        /* TABLA CON ANCHO FIJO: NO SE ESTIRA NI SE ENCOGE */
         table { 
-            width: 80%; 
-            min-width: 900px; 
-            margin: 0; /* Alineada a la izquierda */
+            width: 935px; /* Ancho rígido para que siempre sobre margen a la derecha */
+            margin: 0; 
             border-collapse: collapse; 
             border: 2px solid #000; 
             font-family: Arial, sans-serif; 
             background-color: #fff; 
-            table-layout: fixed;
+            table-layout: fixed; /* Mantiene los píxeles de las columnas intactos */
         }
         
         /* Estilos del Membrete */
@@ -65,7 +64,6 @@
             transition: background 0.2s;
             line-height: 1.1;
         }
-        /* Solo las que tienen onclick muestran puntero */
         .th-columna[onclick] { cursor: pointer; }
         .th-columna[onclick]:hover { background-color: #e2e8f0; }
 
@@ -102,8 +100,8 @@
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
             .planilla-wrapper { display: block !important; overflow: visible; }
             
-            /* SE RESPETA EL 80% EN LA IMPRESIÓN PARA QUE SOBRE ESPACIO A LA DERECHA */
-            table { width: 80% !important; min-width: 0 !important; }
+            /* CONGELA EL ANCHO TAMBIÉN EN LA IMPRESIÓN */
+            table { width: 935px !important; }
             
             .pagina-hoja { page-break-after: always; break-after: page; margin-bottom: 0; }
         }
@@ -155,7 +153,6 @@
     let columnaOrdenActual = 'extintor_numero';
     let ascendenteActual = true;
 
-    // FECHAS EN FORMATO MM/AAAA
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
         let partes = fechaSQL.split("-");
@@ -276,7 +273,6 @@
         const registrosPorPagina = 25;
         const totalPaginas = Math.ceil(datosGlobales.length / registrosPorPagina);
 
-        // Flecha dinámica
         const flecha = (col) => {
             if (columnaOrdenActual !== col) return " ↕";
             return ascendenteActual ? " ▲" : " ▼";
@@ -291,27 +287,28 @@
 
             let htmlTabla = `
                 <table>
+                    <!-- ASIGNACIÓN ESTRICTA EN PÍXELES -->
                     <colgroup>
-                        <col style="width: 4%;">  <!-- N° -->
-                        <col style="width: 4%;">  <!-- TIPO -->
-                        <col style="width: 3.5%;"> <!-- KG -->
-                        <col style="width: 4%;"> <!-- FAB -->
-                        <col style="width: 8%;"> <!-- MARCA -->
-                        <col style="width: 6%;">  <!-- VTO PH -->
-                        <col style="width: 6%;">  <!-- VTO C -->
-                        <col style="width: 6%;">  <!-- N-DPS -->
-                        <col style="width: 5%;">  <!-- PUESTO -->
-                        <col style="width: 37.3%;"> <!-- UBICACION -->
-                        <!-- 9 COLUMNAS BOOLEANAS BIEN JUSTAS (1.8% CADA UNA) -->
-                        <col style="width: 1.8%;"> 
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
-                        <col style="width: 1.8%;">
+                        <col style="width: 60px;">  <!-- N° (ancho justo para 8 chars) -->
+                        <col style="width: 45px;">  <!-- TIPO -->
+                        <col style="width: 40px;">  <!-- KG -->
+                        <col style="width: 45px;">  <!-- FAB -->
+                        <col style="width: 90px;">  <!-- MARCA -->
+                        <col style="width: 65px;">  <!-- VTO PH -->
+                        <col style="width: 65px;">  <!-- VTO C -->
+                        <col style="width: 70px;">  <!-- N-DPS -->
+                        <col style="width: 55px;">  <!-- PUESTO -->
+                        <col style="width: 220px;"> <!-- UBICACION (ancho justo para 32 chars) -->
+                        <!-- BOOLEANAS SUPER AJUSTADAS (20px) -->
+                        <col style="width: 20px;"> 
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
+                        <col style="width: 20px;">
                     </colgroup>
                     <thead>
                         <tr>
@@ -339,7 +336,7 @@
                             <th class="th-columna" onclick="ordenarPor('identificacion_puesto')">PUESTO${flecha('identificacion_puesto')}</th>
                             <th class="th-columna" onclick="ordenarPor('ubicacion')">UBICACIÓN${flecha('ubicacion')}</th>
                             
-                            <!-- COLUMNAS BOOLEANAS (sin onclick ni flechas) -->
+                            <!-- COLUMNAS BOOLEANAS SIN ORDENAMIENTO -->
                             <th class="th-columna"><div class="texto-vertical">CARGA</div></th>
                             <th class="th-columna"><div class="texto-vertical">PRECINTO</div></th>
                             <th class="th-columna"><div class="texto-vertical">BALIZA</div></th>
@@ -358,15 +355,21 @@
                 let formatoDps = ex.numero_dps || "-";
                 if (formatoDps === "NUEVO") formatoDps = `<span class="badge badge-nuevo">NUEVO</span>`;
 
-                // Recorte de Ubicación a 32 caracteres max
+                // Recorte de Ubicación a 32 caracteres
                 let txtUbicacion = ex.ubicacion || "-";
                 if (txtUbicacion.length > 32) {
                     txtUbicacion = txtUbicacion.substring(0, 32) + "...";
                 }
 
+                // Recorte del N° a 8 caracteres 
+                let txtNumero = ex.extintor_numero || "-";
+                if (String(txtNumero).length > 8) {
+                    txtNumero = String(txtNumero).substring(0, 8);
+                }
+
                 htmlTabla += `
                     <tr>
-                        <td><strong>${ex.extintor_numero || "-"}</strong></td>
+                        <td><strong>${txtNumero}</strong></td>
                         <td>${ex.tipo || "-"}</td>
                         <td>${ex.capacidad || "-"}</td>
                         <td>${ex.ano_fab || "-"}</td>
