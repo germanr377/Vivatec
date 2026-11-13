@@ -64,7 +64,7 @@
         <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Agente Extintor, Capacidad -->
         <div class="form-row">
             <div class="form-group" style="flex: none; width: 16ch;">
-                <label>Tipo de Oblea:</label>
+                <label>Tipo Oblea:</label>
                 <select id="nuevoOblea">
                     <option value="">(En blanco)</option>
                     <option value="Uso Gral">Uso Gral</option>
@@ -77,12 +77,18 @@
                 <input type="text" id="nuevoMarca" placeholder="Ej: Horizonte">
             </div>
             <div class="form-group" style="flex: 1;">
-                <label>Tipo (Ej: ABC, BC, A, K):</label>
-                <input type="text" id="nuevoTipo" placeholder="Ej: ABC" oninput="autocompletarAgente()">
+                <label>Tipo:</label>
+                <select id="nuevoTipo" onchange="autocompletarAgente()">
+                    <option value="">-- Seleccionar --</option>
+                    <option value="A">A</option>
+                    <option value="ABC">ABC</option>
+                    <option value="BC">BC</option>
+                    <option value="K">K</option>
+                </select>
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Agente Extintor:</label>
-                <input type="text" id="nuevoAgente" placeholder="Se llena solo">
+                <input type="text" id="nuevoAgente" placeholder="Se llena solo" readonly style="background-color: #f1f2f6;">
             </div>
             <div class="form-group" style="flex: none; width: 12ch;">
                 <label>Capacidad:</label>
@@ -146,18 +152,21 @@
         return null;
     }
 
+    // AUTOCOMPLETAR AGENTE EXTINTOR SEGÚN EL TIPO SELECCIONADO
     function autocompletarAgente() {
-        let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
+        let tipo = document.getElementById("nuevoTipo").value;
         let agenteInput = document.getElementById("nuevoAgente");
 
-        if (tipo.includes("ABC")) {
+        if (tipo === "ABC") {
             agenteInput.value = "PQS";
-        } else if (tipo.includes("BC")) {
+        } else if (tipo === "BC") {
             agenteInput.value = "CO2";
-        } else if (tipo === "A" || tipo.includes("AFFF")) {
+        } else if (tipo === "A") {
             agenteInput.value = "AFFF";
         } else if (tipo === "K") {
             agenteInput.value = "K";
+        } else {
+            agenteInput.value = "";
         }
     }
 
@@ -170,7 +179,6 @@
         if (!extintorNum && !dpsNum) return;
 
         try {
-            // Consultamos si existe el N° de extintor o el DPS en la base
             let query = _supabase.from('extintores').select('*');
             
             if (extintorNum && dpsNum) {
@@ -185,11 +193,9 @@
             if (error) throw error;
 
             if (data && data.length > 0) {
-                // Buscamos si alguno pertenece al MISMO cliente
                 let matchMismoCliente = data.find(item => item.cliente && item.cliente.toLowerCase() === clienteActual.toLowerCase());
 
                 if (matchMismoCliente) {
-                    // CASO A: Es del mismo cliente -> Se pone en modo actualización (sobrescribir)
                     let ex = matchMismoCliente;
                     document.getElementById("registroId").value = ex.id;
                     document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
@@ -197,7 +203,7 @@
                     document.getElementById("nuevoOblea").value = ex.oblea || "";
                     document.getElementById("nuevoMarca").value = ex.marca || "";
                     document.getElementById("nuevoTipo").value = ex.tipo || "";
-                    document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
+                    autocompletarAgente(); // Actualiza el agente según el tipo cargado
                     document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
                     document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
                     document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
@@ -213,11 +219,8 @@
                     btn.classList.add("existente-btn");
 
                 } else {
-                    // CASO B: Existe pero en OTRO cliente -> Solo avisa, pero deja grabar como nuevo
                     let otroCliente = data[0].cliente || "Otro cliente";
                     alert(`ℹ️ Aviso: Este número de extintor o DPS ya se encuentra registrado bajo el cliente "${otroCliente}".\n\nPodes continuar guardándolo sin problemas ya que pertenece a un cliente diferente.`);
-                    
-                    // Limpiamos el ID por las dudas para asegurarnos de que cree uno nuevo
                     document.getElementById("registroId").value = "";
                 }
             }
@@ -244,7 +247,7 @@
             cliente: cliente,
             oblea: document.getElementById("nuevoOblea").value,
             extintor_numero: extintorNumero,
-            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase(),
+            tipo: document.getElementById("nuevoTipo").value,
             agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase(),
             capacidad: document.getElementById("nuevoCapacidad").value.trim(),
             ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
@@ -261,13 +264,11 @@
         let resultado;
 
         if (idExistente) {
-            // Actualiza el equipo existente del mismo cliente
             resultado = await _supabase
                 .from('extintores')
                 .update(datosRegistro)
                 .eq('id', idExistente);
         } else {
-            // Inserta un registro nuevo (permitiendo repetir número si es de otro cliente)
             resultado = await _supabase
                 .from('extintores')
                 .insert([datosRegistro]);
