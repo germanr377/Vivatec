@@ -19,23 +19,31 @@
         .form-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
         .form-row .form-group { margin-bottom: 0; flex: 1; } 
         
-        .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #f9fff9; }
+        .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #f9fff9; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 8px; margin-bottom: 15px; }
+
+        /* Estilo cuando detecta que ya existe (modo edición/actualización) */
+        .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
+        .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
         /* Botón de Guardar */
         .action-buttons { display: flex; gap: 10px; margin-top: 25px; }
         .btn-save { background: #27ae60; flex: 1; padding: 14px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
         .btn-save:hover { background: #219653; }
         .btn-save.success { background: #2980b9 !important; }
+        .btn-save.existente-btn { background: #d35400 !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Vivatec - Registro de Nuevo Extintor</h2>
+    <h2>Vivatec - Registro y Actualización de Extintores</h2>
 
-    <div class="oblea-preview">
-        <div class="oblea-header">DATOS DEL NUEVO EQUIPO</div>
+    <div id="contenedorPrincipal" class="oblea-preview">
+        <div id="tituloForm" class="oblea-header">DATOS DEL NUEVO EQUIPO</div>
+
+        <!-- Campo oculto para almacenar el ID si el registro ya existe -->
+        <input type="hidden" id="registroId">
 
         <!-- FILA 1: Cliente, N° Extintor, DPS -->
         <div class="form-row">
@@ -45,11 +53,11 @@
             </div>
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° Extintor:</label>
-                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130">
+                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130" onblur="verificarDuplicado('extintor', this.value)">
             </div>
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° DPS:</label>
-                <input type="text" id="nuevoDps" placeholder="Ej: 5503020">
+                <input type="text" id="nuevoDps" placeholder="Ej: 5503020" onblur="verificarDuplicado('dps', this.value)">
             </div>
         </div>
 
@@ -107,19 +115,27 @@
         </div>
 
         <div class="action-buttons">
-            <button id="btnGuardar" class="btn-save" onclick="guardarNuevoExtintor()">💾 Guardar Nuevo Extintor</button>
+            <button id="btnGuardar" class="btn-save" onclick="guardarOActualizar()">💾 Guardar Nuevo Extintor</button>
         </div>
     </div>
 </div>
 
 <script>
-    // CREDENCIALES DE SUPABASE
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // TRADUCTOR DE FECHAS: Pantalla (MM/AAAA) -> Supabase (AAAA-MM-01)
+    // TRADUCTORES DE FECHAS
+    function formatearFechaWeb(fechaSQL) {
+        if (!fechaSQL) return "";
+        let partes = fechaSQL.split("-");
+        if (partes.length === 3) {
+            return `${partes[1]}/${partes[0]}`;
+        }
+        return fechaSQL;
+    }
+
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
@@ -131,7 +147,6 @@
         return null;
     }
 
-    // AUTOCOMPLETAR AGENTE EXTINTOR SEGÚN EL TIPO
     function autocompletarAgente() {
         let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
         let agenteInput = document.getElementById("nuevoAgente");
@@ -147,10 +162,59 @@
         }
     }
 
-    // GUARDAR NUEVO EXTINTOR EN SUPABASE
-    async function guardarNuevoExtintor() {
+    // VERIFICACIÓN EN VIVO (AL SALIR DE LOS CAMPOS EXTINTOR O DPS)
+    async function verificarDuplicado(tipoCampo, valor) {
+        if (!valor) return;
+        valor = valor.trim();
+
+        try {
+            let query = _supabase.from('extintores').select('*');
+            if (tipoCampo === 'extintor') {
+                query = query.eq('extintor_numero', valor);
+            } else {
+                query = query.eq('numero_dps', valor);
+            }
+
+            const { data, error } = await query.limit(1);
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                let ex = data[0];
+                
+                // Rellenamos el formulario automáticamente con los datos encontrados
+                document.getElementById("registroId").value = ex.id;
+                document.getElementById("nuevoCliente").value = ex.cliente || "";
+                document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
+                document.getElementById("nuevoDps").value = ex.numero_dps || "";
+                document.getElementById("nuevoOblea").value = ex.oblea || "";
+                document.getElementById("nuevoMarca").value = ex.marca || "";
+                document.getElementById("nuevoTipo").value = ex.tipo || "";
+                document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
+                document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
+                document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
+                document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
+                document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
+                document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
+                document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+
+                // Cambiamos la estética visual para avisar que es un registro existente
+                document.getElementById("contenedorPrincipal").classList.add("modo-existente");
+                document.getElementById("tituloForm").textContent = "⚠️ EQUIPO EXISTENTE (Se actualizará al guardar)";
+                
+                let btn = document.getElementById("btnGuardar");
+                btn.textContent = "🔄 Actualizar Extintor Existente";
+                btn.classList.add("existente-btn");
+            }
+        } catch (err) {
+            console.error("Error al verificar duplicado en vivo:", err);
+        }
+    }
+
+    // GUARDAR O ACTUALIZAR SEGÚN CORRESPONDA
+    async function guardarOActualizar() {
         let cliente = document.getElementById("nuevoCliente").value.trim();
         let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
+        let idExistente = document.getElementById("registroId").value;
 
         if (!cliente || !extintorNumero) {
             alert("Por lo menos debés completar el Cliente y el N° de Extintor.");
@@ -160,7 +224,7 @@
         let valAnoFab = document.getElementById("nuevoAFabricacion").value;
         let valPuesto = document.getElementById("nuevoPuesto").value;
 
-        const nuevoRegistro = {
+        const datosRegistro = {
             cliente: cliente,
             oblea: document.getElementById("nuevoOblea").value,
             extintor_numero: extintorNumero,
@@ -178,30 +242,42 @@
             ubicacion: document.getElementById("nuevoUbicacion").value.trim()
         };
 
-        const { error } = await _supabase
-            .from('extintores')
-            .insert([nuevoRegistro]);
+        let resultado;
 
-        if (error) {
-            console.error("Error al guardar:", error);
+        if (idExistente) {
+            // Si ya existía y se cargó el ID, hace UPDATE
+            resultado = await _supabase
+                .from('extintores')
+                .update(datosRegistro)
+                .eq('id', idExistente);
+        } else {
+            // Si es completamente nuevo, hace INSERT
+            resultado = await _supabase
+                .from('extintores')
+                .insert([datosRegistro]);
+        }
+
+        if (resultado.error) {
+            console.error("Error al guardar:", resultado.error);
             alert("Hubo un error al guardar el extintor en la base de datos.");
         } else {
-            // Feedback visual en el botón sin usar alertas molestos
             const btn = document.getElementById("btnGuardar");
             const textoOriginal = btn.innerHTML;
-            btn.innerHTML = "✅ ¡Extintor Guardado con Éxito!";
+            btn.innerHTML = "✅ ¡Operación Exitosa!";
             btn.classList.add("success");
 
-            // Limpiar formulario para cargar otro
             setTimeout(() => {
-                btn.innerHTML = textoOriginal;
-                btn.classList.remove("success");
+                btn.innerHTML = "💾 Guardar Nuevo Extintor";
+                btn.classList.remove("success", "existente-btn");
+                document.getElementById("contenedorPrincipal").classList.remove("modo-existente");
+                document.getElementById("tituloForm").textContent = "DATOS DEL NUEVO EQUIPO";
                 limpiarFormulario();
             }, 2000);
         }
     }
 
     function limpiarFormulario() {
+        document.getElementById("registroId").value = "";
         document.getElementById("nuevoExtintor").value = "";
         document.getElementById("nuevoDps").value = "";
         document.getElementById("nuevoMarca").value = "";
@@ -213,7 +289,6 @@
         document.getElementById("nuevoVencCarga").value = "";
         document.getElementById("nuevoPuesto").value = "";
         document.getElementById("nuevoUbicacion").value = "";
-        // El cliente se mantiene por si cargás varios equipos para el mismo cliente
     }
 </script>
 
