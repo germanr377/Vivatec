@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivatec - Carga de Nuevos Extintores</title>
+    <title>Vivatec - Gestión y Carga de Extintores</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 750px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
@@ -22,30 +22,41 @@
         .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #f9fff9; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 8px; margin-bottom: 15px; }
 
-        /* Estilo cuando detecta que es del MISMO cliente (modo actualización) */
+        /* Estilos dinámicos del contenedor */
         .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
-        /* Aviso de Cliente Nuevo */
-        .aviso-nuevo-cliente { font-size: 12px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
+        /* Avisos flotantes */
+        .aviso-nuevo { font-size: 11px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
 
-        /* Botón de Guardar */
-        .action-buttons { display: flex; gap: 10px; margin-top: 25px; }
-        .btn-save { background: #27ae60; flex: 1; padding: 14px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
+        /* Botones de acción */
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
+        .btn-base { flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; min-width: 130px; text-align: center; }
+        
+        .btn-buscar { background: #2980b9; }
+        .btn-buscar:hover { background: #1f618d; }
+
+        .btn-save { background: #27ae60; }
         .btn-save:hover { background: #219653; }
         .btn-save.success { background: #2980b9 !important; }
         .btn-save.existente-btn { background: #d35400 !important; }
+
+        .btn-delete { background: #c0392b; }
+        .btn-delete:hover { background: #962d22; }
+
+        .btn-clean { background: #7f8c8d; }
+        .btn-clean:hover { background: #626567; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Vivatec - Registro y Actualización de Extintores</h2>
+    <h2>Vivatec - Panel de Gestión de Extintores</h2>
 
     <div id="contenedorPrincipal" class="oblea-preview">
-        <div id="tituloForm" class="oblea-header">DATOS DEL NUEVO EQUIPO</div>
+        <div id="tituloForm" class="oblea-header">PANEL DE CONTROL DE EQUIPOS</div>
 
-        <!-- Campo oculto para almacenar el ID si es actualización del mismo cliente -->
+        <!-- ID oculto para saber si estamos editando un registro existente -->
         <input type="hidden" id="registroId">
 
         <!-- FILA 1: Cliente, N° Extintor, DPS -->
@@ -54,15 +65,17 @@
                 <label>Cliente:</label>
                 <input type="text" id="nuevoCliente" list="listaClientes" placeholder="Escribí o seleccioná cliente..." oninput="verificarClienteNuevo()">
                 <datalist id="listaClientes"></datalist>
-                <div id="lblNuevoCliente" class="aviso-nuevo-cliente">✨ Nuevo Cliente</div>
+                <div id="lblNuevoCliente" class="aviso-nuevo">✨ Nuevo Cliente</div>
             </div>
-            <div class="form-group" style="flex: none; width: 15ch;">
+            <div class="form-group" style="flex: none; width: 16ch;">
                 <label>N° Extintor:</label>
-                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130" onblur="verificarDuplicado()">
+                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130" oninput="verificarExtintorNuevo()" onblur="verificarDuplicado()">
+                <div id="lblNuevoExtintor" class="aviso-nuevo">✨ Nuevo Extintor</div>
             </div>
-            <div class="form-group" style="flex: none; width: 15ch;">
+            <div class="form-group" style="flex: none; width: 16ch;">
                 <label>N° DPS:</label>
-                <input type="text" id="nuevoDps" placeholder="Ej: 5503020" onblur="verificarDuplicado()">
+                <input type="text" id="nuevoDps" placeholder="Ej: 5503020" oninput="verificarDpsNuevo()" onblur="verificarDuplicado()">
+                <div id="lblNuevoDps" class="aviso-nuevo">✨ Nuevo DPS</div>
             </div>
         </div>
 
@@ -118,8 +131,12 @@
             </div>
         </div>
 
+        <!-- BOTONERA DE ACCIÓN UNIFICADA -->
         <div class="action-buttons">
-            <button id="btnGuardar" class="btn-save" onclick="guardarOActualizar()">💾 Guardar Nuevo Extintor</button>
+            <button class="btn-base btn-buscar" onclick="buscarExtintor()">🔍 Buscar</button>
+            <button id="btnGuardar" class="btn-base btn-save" onclick="guardarOActualizar()">💾 Guardar / Actualizar</button>
+            <button class="btn-base btn-delete" onclick="eliminarExtintor()">🗑️ Eliminar</button>
+            <button class="btn-base btn-clean" onclick="limpiarFormulario()">🧹 Limpiar</button>
         </div>
     </div>
 </div>
@@ -127,20 +144,23 @@
 <script>
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
-
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let listaClientesExistentes = [];
+    let listaExtintoresExistentes = [];
+    let listaDpsExistentes = [];
 
-    // Cargar clientes al iniciar la página para el predictivo
+    // Cargar listas al iniciar la página para los predictivos y validaciones
     window.addEventListener("load", async function() {
         const { data, error } = await _supabase
             .from('extintores')
-            .select('cliente')
-            .not('cliente', 'is', null);
+            .select('cliente, extintor_numero, numero_dps');
 
         if (!error && data) {
-            listaClientesExistentes = [...new Set(data.map(item => item.cliente.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            listaClientesExistentes = [...new Set(data.map(item => item.cliente?.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            listaExtintoresExistentes = data.map(item => String(item.extintor_numero).trim()).filter(Boolean);
+            listaDpsExistentes = data.map(item => String(item.numero_dps).trim()).filter(Boolean);
+
             let datalist = document.getElementById("listaClientes");
             listaClientesExistentes.forEach(cliente => {
                 let opt = document.createElement("option");
@@ -150,29 +170,31 @@
         }
     });
 
-    // Detectar si el cliente escrito es nuevo o ya existe
+    // Detectar si el Cliente es nuevo
     function verificarClienteNuevo() {
-        let valorCliente = document.getElementById("nuevoCliente").value.trim().toLowerCase();
+        let val = document.getElementById("nuevoCliente").value.trim().toLowerCase();
         let aviso = document.getElementById("lblNuevoCliente");
-
-        if (!valorCliente) {
-            aviso.style.display = "none";
-            return;
-        }
-
-        let encontrado = listaClientesExistentes.some(c => c.toLowerCase() === valorCliente);
-        if (!encontrado) {
-            aviso.style.display = "block"; // Muestra "Nuevo Cliente"
-        } else {
-            aviso.style.display = "none";
-        }
+        aviso.style.display = (val && !listaClientesExistentes.some(c => c.toLowerCase() === val)) ? "block" : "none";
     }
 
-    // Validar que el tipo escrito sea válido
+    // Detectar si el N° de Extintor es nuevo
+    function verificarExtintorNuevo() {
+        let val = document.getElementById("nuevoExtintor").value.trim();
+        let aviso = document.getElementById("lblNuevoExtintor");
+        aviso.style.display = (val && !listaExtintoresExistentes.includes(val)) ? "block" : "none";
+    }
+
+    // Detectar si el N° de DPS es nuevo
+    function verificarDpsNuevo() {
+        let val = document.getElementById("nuevoDps").value.trim();
+        let aviso = document.getElementById("lblNuevoDps");
+        aviso.style.display = (val && !listaDpsExistentes.includes(val)) ? "block" : "none";
+    }
+
+    // Validar tipo permitido
     function validarTipo(input) {
         let valor = input.value.trim().toUpperCase();
         let permitidos = ["A", "ABC", "BC", "K"];
-
         if (valor && !permitidos.includes(valor)) {
             alert("⚠️ Tipo inválido. Los tipos permitidos son: A, ABC, BC o K.");
             input.value = "";
@@ -184,40 +206,108 @@
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
-        if (partes.length === 3) {
-            return `${partes[1]}/${partes[0]}`;
-        }
+        if (partes.length === 3) return `${partes[1]}/${partes[0]}`;
         return fechaSQL;
     }
 
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
-        if (partes.length === 2) {
-            let mes = partes[0].padStart(2, '0');
-            let anio = partes[1];
-            return `${anio}-${mes}-01`;
-        }
+        if (partes.length === 2) return `${partes[1]}-${partes[0].padStart(2, '0')}-01`;
         return null;
     }
 
     function autocompletarAgente() {
         let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
         let agenteInput = document.getElementById("nuevoAgente");
+        if (tipo === "ABC") agenteInput.value = "PQS";
+        else if (tipo === "BC") agenteInput.value = "CO2";
+        else if (tipo === "A") agenteInput.value = "AFFF";
+        else if (tipo === "K") agenteInput.value = "K";
+        else agenteInput.value = "";
+    }
 
-        if (tipo === "ABC") {
-            agenteInput.value = "PQS";
-        } else if (tipo === "BC") {
-            agenteInput.value = "CO2";
-        } else if (tipo === "A") {
-            agenteInput.value = "AFFF";
-        } else if (tipo === "K") {
-            agenteInput.value = "K";
-        } else {
-            agenteInput.value = "";
+    // FUNCIÓN DE BÚSQUEDA INTELIGENTE
+    async function buscarExtintor() {
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let dpsNum = document.getElementById("nuevoDps").value.trim();
+        let clienteFiltro = document.getElementById("nuevoCliente").value.trim();
+
+        if (!extintorNum && !dpsNum) {
+            alert("Por favor, ingresá al menos un N° de Extintor o N° de DPS para buscar.");
+            return;
+        }
+
+        try {
+            let query = _supabase.from('extintores').select('*');
+            if (extintorNum) query = query.eq('extintor_numero', extintorNum);
+            if (dpsNum) query = query.eq('numero_dps', dpsNum);
+            if (clienteFiltro) query = query.eq('cliente', clienteFiltro);
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                alert("No se encontró ningún equipo con los datos indicados.");
+                return;
+            }
+
+            let registroA Cargar = data[0];
+
+            // Si hay más de un resultado (ej. mismo extintor en varios clientes y no se filtró cliente)
+            if (data.length > 1 && !clienteFiltro) {
+                let mensaje = "Se encontraron varios registros con ese número. Elegí el cliente:\n";
+                data.forEach((item, index) => {
+                    mensaje += `[${index + 1}] Cliente: ${item.cliente} (Extintor: ${item.extintor_numero}, DPS: ${item.numero_dps || '-'})\n`;
+                });
+                let seleccion = prompt(mensaje + "\nIngresá el número de opción:");
+                let idx = parseInt(seleccion) - 1;
+                if (isNaN(idx) || !data[idx]) {
+                    alert("Selección inválida.");
+                    return;
+                }
+                registroACargar = data[idx];
+            }
+
+            cargarDatosEnFormulario(registroACargar);
+            alert("¡Equipo encontrado y cargado en pantalla!");
+
+        } catch (err) {
+            console.error("Error al buscar:", err);
+            alert("Ocurrió un error al realizar la búsqueda.");
         }
     }
 
+    // CARGAR DATOS EN LOS INPUTS Y PONER EN MODO EDICIÓN
+    function cargarDatosEnFormulario(ex) {
+        document.getElementById("registroId").value = ex.id;
+        document.getElementById("nuevoCliente").value = ex.cliente || "";
+        document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
+        document.getElementById("nuevoDps").value = ex.numero_dps || "";
+        document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
+        document.getElementById("nuevoMarca").value = ex.marca || "";
+        document.getElementById("nuevoTipo").value = ex.tipo || "";
+        autocompletarAgente();
+        document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
+        document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
+        document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
+        document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
+        document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
+        document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+
+        document.getElementById("contenedorPrincipal").classList.add("modo-existente");
+        document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
+        
+        let btn = document.getElementById("btnGuardar");
+        btn.textContent = "🔄 Actualizar Extintor";
+        btn.classList.add("existente-btn");
+
+        verificarClienteNuevo();
+        verificarExtintorNuevo();
+        verificarDpsNuevo();
+    }
+
+    // VERIFICAR DUPLICADO EN VIVO AL SALIR DE LOS CAMPOS
     async function verificarDuplicado() {
         let clienteActual = document.getElementById("nuevoCliente").value.trim();
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
@@ -227,14 +317,9 @@
 
         try {
             let query = _supabase.from('extintores').select('*');
-            
-            if (extintorNum && dpsNum) {
-                query = query.or(`extintor_numero.eq.${extintorNum},numero_dps.eq.${dpsNum}`);
-            } else if (extintorNum) {
-                query = query.eq('extintor_numero', extintorNum);
-            } else {
-                query = query.eq('numero_dps', dpsNum);
-            }
+            if (extintorNum && dpsNum) query = query.or(`extintor_numero.eq.${extintorNum},numero_dps.eq.${dpsNum}`);
+            else if (extintorNum) query = query.eq('extintor_numero', extintorNum);
+            else query = query.eq('numero_dps', dpsNum);
 
             const { data, error } = await query;
             if (error) throw error;
@@ -243,31 +328,10 @@
                 let matchMismoCliente = data.find(item => item.cliente && item.cliente.toLowerCase() === clienteActual.toLowerCase());
 
                 if (matchMismoCliente) {
-                    let ex = matchMismoCliente;
-                    document.getElementById("registroId").value = ex.id;
-                    document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
-                    document.getElementById("nuevoDps").value = ex.numero_dps || "";
-                    document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
-                    document.getElementById("nuevoMarca").value = ex.marca || "";
-                    document.getElementById("nuevoTipo").value = ex.tipo || "";
-                    autocompletarAgente();
-                    document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
-                    document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
-                    document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
-                    document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
-                    document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
-                    document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
-
-                    document.getElementById("contenedorPrincipal").classList.add("modo-existente");
-                    document.getElementById("tituloForm").textContent = "⚠️ EQUIPO EXISTENTE EN ESTE CLIENTE (Se actualizará)";
-                    
-                    let btn = document.getElementById("btnGuardar");
-                    btn.textContent = "🔄 Actualizar Extintor del Cliente";
-                    btn.classList.add("existente-btn");
-
-                } else {
+                    cargarDatosEnFormulario(matchMismoCliente);
+                } else if (clienteActual) {
                     let otroCliente = data[0].cliente || "Otro cliente";
-                    alert(`ℹ️ Aviso: Este número de extintor o DPS ya se encuentra registrado bajo el cliente "${otroCliente}".\n\nPodes continuar guardándolo sin problemas ya que pertenece a un cliente diferente.`);
+                    alert(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroCliente}". Podés guardarlo igual ya que es de otro cliente.`);
                     document.getElementById("registroId").value = "";
                 }
             }
@@ -276,6 +340,7 @@
         }
     }
 
+    // GUARDAR O ACTUALIZAR
     async function guardarOActualizar() {
         let cliente = document.getElementById("nuevoCliente").value.trim();
         let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
@@ -298,26 +363,18 @@
             capacidad: document.getElementById("nuevoCapacidad").value.trim(),
             ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
             marca: document.getElementById("nuevoMarca").value.trim().toUpperCase(),
-            
             vto_prueb_hidr: formatearFechaSQL(document.getElementById("nuevoVencPH").value),
             vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
-            
             numero_dps: document.getElementById("nuevoDps").value.trim(),
             identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
             ubicacion: document.getElementById("nuevoUbicacion").value.trim()
         };
 
         let resultado;
-
         if (idExistente) {
-            resultado = await _supabase
-                .from('extintores')
-                .update(datosRegistro)
-                .eq('id', idExistente);
+            resultado = await _supabase.from('extintores').update(datosRegistro).eq('id', idExistente);
         } else {
-            resultado = await _supabase
-                .from('extintores')
-                .insert([datosRegistro]);
+            resultado = await _supabase.from('extintores').insert([datosRegistro]);
         }
 
         if (resultado.error) {
@@ -330,12 +387,44 @@
             btn.classList.add("success");
 
             setTimeout(() => {
-                btn.innerHTML = "💾 Guardar Nuevo Extintor";
+                btn.innerHTML = "💾 Guardar / Actualizar";
                 btn.classList.remove("success", "existente-btn");
                 document.getElementById("contenedorPrincipal").classList.remove("modo-existente");
-                document.getElementById("tituloForm").textContent = "DATOS DEL NUEVO EQUIPO";
+                document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
                 limpiarFormulario();
             }, 2000);
+        }
+    }
+
+    // ELIMINAR EXTINTOR CON CONFIRMACIÓN
+    async function eliminarExtintor() {
+        let idExistente = document.getElementById("registroId").value;
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let cliente = document.getElementById("nuevoCliente").value.trim();
+
+        if (!idExistente) {
+            alert("⚠️ Primero debés buscar y cargar un extintor en pantalla para poder eliminarlo.");
+            return;
+        }
+
+        let confirmar = confirm(`¿Estás 100% seguro de que querés ELIMINAR el extintor N° ${extintorNum} del cliente "${cliente}" de la base de datos?\n\nEsta acción no se puede deshacer.`);
+        
+        if (!confirmar) return;
+
+        try {
+            const { error } = await _supabase
+                .from('extintores')
+                .delete()
+                .eq('id', idExistente);
+
+            if (error) throw error;
+
+            alert("🗑️ El extintor fue eliminado correctamente de la base de datos.");
+            limpiarFormulario();
+
+        } catch (err) {
+            console.error("Error al eliminar:", err);
+            alert("Ocurrió un error al intentar eliminar el registro.");
         }
     }
 
@@ -343,7 +432,7 @@
         document.getElementById("registroId").value = "";
         document.getElementById("nuevoExtintor").value = "";
         document.getElementById("nuevoDps").value = "";
-        document.getElementById("nuevoOblea").value = "Uso Gral"; // Vuelve a Uso Gral por defecto
+        document.getElementById("nuevoOblea").value = "Uso Gral";
         document.getElementById("nuevoMarca").value = "";
         document.getElementById("nuevoTipo").value = "";
         document.getElementById("nuevoAgente").value = "";
@@ -354,6 +443,14 @@
         document.getElementById("nuevoPuesto").value = "";
         document.getElementById("nuevoUbicacion").value = "";
         document.getElementById("lblNuevoCliente").style.display = "none";
+        document.getElementById("lblNuevoExtintor").style.display = "none";
+        document.getElementById("lblNuevoDps").style.display = "none";
+        document.getElementById("contenedorPrincipal").classList.remove("modo-existente");
+        document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
+        
+        let btn = document.getElementById("btnGuardar");
+        btn.textContent = "💾 Guardar / Actualizar";
+        btn.classList.remove("existente-btn");
     }
 </script>
 
