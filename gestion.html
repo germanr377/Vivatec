@@ -189,7 +189,7 @@
         }
     }
 
-    // BOTÓN RECARGA: Actualiza carga, calcula nuevo Vto P.H. (comparando solo el año) y solicita nuevo DPS
+    // BOTÓN RECARGA: Actualiza carga, recalcula P.H. siempre y solicita nuevo DPS
     function aplicarRecarga() {
         let ahora = new Date();
         let mesActual = ahora.getMonth() + 1; // 1 al 12
@@ -200,28 +200,30 @@
         // 1. Asignar nuevo vencimiento de carga (mes actual y próximo año)
         document.getElementById("nuevoVencCarga").value = `${mesActualStr}/${proximoAnioCarga}`;
 
-        // 2. Lógica condicional para el Vencimiento de P.H. (Comparación estricta por año)
+        // 2. Recálculo automático de Vencimiento de P.H. (¡Siempre se ejecuta al recargar!)
         let vencPhActual = document.getElementById("nuevoVencPH").value.trim();
         let anoFabInput = document.getElementById("nuevoAFabricacion").value.trim();
 
-        if (vencPhActual && anoFabInput) {
-            let partesPh = vencPhActual.split("/");
-            if (partesPh.length === 2) {
-                let mesPh = partesPh[0]; // Conserva el mes original
-                let anioPh = parseInt(partesPh[1], 10);
-                let anoFab = parseInt(anoFabInput, 10);
+        if (anoFabInput) {
+            let anoFab = parseInt(anoFabInput, 10);
+            let mesPh = mesActualStr; // Mes por defecto si no tenía
 
-                // Condición: Si el año de P.H. es menor o igual al año actual
-                if (anioPh <= anioActual && !isNaN(anoFab)) {
-                    let diferencia = anioActual - anoFab;
-                    let division = diferencia / 5;
-                    let redondeadoArriba = Math.ceil(division);
-                    let x = redondeadoArriba * 5;
-                    let nuevoAnioPh = anoFab + x;
-
-                    // Asignar el nuevo Venc. P.H. manteniendo el mes original
-                    document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
+            if (vencPhActual) {
+                let partesPh = vencPhActual.split("/");
+                if (partesPh.length === 2) {
+                    mesPh = partesPh[0]; // Mantiene el mes original de la P.H.
                 }
+            }
+
+            if (!isNaN(anoFab)) {
+                let diferencia = anioActual - anoFab;
+                let division = diferencia / 5;
+                let redondeadoArriba = Math.ceil(division);
+                let x = redondeadoArriba * 5;
+                let nuevoAnioPh = anoFab + x;
+
+                // Asignar el nuevo Venc. P.H. recalculado
+                document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
             }
         }
 
@@ -543,7 +545,7 @@
 
         } catch (err) {
             console.error("Error al eliminar:", err);
-            alert("Ocurrió an error al intentar eliminar el registro.");
+            alert("Ocurrió un error al intentar eliminar el registro.");
         }
     }
 
