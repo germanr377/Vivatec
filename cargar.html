@@ -152,6 +152,10 @@
 
     // Cargar listas al iniciar la página para los predictivos y validaciones
     window.addEventListener("load", async function() {
+        await cargarListasGlobales();
+    });
+
+    async function cargarListasGlobales() {
         const { data, error } = await _supabase
             .from('extintores')
             .select('cliente, extintor_numero, numero_dps');
@@ -162,19 +166,27 @@
             listaDpsExistentes = data.map(item => String(item.numero_dps).trim()).filter(Boolean);
 
             let datalist = document.getElementById("listaClientes");
+            datalist.innerHTML = ""; // Limpia por si se recarga dinámicamente
             listaClientesExistentes.forEach(cliente => {
                 let opt = document.createElement("option");
                 opt.value = cliente;
                 datalist.appendChild(opt);
             });
         }
-    });
+    }
 
     // Detectar si el Cliente es nuevo
     function verificarClienteNuevo() {
-        let val = document.getElementById("nuevoCliente").value.trim().toLowerCase();
+        let val = document.getElementById("nuevoCliente").value.trim();
         let aviso = document.getElementById("lblNuevoCliente");
-        aviso.style.display = (val && !listaClientesExistentes.some(c => c.toLowerCase() === val)) ? "block" : "none";
+        
+        if (!val) {
+            aviso.style.display = "none";
+            return;
+        }
+
+        let encontrado = listaClientesExistentes.some(c => c.toLowerCase() === val.toLowerCase());
+        aviso.style.display = !encontrado ? "block" : "none";
     }
 
     // Detectar si el N° de Extintor es nuevo
@@ -252,9 +264,8 @@
                 return;
             }
 
-            let registroA Cargar = data[0];
+            let registroACargar = data[0];
 
-            // Si hay más de un resultado (ej. mismo extintor en varios clientes y no se filtró cliente)
             if (data.length > 1 && !clienteFiltro) {
                 let mensaje = "Se encontraron varios registros con ese número. Elegí el cliente:\n";
                 data.forEach((item, index) => {
@@ -278,7 +289,6 @@
         }
     }
 
-    // CARGAR DATOS EN LOS INPUTS Y PONER EN MODO EDICIÓN
     function cargarDatosEnFormulario(ex) {
         document.getElementById("registroId").value = ex.id;
         document.getElementById("nuevoCliente").value = ex.cliente || "";
@@ -307,7 +317,6 @@
         verificarDpsNuevo();
     }
 
-    // VERIFICAR DUPLICADO EN VIVO AL SALIR DE LOS CAMPOS
     async function verificarDuplicado() {
         let clienteActual = document.getElementById("nuevoCliente").value.trim();
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
@@ -381,6 +390,9 @@
             console.error("Error al guardar:", resultado.error);
             alert("Hubo un error al guardar el extintor en la base de datos.");
         } else {
+            // Recargamos las listas globales en segundo plano para que tome el nuevo cliente/extintor al instante
+            await cargarListasGlobales();
+
             const btn = document.getElementById("btnGuardar");
             const textoOriginal = btn.innerHTML;
             btn.innerHTML = "✅ ¡Operación Exitosa!";
@@ -396,7 +408,6 @@
         }
     }
 
-    // ELIMINAR EXTINTOR CON CONFIRMACIÓN
     async function eliminarExtintor() {
         let idExistente = document.getElementById("registroId").value;
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
@@ -419,6 +430,7 @@
 
             if (error) throw error;
 
+            await cargarListasGlobales(); // Actualiza listas tras borrar
             alert("🗑️ El extintor fue eliminado correctamente de la base de datos.");
             limpiarFormulario();
 
@@ -451,6 +463,10 @@
         let btn = document.getElementById("btnGuardar");
         btn.textContent = "💾 Guardar / Actualizar";
         btn.classList.remove("existente-btn");
+        
+        verificarClienteNuevo();
+        verificarExtintorNuevo();
+        verificarDpsNuevo();
     }
 </script>
 
