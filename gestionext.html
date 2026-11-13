@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIVATEC - Gestión de Extintores</title>
+    <title>Carga de Extintores</title>
     
     <!-- Cliente de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,244 +14,212 @@
             background-color: #f4f4f5;
             margin: 0;
             padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            max-width: 1000px;
-            margin-inline: auto;
-        }
-
-        /* Cabecera */
-        header {
-            background: #18181b;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: center;
         }
 
-        /* Contenedor principal con CSS Grid */
-        main {
-            display: grid;
-            grid-template-columns: 300px 1fr; /* Formulario a la izquierda, tabla a la derecha */
-            gap: 20px;
-            align-items: start;
-        }
-
-        @media (max-width: 768px) {
-            main { grid-template-columns: 1fr; }
-        }
-
-        /* Tarjetas (Formulario y Tabla) */
-        .panel {
+        .contenedor {
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             border: 1px solid #e4e4e7;
+            width: 100%;
+            max-width: 600px;
         }
 
-        /* Estilos del Formulario */
-        form { display: grid; gap: 15px; }
-        label { font-size: 0.9em; font-weight: 600; color: #3f3f46; }
-        input, select {
+        h2 { margin-top: 0; color: #18181b; }
+
+        /* Formulario a dos columnas */
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Hacer que algunos elementos ocupen las dos columnas si es necesario */
+        .col-completa { grid-column: 1 / -1; }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #3f3f46;
+            margin-bottom: 5px;
+        }
+
+        input {
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            width: 100%;
-            box-sizing: border-box;
+            font-size: 0.95em;
         }
+
         button {
-            padding: 10px;
-            background-color: #ef4444; /* Rojo para VIVATEC / Extintores */
+            grid-column: 1 / -1;
+            padding: 12px;
+            background-color: #ef4444; /* Rojo */
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            transition: background 0.2s;
-        }
-        button:hover { background-color: #dc2626; }
-        
-        button.btn-baja {
-            background-color: #3f3f46;
-            padding: 5px 10px;
-            font-size: 0.85em;
-        }
-        button.btn-baja:hover { background-color: #18181b; }
-
-        #mensaje { font-size: 0.85em; font-weight: bold; margin: 0; text-align: center; height: 15px; }
-
-        /* Estilos de la Tabla */
-        table {
-            width: 100%;
-            border-collapse: collapse;
             margin-top: 10px;
         }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #e4e4e7;
-            font-size: 0.9em;
+
+        button:hover { background-color: #dc2626; }
+
+        #mensaje {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            min-height: 20px;
         }
-        th { background-color: #f8fafc; font-weight: 600; color: #3f3f46; }
-        tr:hover { background-color: #fafafa; }
+
+        @media (max-width: 500px) {
+            form { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2 style="margin: 0;">VIVATEC - Gestión de Extintores</h2>
-    </header>
+    <div class="contenedor">
+        <h2>Alta de Extintor</h2>
+        <form id="form-extintores">
+            
+            <div class="campo col-completa">
+                <label>Cliente</label>
+                <input type="text" id="cliente">
+            </div>
 
-    <main>
-        <!-- Panel Izquierdo: Alta de Extintor -->
-        <div class="panel">
-            <h3 style="margin-top: 0;">Alta de Equipo</h3>
-            <form id="formulario-carga">
-                <div>
-                    <label for="numero_serie">Nº de Serie o Puesto:</label>
-                    <input type="text" id="numero_serie" required placeholder="Ej: EXT-001">
-                </div>
+            <div class="campo">
+                <label>N° Extintor</label>
+                <input type="text" id="extintor_numero">
+            </div>
 
-                <div>
-                    <label for="tipo_extintor">Tipo:</label>
-                    <select id="tipo_extintor" required>
-                        <option value="ABC 5kg">Polvo ABC - 5kg</option>
-                        <option value="ABC 10kg">Polvo ABC - 10kg</option>
-                        <option value="CO2 3.5kg">CO2 - 3.5kg</option>
-                        <option value="Agua 10L">Agua - 10L</option>
-                    </select>
-                </div>
+            <div class="campo">
+                <label>Tipo Oblea</label>
+                <input type="text" id="oblea">
+            </div>
 
-                <div>
-                    <label for="fecha_vencimiento">Vencimiento Carga:</label>
-                    <input type="date" id="fecha_vencimiento" required>
-                </div>
+            <div class="campo">
+                <label>Tipo</label>
+                <input type="text" id="tipo">
+            </div>
 
-                <button type="submit">Registrar Extintor</button>
-                <p id="mensaje"></p>
-            </form>
-        </div>
+            <div class="campo">
+                <label>Agente Extintor</label>
+                <input type="text" id="agente_extintor">
+            </div>
 
-        <!-- Panel Derecho: Inventario y Bajas -->
-        <div class="panel">
-            <h3 style="margin-top: 0;">Inventario Activo</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nº Serie</th>
-                        <th>Tipo</th>
-                        <th>Vencimiento</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-extintores">
-                    <!-- Los datos se inyectarán aquí con JavaScript -->
-                    <tr><td colspan="4" style="text-align:center; color:#666;">Cargando datos...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
+            <div class="campo">
+                <label>Capacidad</label>
+                <input type="text" id="capacidad">
+            </div>
+
+            <div class="campo">
+                <label>Año Fab.</label>
+                <input type="number" id="ano_fab">
+            </div>
+
+            <div class="campo col-completa">
+                <label>Marca</label>
+                <input type="text" id="marca">
+            </div>
+
+            <div class="campo">
+                <label>Vto Carga</label>
+                <input type="date" id="vto_carga">
+            </div>
+
+            <div class="campo">
+                <label>Vto P.H.</label>
+                <input type="date" id="vto_prueb_hidr">
+            </div>
+
+            <div class="campo">
+                <label>Puesto</label>
+                <input type="text" id="numero_dps">
+            </div>
+
+            <div class="campo">
+                <label>Identif. puesto</label>
+                <input type="number" id="identificacion_puesto">
+            </div>
+
+            <div class="campo col-completa">
+                <label>Ubicación</label>
+                <input type="text" id="ubicacion">
+            </div>
+
+            <button type="submit">Guardar Registro</button>
+            <div id="mensaje"></div>
+        </form>
+    </div>
 
     <script>
         // 1. Configuración de Supabase
-        const SUPABASE_URL = 'https://tu-proyecto.supabase.co';
-        const SUPABASE_ANON_KEY = 'tu-anon-key-publica';
+        // Reemplazá con tu ANON KEY pública de Supabase
+        const SUPABASE_URL = 'https://cpgdqzrvtensoruahgxn.supabase.co';
+        const SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUI'; 
+        
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Nombre de la tabla en tu base de datos
-        const TABLA = 'extintores'; 
-
-        // 2. Función para leer y mostrar los extintores
-        async function cargarExtintores() {
-            const tbody = document.getElementById('tabla-extintores');
-            
-            // Consultar datos a Supabase ordenados por fecha de creación descendente
-            const { data, error } = await supabase
-                .from(TABLA)
-                .select('*')
-                .order('id', { ascending: false });
-
-            if (error) {
-                console.error("Error al cargar:", error);
-                tbody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error al cargar datos</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = ''; // Limpiar tabla
-
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#666;">No hay extintores registrados.</td></tr>`;
-                return;
-            }
-
-            // Generar las filas de la tabla dinámicamente
-            data.forEach(extintor => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${extintor.numero_serie}</strong></td>
-                    <td>${extintor.tipo_extintor}</td>
-                    <td>${extintor.fecha_vencimiento}</td>
-                    <td>
-                        <button class="btn-baja" onclick="darDeBaja(${extintor.id})">Baja / Borrar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+        // 2. Función auxiliar para manejar los campos vacíos
+        // Si el campo está vacío, devuelve null en lugar de un texto vacío
+        function obtenerValor(id, esNumero = false) {
+            const valor = document.getElementById(id).value.trim();
+            if (valor === '') return null;
+            return esNumero ? parseInt(valor) : valor;
         }
 
-        // 3. Función para dar de baja (eliminar) un extintor
-        async function darDeBaja(id) {
-            if (!confirm('¿Estás seguro de que deseas dar de baja este extintor? Esta acción no se puede deshacer.')) return;
-
-            const { error } = await supabase
-                .from(TABLA)
-                .delete()
-                .eq('id', id);
-
-            if (error) {
-                alert("Error al dar de baja: " + error.message);
-                console.error(error);
-            } else {
-                cargarExtintores(); // Recargar la tabla automáticamente
-            }
-        }
-
-        // 4. Manejar el evento de Alta (Submit del formulario)
-        document.getElementById('formulario-carga').addEventListener('submit', async (evento) => {
-            evento.preventDefault();
+        // 3. Manejo del envío del formulario
+        document.getElementById('form-extintores').addEventListener('submit', async (e) => {
+            e.preventDefault();
             const mensaje = document.getElementById('mensaje');
-            mensaje.textContent = 'Guardando...';
+            
+            mensaje.textContent = 'Guardando datos...';
             mensaje.style.color = '#666';
 
-            const nuevoExtintor = {
-                numero_serie: document.getElementById('numero_serie').value,
-                tipo_extintor: document.getElementById('tipo_extintor').value,
-                fecha_vencimiento: document.getElementById('fecha_vencimiento').value
+            // Armar el objeto mapeando los inputs a las columnas de la base de datos
+            const nuevoRegistro = {
+                cliente: obtenerValor('cliente'),
+                extintor_numero: obtenerValor('extintor_numero'),
+                oblea: obtenerValor('oblea'),
+                tipo: obtenerValor('tipo'),
+                agente_extintor: obtenerValor('agente_extintor'),
+                capacidad: obtenerValor('capacidad'),
+                ano_fab: obtenerValor('ano_fab', true),
+                marca: obtenerValor('marca'),
+                vto_carga: obtenerValor('vto_carga'),
+                vto_prueb_hidr: obtenerValor('vto_prueb_hidr'),
+                numero_dps: obtenerValor('numero_dps'),
+                identificacion_puesto: obtenerValor('identificacion_puesto', true),
+                ubicacion: obtenerValor('ubicacion')
             };
 
+            // Enviar a Supabase
             const { error } = await supabase
-                .from(TABLA)
-                .insert([nuevoExtintor]);
+                .from('extintores')
+                .insert([nuevoRegistro]);
 
             if (error) {
-                mensaje.textContent = 'Error: ' + error.message;
+                console.error(error);
+                mensaje.textContent = 'Error al guardar: ' + error.message;
                 mensaje.style.color = 'red';
             } else {
-                mensaje.textContent = 'Guardado exitosamente';
+                mensaje.textContent = '¡Registro guardado correctamente!';
                 mensaje.style.color = 'green';
-                evento.target.reset(); // Limpiar formulario
-                cargarExtintores();    // Actualizar tabla instantáneamente
-                setTimeout(() => { mensaje.textContent = ''; }, 3000);
+                e.target.reset(); // Limpia el formulario
+                
+                setTimeout(() => { mensaje.textContent = ''; }, 4000);
             }
         });
-
-        // 5. Cargar los datos al abrir la página por primera vez
-        document.addEventListener('DOMContentLoaded', cargarExtintores);
-
     </script>
 </body>
 </html>
