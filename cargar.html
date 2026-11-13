@@ -99,7 +99,7 @@
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Agente Extintor:</label>
-                <input type="text" id="nuevoAgente" placeholder="Se llena solo" readonly style="background-color: #f1f2f6;">
+                <input type="text" id="nuevoAgente" placeholder="Ej: PQS">
             </div>
             <div class="form-group" style="flex: none; width: 12ch;">
                 <label>Capacidad:</label>
@@ -115,11 +115,11 @@
             </div>
             <div class="form-group" style="flex: none; width: 14ch;">
                 <label>Venc. P.H. (MM/AAAA):</label>
-                <input type="text" id="nuevoVencPH" placeholder="MM/AAAA">
+                <input type="text" id="nuevoVencPH" placeholder="MM/AAAA" onblur="validarFormatoMesAnio(this)">
             </div>
             <div class="form-group" style="flex: none; width: 14ch;">
                 <label>Venc. Carga (MM/AAAA):</label>
-                <input type="text" id="nuevoVencCarga" placeholder="MM/AAAA">
+                <input type="text" id="nuevoVencCarga" placeholder="MM/AAAA" onblur="validarFormatoMesAnio(this)">
             </div>
             <div class="form-group" style="flex: none; width: 10ch;">
                 <label>Puesto:</label>
@@ -150,7 +150,6 @@
     let listaExtintoresExistentes = [];
     let listaDpsExistentes = [];
 
-    // Cargar listas al iniciar la página para los predictivos y validaciones
     window.addEventListener("load", async function() {
         await cargarListasGlobales();
     });
@@ -166,7 +165,7 @@
             listaDpsExistentes = data.map(item => String(item.numero_dps).trim()).filter(Boolean);
 
             let datalist = document.getElementById("listaClientes");
-            datalist.innerHTML = ""; // Limpia por si se recarga dinámicamente
+            datalist.innerHTML = "";
             listaClientesExistentes.forEach(cliente => {
                 let opt = document.createElement("option");
                 opt.value = cliente;
@@ -175,7 +174,6 @@
         }
     }
 
-    // Detectar si el Cliente es nuevo
     function verificarClienteNuevo() {
         let val = document.getElementById("nuevoCliente").value.trim();
         let aviso = document.getElementById("lblNuevoCliente");
@@ -189,21 +187,18 @@
         aviso.style.display = !encontrado ? "block" : "none";
     }
 
-    // Detectar si el N° de Extintor es nuevo
     function verificarExtintorNuevo() {
         let val = document.getElementById("nuevoExtintor").value.trim();
         let aviso = document.getElementById("lblNuevoExtintor");
         aviso.style.display = (val && !listaExtintoresExistentes.includes(val)) ? "block" : "none";
     }
 
-    // Detectar si el N° de DPS es nuevo
     function verificarDpsNuevo() {
         let val = document.getElementById("nuevoDps").value.trim();
         let aviso = document.getElementById("lblNuevoDps");
         aviso.style.display = (val && !listaDpsExistentes.includes(val)) ? "block" : "none";
     }
 
-    // Validar tipo permitido
     function validarTipo(input) {
         let valor = input.value.trim().toUpperCase();
         let permitidos = ["A", "ABC", "BC", "K"];
@@ -211,6 +206,21 @@
             alert("⚠️ Tipo inválido. Los tipos permitidos son: A, ABC, BC o K.");
             input.value = "";
             document.getElementById("nuevoAgente").value = "";
+            input.focus();
+        }
+    }
+
+    // VALIDAR FORMATO ESTRICTO MM/AAAA EN VENCIMIENTOS
+    function validarFormatoMesAnio(input) {
+        let val = input.value.trim();
+        if (!val) return;
+
+        // Expresión regular para validar formato MM/AAAA (ej: 08/2029 o 12/2027)
+        let regex = /^(0[1-9]|1[0-2])\/\d{4}$/;
+
+        if (!regex.test(val)) {
+            alert("⚠️ Formato incorrecto. Debe ingresar el mes y año en formato MM/AAAA (Ej: 08/2029).");
+            input.value = "";
             input.focus();
         }
     }
@@ -229,6 +239,7 @@
         return null;
     }
 
+    // Autocompleta sugerencia pero deja editar libremente
     function autocompletarAgente() {
         let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
         let agenteInput = document.getElementById("nuevoAgente");
@@ -236,10 +247,8 @@
         else if (tipo === "BC") agenteInput.value = "CO2";
         else if (tipo === "A") agenteInput.value = "AFFF";
         else if (tipo === "K") agenteInput.value = "K";
-        else agenteInput.value = "";
     }
 
-    // FUNCIÓN DE BÚSQUEDA INTELIGENTE
     async function buscarExtintor() {
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let dpsNum = document.getElementById("nuevoDps").value.trim();
@@ -281,7 +290,7 @@
             }
 
             cargarDatosEnFormulario(registroACargar);
-            alert("¡Equipo encontrado y cargado en pantalla!");
+            // Se eliminó el alert de equipo encontrado por pedido expreso
 
         } catch (err) {
             console.error("Error al buscar:", err);
@@ -297,7 +306,7 @@
         document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
         document.getElementById("nuevoMarca").value = ex.marca || "";
         document.getElementById("nuevoTipo").value = ex.tipo || "";
-        autocompletarAgente();
+        document.getElementById("nuevoAgente").value = ex.agente_extintor || ""; // Carga el agente sin bloquearlo
         document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
         document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
         document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
@@ -349,7 +358,6 @@
         }
     }
 
-    // GUARDAR O ACTUALIZAR
     async function guardarOActualizar() {
         let cliente = document.getElementById("nuevoCliente").value.trim();
         let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
@@ -390,7 +398,6 @@
             console.error("Error al guardar:", resultado.error);
             alert("Hubo un error al guardar el extintor en la base de datos.");
         } else {
-            // Recargamos las listas globales en segundo plano para que tome el nuevo cliente/extintor al instante
             await cargarListasGlobales();
 
             const btn = document.getElementById("btnGuardar");
@@ -430,7 +437,7 @@
 
             if (error) throw error;
 
-            await cargarListasGlobales(); // Actualiza listas tras borrar
+            await cargarListasGlobales();
             alert("🗑️ El extintor fue eliminado correctamente de la base de datos.");
             limpiarFormulario();
 
