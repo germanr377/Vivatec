@@ -26,15 +26,23 @@
         .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
+        /* MODO RECARGA (Fondo Amarillo) */
+        .modo-recarga { border-color: #f1c40f !important; background-color: #fef9e7 !important; }
+        .modo-recarga .oblea-header { color: #b7950b; border-bottom-color: #f1c40f; }
+
         /* Avisos flotantes */
         .aviso-nuevo { font-size: 11px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
 
         /* Botones de acción */
         .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
-        .btn-base { flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; min-width: 130px; text-align: center; }
+        .btn-base { flex: 1; padding: 12px; border: none; color: white; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; min-width: 120px; text-align: center; }
         
         .btn-buscar { background: #2980b9; }
         .btn-buscar:hover { background: #1f618d; }
+
+        /* Botón Recarga (Amarillo) */
+        .btn-recarga { background: #f1c40f; color: #2c3e50; }
+        .btn-recarga:hover { background: #d4ac0d; }
 
         .btn-save { background: #27ae60; }
         .btn-save:hover { background: #219653; }
@@ -134,6 +142,7 @@
         <!-- BOTONERA DE ACCIÓN UNIFICADA -->
         <div class="action-buttons">
             <button class="btn-base btn-buscar" onclick="buscarExtintor()">🔍 Buscar</button>
+            <button class="btn-base btn-recarga" onclick="aplicarRecarga()">⚡ Recarga</button>
             <button id="btnGuardar" class="btn-base btn-save" onclick="guardarOActualizar()">💾 Guardar / Actualizar</button>
             <button class="btn-base btn-delete" onclick="eliminarExtintor()">🗑️ Eliminar</button>
             <button class="btn-base btn-clean" onclick="limpiarFormulario()">🧹 Limpiar</button>
@@ -174,6 +183,22 @@
         }
     }
 
+    // FUNCIÓN DEL BOTÓN RECARGA (Fondo Amarillo + Mes Actual / Próximo Año)
+    function aplicarRecarga() {
+        let ahora = new Date();
+        let mesActual = String(ahora.getMonth() + 1).padStart(2, '0');
+        let proximoAnio = ahora.getFullYear() + 1;
+
+        // Setea el vencimiento de carga al mes actual y próximo año (MM/AAAA)
+        document.getElementById("nuevoVencCarga").value = `${mesActual}/${proximoAnio}`;
+
+        // Pone todo el contenedor con fondo amarillo
+        let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-existente");
+        contenedor.classList.add("modo-recarga");
+        document.getElementById("tituloForm").textContent = "⚡ MODO RECARGA ACTIVADO";
+    }
+
     function verificarClienteNuevo() {
         let val = document.getElementById("nuevoCliente").value.trim();
         let aviso = document.getElementById("lblNuevoCliente");
@@ -210,12 +235,10 @@
         }
     }
 
-    // VALIDAR FORMATO ESTRICTO MM/AAAA EN VENCIMIENTOS
     function validarFormatoMesAnio(input) {
         let val = input.value.trim();
         if (!val) return;
 
-        // Expresión regular para validar formato MM/AAAA (ej: 08/2029 o 12/2027)
         let regex = /^(0[1-9]|1[0-2])\/\d{4}$/;
 
         if (!regex.test(val)) {
@@ -239,7 +262,6 @@
         return null;
     }
 
-    // Autocompleta sugerencia pero deja editar libremente
     function autocompletarAgente() {
         let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
         let agenteInput = document.getElementById("nuevoAgente");
@@ -290,7 +312,6 @@
             }
 
             cargarDatosEnFormulario(registroACargar);
-            // Se eliminó el alert de equipo encontrado por pedido expreso
 
         } catch (err) {
             console.error("Error al buscar:", err);
@@ -306,7 +327,7 @@
         document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
         document.getElementById("nuevoMarca").value = ex.marca || "";
         document.getElementById("nuevoTipo").value = ex.tipo || "";
-        document.getElementById("nuevoAgente").value = ex.agente_extintor || ""; // Carga el agente sin bloquearlo
+        document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
         document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
         document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
         document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
@@ -314,7 +335,9 @@
         document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
         document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
 
-        document.getElementById("contenedorPrincipal").classList.add("modo-existente");
+        let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-recarga");
+        contenedor.classList.add("modo-existente");
         document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
         
         let btn = document.getElementById("btnGuardar");
@@ -408,8 +431,6 @@
             setTimeout(() => {
                 btn.innerHTML = "💾 Guardar / Actualizar";
                 btn.classList.remove("success", "existente-btn");
-                document.getElementById("contenedorPrincipal").classList.remove("modo-existente");
-                document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
                 limpiarFormulario();
             }, 2000);
         }
@@ -464,7 +485,10 @@
         document.getElementById("lblNuevoCliente").style.display = "none";
         document.getElementById("lblNuevoExtintor").style.display = "none";
         document.getElementById("lblNuevoDps").style.display = "none";
-        document.getElementById("contenedorPrincipal").classList.remove("modo-existente");
+        
+        let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-existente");
+        contenedor.classList.remove("modo-recarga");
         document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
         
         let btn = document.getElementById("btnGuardar");
