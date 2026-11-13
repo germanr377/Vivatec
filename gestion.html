@@ -189,42 +189,40 @@
         }
     }
 
-    // BOTÓN RECARGA: Actualiza carga, recalcula P.H. siempre y solicita nuevo DPS
+    // BOTÓN RECARGA: Actualiza carga, calcula P.H. siempre con tu fórmula exacta y solicita nuevo DPS
     function aplicarRecarga() {
         let ahora = new Date();
-        let mesActual = ahora.getMonth() + 1; // 1 al 12
+        let mesActual = ahora.getMonth() + 1;
         let anioActual = ahora.getFullYear();
         let mesActualStr = String(mesActual).padStart(2, '0');
         let proximoAnioCarga = anioActual + 1;
 
-        // 1. Asignar nuevo vencimiento de carga (mes actual y próximo año)
+        // 1. Asignar nuevo vencimiento de carga
         document.getElementById("nuevoVencCarga").value = `${mesActualStr}/${proximoAnioCarga}`;
 
-        // 2. Recálculo automático de Vencimiento de P.H. (¡Siempre se ejecuta al recargar!)
-        let vencPhActual = document.getElementById("nuevoVencPH").value.trim();
+        // 2. Recálculo estricto de P.H. con la fórmula solicitada
         let anoFabInput = document.getElementById("nuevoAFabricacion").value.trim();
-
-        if (anoFabInput) {
-            let anoFab = parseInt(anoFabInput, 10);
-            let mesPh = mesActualStr; // Mes por defecto si no tenía
-
-            if (vencPhActual) {
-                let partesPh = vencPhActual.split("/");
-                if (partesPh.length === 2) {
-                    mesPh = partesPh[0]; // Mantiene el mes original de la P.H.
-                }
+        let vencPhActual = document.getElementById("nuevoVencPH").value.trim();
+        
+        let mesPh = mesActualStr; // Mes por defecto si no tuviera
+        if (vencPhActual) {
+            let partesPh = vencPhActual.split("/");
+            if (partesPh.length === 2 && partesPh[0]) {
+                mesPh = partesPh[0]; // Mantiene el mes original
             }
+        }
 
-            if (!isNaN(anoFab)) {
-                let diferencia = anioActual - anoFab;
-                let division = diferencia / 5;
-                let redondeadoArriba = Math.ceil(division);
-                let x = redondeadoArriba * 5;
-                let nuevoAnioPh = anoFab + x;
+        let anoFab = parseInt(anoFabInput, 10);
+        if (!isNaN(anoFab)) {
+            let diferencia = anioActual - anoFab;
+            let division = diferencia / 5;
+            let redondeadoArriba = Math.ceil(division); // Redondea hacia arriba al entero
+            let x = redondeadoArriba * 5;
+            let nuevoAnioPh = anoFab + x;
 
-                // Asignar el nuevo Venc. P.H. recalculado
-                document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
-            }
+            document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
+        } else {
+            alert("⚠️ Por favor, ingresá el 'Año Fab.' del extintor para poder calcular el nuevo Venc. P.H.");
         }
 
         // 3. Solicitar el nuevo número de DPS
