@@ -189,22 +189,50 @@
         }
     }
 
-    // BOTÓN RECARGA: Setea fecha de carga y solicita el nuevo N° de DPS
+    // BOTÓN RECARGA: Actualiza carga, calcula nuevo Vto P.H. (comparando solo el año) y solicita nuevo DPS
     function aplicarRecarga() {
         let ahora = new Date();
-        let mesActual = String(ahora.getMonth() + 1).padStart(2, '0');
-        let proximoAnio = ahora.getFullYear() + 1;
+        let mesActual = ahora.getMonth() + 1; // 1 al 12
+        let anioActual = ahora.getFullYear();
+        let mesActualStr = String(mesActual).padStart(2, '0');
+        let proximoAnioCarga = anioActual + 1;
 
-        // Asigna vencimiento de carga automático
-        document.getElementById("nuevoVencCarga").value = `${mesActual}/${proximoAnio}`;
+        // 1. Asignar nuevo vencimiento de carga (mes actual y próximo año)
+        document.getElementById("nuevoVencCarga").value = `${mesActualStr}/${proximoAnioCarga}`;
 
-        // Solicita el nuevo número de DPS mediante una ventana emergente
+        // 2. Lógica condicional para el Vencimiento de P.H. (Comparación estricta por año)
+        let vencPhActual = document.getElementById("nuevoVencPH").value.trim();
+        let anoFabInput = document.getElementById("nuevoAFabricacion").value.trim();
+
+        if (vencPhActual && anoFabInput) {
+            let partesPh = vencPhActual.split("/");
+            if (partesPh.length === 2) {
+                let mesPh = partesPh[0]; // Conserva el mes original
+                let anioPh = parseInt(partesPh[1], 10);
+                let anoFab = parseInt(anoFabInput, 10);
+
+                // Condición: Si el año de P.H. es menor o igual al año actual
+                if (anioPh <= anioActual && !isNaN(anoFab)) {
+                    let diferencia = anioActual - anoFab;
+                    let division = diferencia / 5;
+                    let redondeadoArriba = Math.ceil(division);
+                    let x = redondeadoArriba * 5;
+                    let nuevoAnioPh = anoFab + x;
+
+                    // Asignar el nuevo Venc. P.H. manteniendo el mes original
+                    document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
+                }
+            }
+        }
+
+        // 3. Solicitar el nuevo número de DPS
         let nuevoDps = prompt("Ingrese el nuevo N° de DPS para esta recarga:");
         if (nuevoDps !== null && nuevoDps.trim() !== "") {
             document.getElementById("nuevoDps").value = nuevoDps.trim();
-            verificarDpsNuevo(); // Evalúa si el DPS ingresado es nuevo o ya existe
+            verificarDpsNuevo();
         }
 
+        // 4. Cambiar interfaz a modo recarga (fondo amarillo)
         let contenedor = document.getElementById("contenedorPrincipal");
         contenedor.classList.remove("modo-existente");
         contenedor.classList.add("modo-recarga");
@@ -455,7 +483,6 @@
                 btn.innerHTML = "💾 Guardar / Actualizar";
                 btn.classList.remove("success", "existente-btn");
 
-                // Si vino de recarga, se queda cargado en pantalla para seguir operando
                 if (enModoRecarga) {
                     let contenedor = document.getElementById("contenedorPrincipal");
                     contenedor.classList.remove("modo-recarga");
@@ -469,7 +496,6 @@
                     }
                     enModoRecarga = false;
                 } else {
-                    // Casos normales: limpia el formulario por completo
                     limpiarFormulario();
                 }
             }, 2000);
@@ -517,7 +543,7 @@
 
         } catch (err) {
             console.error("Error al eliminar:", err);
-            alert("Ocurrió un error al intentar eliminar el registro.");
+            alert("Ocurrió an error al intentar eliminar el registro.");
         }
     }
 
