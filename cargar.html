@@ -22,7 +22,7 @@
         .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #f9fff9; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 8px; margin-bottom: 15px; }
 
-        /* Estilo cuando detecta que ya existe (modo edición/actualización) */
+        /* Estilo cuando detecta que es del MISMO cliente (modo actualización) */
         .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
@@ -42,7 +42,7 @@
     <div id="contenedorPrincipal" class="oblea-preview">
         <div id="tituloForm" class="oblea-header">DATOS DEL NUEVO EQUIPO</div>
 
-        <!-- Campo oculto para almacenar el ID si el registro ya existe -->
+        <!-- Campo oculto para almacenar el ID si es actualización del mismo cliente -->
         <input type="hidden" id="registroId">
 
         <!-- FILA 1: Cliente, N° Extintor, DPS -->
@@ -53,11 +53,11 @@
             </div>
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° Extintor:</label>
-                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130" onblur="verificarDuplicado('extintor', this.value)">
+                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130" onblur="verificarDuplicado()">
             </div>
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° DPS:</label>
-                <input type="text" id="nuevoDps" placeholder="Ej: 5503020" onblur="verificarDuplicado('dps', this.value)">
+                <input type="text" id="nuevoDps" placeholder="Ej: 5503020" onblur="verificarDuplicado()">
             </div>
         </div>
 
@@ -126,7 +126,6 @@
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // TRADUCTORES DE FECHAS
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
@@ -162,55 +161,72 @@
         }
     }
 
-    // VERIFICACIÓN EN VIVO (AL SALIR DE LOS CAMPOS EXTINTOR O DPS)
-    async function verificarDuplicado(tipoCampo, valor) {
-        if (!valor) return;
-        valor = valor.trim();
+    // VERIFICACIÓN INTELIGENTE POR CLIENTE
+    async function verificarDuplicado() {
+        let clienteActual = document.getElementById("nuevoCliente").value.trim();
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let dpsNum = document.getElementById("nuevoDps").value.trim();
+
+        if (!extintorNum && !dpsNum) return;
 
         try {
+            // Consultamos si existe el N° de extintor o el DPS en la base
             let query = _supabase.from('extintores').select('*');
-            if (tipoCampo === 'extintor') {
-                query = query.eq('extintor_numero', valor);
+            
+            if (extintorNum && dpsNum) {
+                query = query.or(`extintor_numero.eq.${extintorNum},numero_dps.eq.${dpsNum}`);
+            } else if (extintorNum) {
+                query = query.eq('extintor_numero', extintorNum);
             } else {
-                query = query.eq('numero_dps', valor);
+                query = query.eq('numero_dps', dpsNum);
             }
 
-            const { data, error } = await query.limit(1);
+            const { data, error } = await query;
             if (error) throw error;
 
             if (data && data.length > 0) {
-                let ex = data[0];
-                
-                // Rellenamos el formulario automáticamente con los datos encontrados
-                document.getElementById("registroId").value = ex.id;
-                document.getElementById("nuevoCliente").value = ex.cliente || "";
-                document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
-                document.getElementById("nuevoDps").value = ex.numero_dps || "";
-                document.getElementById("nuevoOblea").value = ex.oblea || "";
-                document.getElementById("nuevoMarca").value = ex.marca || "";
-                document.getElementById("nuevoTipo").value = ex.tipo || "";
-                document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
-                document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
-                document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
-                document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
-                document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
-                document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
-                document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+                // Buscamos si alguno pertenece al MISMO cliente
+                let matchMismoCliente = data.find(item => item.cliente && item.cliente.toLowerCase() === clienteActual.toLowerCase());
 
-                // Cambiamos la estética visual para avisar que es un registro existente
-                document.getElementById("contenedorPrincipal").classList.add("modo-existente");
-                document.getElementById("tituloForm").textContent = "⚠️ EQUIPO EXISTENTE (Se actualizará al guardar)";
-                
-                let btn = document.getElementById("btnGuardar");
-                btn.textContent = "🔄 Actualizar Extintor Existente";
-                btn.classList.add("existente-btn");
+                if (matchMismoCliente) {
+                    // CASO A: Es del mismo cliente -> Se pone en modo actualización (sobrescribir)
+                    let ex = matchMismoCliente;
+                    document.getElementById("registroId").value = ex.id;
+                    document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
+                    document.getElementById("nuevoDps").value = ex.numero_dps || "";
+                    document.getElementById("nuevoOblea").value = ex.oblea || "";
+                    document.getElementById("nuevoMarca").value = ex.marca || "";
+                    document.getElementById("nuevoTipo").value = ex.tipo || "";
+                    document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
+                    document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
+                    document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
+                    document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
+                    document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
+                    document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
+                    document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+
+                    document.getElementById("contenedorPrincipal").classList.add("modo-existente");
+                    document.getElementById("tituloForm").textContent = "⚠️ EQUIPO EXISTENTE EN ESTE CLIENTE (Se actualizará)";
+                    
+                    let btn = document.getElementById("btnGuardar");
+                    btn.textContent = "🔄 Actualizar Extintor del Cliente";
+                    btn.classList.add("existente-btn");
+
+                } else {
+                    // CASO B: Existe pero en OTRO cliente -> Solo avisa, pero deja grabar como nuevo
+                    let otroCliente = data[0].cliente || "Otro cliente";
+                    alert(`ℹ️ Aviso: Este número de extintor o DPS ya se encuentra registrado bajo el cliente "${otroCliente}".\n\nPodes continuar guardándolo sin problemas ya que pertenece a un cliente diferente.`);
+                    
+                    // Limpiamos el ID por las dudas para asegurarnos de que cree uno nuevo
+                    document.getElementById("registroId").value = "";
+                }
             }
         } catch (err) {
-            console.error("Error al verificar duplicado en vivo:", err);
+            console.error("Error al verificar duplicado:", err);
         }
     }
 
-    // GUARDAR O ACTUALIZAR SEGÚN CORRESPONDA
+    // GUARDAR O ACTUALIZAR
     async function guardarOActualizar() {
         let cliente = document.getElementById("nuevoCliente").value.trim();
         let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
@@ -245,13 +261,13 @@
         let resultado;
 
         if (idExistente) {
-            // Si ya existía y se cargó el ID, hace UPDATE
+            // Actualiza el equipo existente del mismo cliente
             resultado = await _supabase
                 .from('extintores')
                 .update(datosRegistro)
                 .eq('id', idExistente);
         } else {
-            // Si es completamente nuevo, hace INSERT
+            // Inserta un registro nuevo (permitiendo repetir número si es de otro cliente)
             resultado = await _supabase
                 .from('extintores')
                 .insert([datosRegistro]);
