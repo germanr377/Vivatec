@@ -423,4 +423,133 @@
             vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
             numero_dps: document.getElementById("nuevoDps").value.trim(),
             identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
+            ubicacion: document.getElementById("nuevoUbicacion").value.trim()
+        };
+
+        let resultado;
+        if (idExistente) {
+            resultado = await _supabase.from('extintores').update(datosRegistro).eq('id', idExistente);
+        } else {
+            resultado = await _supabase.from('extintores').insert([datosRegistro]);
+        }
+
+        if (resultado.error) {
+            console.error("Error al guardar:", resultado.error);
+            alert("Hubo un error al guardar el extintor en la base de datos.");
+        } else {
+            await cargarListasGlobales();
+
+            const btn = document.getElementById("btnGuardar");
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = "✅ ¡Operación Exitosa!";
+            btn.classList.add("success");
+
+            setTimeout(() => {
+                btn.innerHTML = "💾 Guardar / Actualizar";
+                btn.classList.remove("success", "existente-btn");
+
+                // CONTROL DE FLUJO SEGÚN SI VINO DE RECARGA O NO
+                if (enModoRecarga) {
+                    // Si se usó recarga, se mantiene cargado en pantalla en modo existente
+                    let contenedor = document.getElementById("contenedorPrincipal");
+                    contenedor.classList.remove("modo-recarga");
+                    contenedor.classList.add("modo-existente");
+                    document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
+                    btn.textContent = "🔄 Actualizar Extintor";
+                    btn.classList.add("existente-btn");
+                    
+                    // Si se creó nuevo durante la recarga, recuperamos su ID recién guardado
+                    if (!idExistente) {
+                        buscarExtintorSilencioso();
+                    }
+                    enModoRecarga = false; // Reseteamos la bandera
+                } else {
+                    // Casos normales: limpia el formulario para un nuevo ingreso
+                    limpiarFormulario();
+                }
+            }, 2000);
+        }
+    }
+
+    // Búsqueda silenciosa auxiliar para asignar el ID tras insertar por recarga
+    async function buscarExtintorSilencioso() {
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let clienteFiltro = document.getElementById("nuevoCliente").value.trim();
+        try {
+            let { data } = await _supabase.from('extintores').select('id').eq('extintor_numero', extintorNum).eq('cliente', clienteFiltro).limit(1);
+            if (data && data.length > 0) {
+                document.getElementById("registroId").value = data[0].id;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function eliminarExtintor() {
+        let idExistente = document.getElementById("registroId").value;
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let cliente = document.getElementById("nuevoCliente").value.trim();
+
+        if (!idExistente) {
+            alert("⚠️ Primero debés buscar y cargar un extintor en pantalla para poder eliminarlo.");
+            return;
+        }
+
+        let confirmar = confirm(`¿Estás 100% seguro de que querés ELIMINAR el extintor N° ${extintorNum} del cliente "${cliente}" de la base de datos?\n\nEsta acción no se puede deshacer.`);
         
+        if (!confirmar) return;
+
+        try {
+            const { error } = await _supabase
+                .from('extintores')
+                .delete()
+                .eq('id', idExistente);
+
+            if (error) throw error;
+
+            await cargarListasGlobales();
+            alert("🗑️ El extintor fue eliminado correctamente de la base de datos.");
+            limpiarFormulario();
+
+        } catch (err) {
+            console.error("Error al eliminar:", err);
+            alert("Ocurrió un error al intentar eliminar el registro.");
+        }
+    }
+
+    function limpiarFormulario() {
+        document.getElementById("registroId").value = "";
+        document.getElementById("nuevoExtintor").value = "";
+        document.getElementById("nuevoDps").value = "";
+        document.getElementById("nuevoOblea").value = "Uso Gral";
+        document.getElementById("nuevoMarca").value = "";
+        document.getElementById("nuevoTipo").value = "";
+        document.getElementById("nuevoAgente").value = "";
+        document.getElementById("nuevoCapacidad").value = "";
+        document.getElementById("nuevoAFabricacion").value = "";
+        document.getElementById("nuevoVencPH").value = "";
+        document.getElementById("nuevoVencCarga").value = "";
+        document.getElementById("nuevoPuesto").value = "";
+        document.getElementById("nuevoUbicacion").value = "";
+        document.getElementById("lblNuevoCliente").style.display = "none";
+        document.getElementById("lblNuevoExtintor").style.display = "none";
+        document.getElementById("lblNuevoDps").style.display = "none";
+        
+        enModoRecarga = false;
+        let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-existente");
+        contenedor.classList.remove("modo-recarga");
+        document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
+        
+        let btn = document.getElementById("btnGuardar");
+        btn.textContent = "💾 Guardar / Actualizar";
+        btn.classList.remove("existente-btn");
+        
+        verificarClienteNuevo();
+        verificarExtintorNuevo();
+        verificarDpsNuevo();
+    }
+</script>
+
+</body>
+</html>
