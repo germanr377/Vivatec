@@ -163,7 +163,7 @@
     let listaClientesExistentes = [];
     let listaExtintoresExistentes = [];
     let listaDpsExistentes = [];
-    let enModoRecarga = false; // Bandera para saber si se presionó Recarga
+    let enModoRecarga = false;
 
     window.addEventListener("load", async function() {
         await cargarListasGlobales();
@@ -189,30 +189,37 @@
         }
     }
 
-    // BOTÓN RECARGA
+    // BOTÓN RECARGA: Setea fecha de carga y solicita el nuevo N° de DPS
     function aplicarRecarga() {
         let ahora = new Date();
         let mesActual = String(ahora.getMonth() + 1).padStart(2, '0');
         let proximoAnio = ahora.getFullYear() + 1;
 
+        // Asigna vencimiento de carga automático
         document.getElementById("nuevoVencCarga").value = `${mesActual}/${proximoAnio}`;
+
+        // Solicita el nuevo número de DPS mediante una ventana emergente
+        let nuevoDps = prompt("Ingrese el nuevo N° de DPS para esta recarga:");
+        if (nuevoDps !== null && nuevoDps.trim() !== "") {
+            document.getElementById("nuevoDps").value = nuevoDps.trim();
+            verificarDpsNuevo(); // Evalúa si el DPS ingresado es nuevo o ya existe
+        }
 
         let contenedor = document.getElementById("contenedorPrincipal");
         contenedor.classList.remove("modo-existente");
         contenedor.classList.add("modo-recarga");
         document.getElementById("tituloForm").textContent = "⚡ MODO RECARGA ACTIVADO";
         
-        enModoRecarga = true; // Activamos la bandera de recarga
+        enModoRecarga = true;
     }
 
-    // BOTÓN IMPRIMIR OBLEA (En espera de instrucciones de acción)
     function imprimirOblea() {
         let id = document.getElementById("registroId").value;
         if (!id) {
             alert("⚠️ Primero debés buscar, cargar o guardar un extintor para poder imprimir su oblea.");
             return;
         }
-        alert("Botón 'Imprimir Oblea' presionado. Próximamente configuraremos su lógica exacta.");
+        alert("Botón 'Imprimir Oblea' presionado. Próximamente configuraremos su acción exacta.");
     }
 
     function verificarClienteNuevo() {
@@ -448,9 +455,8 @@
                 btn.innerHTML = "💾 Guardar / Actualizar";
                 btn.classList.remove("success", "existente-btn");
 
-                // CONTROL DE FLUJO SEGÚN SI VINO DE RECARGA O NO
+                // Si vino de recarga, se queda cargado en pantalla para seguir operando
                 if (enModoRecarga) {
-                    // Si se usó recarga, se mantiene cargado en pantalla en modo existente
                     let contenedor = document.getElementById("contenedorPrincipal");
                     contenedor.classList.remove("modo-recarga");
                     contenedor.classList.add("modo-existente");
@@ -458,20 +464,18 @@
                     btn.textContent = "🔄 Actualizar Extintor";
                     btn.classList.add("existente-btn");
                     
-                    // Si se creó nuevo durante la recarga, recuperamos su ID recién guardado
                     if (!idExistente) {
                         buscarExtintorSilencioso();
                     }
-                    enModoRecarga = false; // Reseteamos la bandera
+                    enModoRecarga = false;
                 } else {
-                    // Casos normales: limpia el formulario para un nuevo ingreso
+                    // Casos normales: limpia el formulario por completo
                     limpiarFormulario();
                 }
             }, 2000);
         }
     }
 
-    // Búsqueda silenciosa auxiliar para asignar el ID tras insertar por recarga
     async function buscarExtintorSilencioso() {
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let clienteFiltro = document.getElementById("nuevoCliente").value.trim();
