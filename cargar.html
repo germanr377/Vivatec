@@ -26,6 +26,9 @@
         .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
+        /* Aviso de Cliente Nuevo */
+        .aviso-nuevo-cliente { font-size: 12px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
+
         /* Botón de Guardar */
         .action-buttons { display: flex; gap: 10px; margin-top: 25px; }
         .btn-save { background: #27ae60; flex: 1; padding: 14px; border: none; color: white; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
@@ -49,7 +52,9 @@
         <div class="form-row">
             <div class="form-group" style="flex: 1;">
                 <label>Cliente:</label>
-                <input type="text" id="nuevoCliente" placeholder="Ej: Aceros Borroni S.A.">
+                <input type="text" id="nuevoCliente" list="listaClientes" placeholder="Escribí o seleccioná cliente..." oninput="verificarClienteNuevo()">
+                <datalist id="listaClientes"></datalist>
+                <div id="lblNuevoCliente" class="aviso-nuevo-cliente">✨ Nuevo Cliente</div>
             </div>
             <div class="form-group" style="flex: none; width: 15ch;">
                 <label>N° Extintor:</label>
@@ -77,14 +82,8 @@
                 <input type="text" id="nuevoMarca" placeholder="Ej: Horizonte">
             </div>
             <div class="form-group" style="flex: 1;">
-                <label>Tipo:</label>
-                <select id="nuevoTipo" onchange="autocompletarAgente()">
-                    <option value="">-- Seleccionar --</option>
-                    <option value="A">A</option>
-                    <option value="ABC">ABC</option>
-                    <option value="BC">BC</option>
-                    <option value="K">K</option>
-                </select>
+                <label>Tipo (A, ABC, BC, K):</label>
+                <input type="text" id="nuevoTipo" placeholder="Ej: ABC" oninput="autocompletarAgente()" onblur="validarTipo(this)">
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Agente Extintor:</label>
@@ -132,6 +131,57 @@
 
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let listaClientesExistentes = [];
+
+    // Cargar clientes al iniciar la página para el predictivo
+    window.addEventListener("load", async function() {
+        const { data, error } = await _supabase
+            .from('extintores')
+            .select('cliente')
+            .not('cliente', 'is', null);
+
+        if (!error && data) {
+            listaClientesExistentes = [...new Set(data.map(item => item.cliente.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            let datalist = document.getElementById("listaClientes");
+            listaClientesExistentes.forEach(cliente => {
+                let opt = document.createElement("option");
+                opt.value = cliente;
+                datalist.appendChild(opt);
+            });
+        }
+    });
+
+    // Detectar si el cliente escrito es nuevo o ya existe
+    function verificarClienteNuevo() {
+        let valorCliente = document.getElementById("nuevoCliente").value.trim().toLowerCase();
+        let aviso = document.getElementById("lblNuevoCliente");
+
+        if (!valorCliente) {
+            aviso.style.display = "none";
+            return;
+        }
+
+        let encontrado = listaClientesExistentes.some(c => c.toLowerCase() === valorCliente);
+        if (!encontrado) {
+            aviso.style.display = "block"; // Muestra "Nuevo Cliente"
+        } else {
+            aviso.style.display = "none";
+        }
+    }
+
+    // Validar que el tipo escrito sea válido
+    function validarTipo(input) {
+        let valor = input.value.trim().toUpperCase();
+        let permitidos = ["A", "ABC", "BC", "K"];
+
+        if (valor && !permitidos.includes(valor)) {
+            alert("⚠️ Tipo inválido. Los tipos permitidos son: A, ABC, BC o K.");
+            input.value = "";
+            document.getElementById("nuevoAgente").value = "";
+            input.focus();
+        }
+    }
+
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
@@ -152,9 +202,8 @@
         return null;
     }
 
-    // AUTOCOMPLETAR AGENTE EXTINTOR SEGÚN EL TIPO SELECCIONADO
     function autocompletarAgente() {
-        let tipo = document.getElementById("nuevoTipo").value;
+        let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
         let agenteInput = document.getElementById("nuevoAgente");
 
         if (tipo === "ABC") {
@@ -170,7 +219,6 @@
         }
     }
 
-    // VERIFICACIÓN INTELIGENTE POR CLIENTE
     async function verificarDuplicado() {
         let clienteActual = document.getElementById("nuevoCliente").value.trim();
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
@@ -203,7 +251,7 @@
                     document.getElementById("nuevoOblea").value = ex.oblea || "";
                     document.getElementById("nuevoMarca").value = ex.marca || "";
                     document.getElementById("nuevoTipo").value = ex.tipo || "";
-                    autocompletarAgente(); // Actualiza el agente según el tipo cargado
+                    autocompletarAgente();
                     document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
                     document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
                     document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
@@ -229,7 +277,6 @@
         }
     }
 
-    // GUARDAR O ACTUALIZAR
     async function guardarOActualizar() {
         let cliente = document.getElementById("nuevoCliente").value.trim();
         let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
@@ -247,7 +294,7 @@
             cliente: cliente,
             oblea: document.getElementById("nuevoOblea").value,
             extintor_numero: extintorNumero,
-            tipo: document.getElementById("nuevoTipo").value,
+            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase(),
             agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase(),
             capacidad: document.getElementById("nuevoCapacidad").value.trim(),
             ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
@@ -306,6 +353,7 @@
         document.getElementById("nuevoVencCarga").value = "";
         document.getElementById("nuevoPuesto").value = "";
         document.getElementById("nuevoUbicacion").value = "";
+        document.getElementById("lblNuevoCliente").style.display = "none";
     }
 </script>
 
