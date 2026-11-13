@@ -71,8 +71,7 @@
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>Tipo Oblea:</label>
                 <select id="nuevoOblea">
-                    <option value="">(En blanco)</option>
-                    <option value="Uso Gral">Uso Gral</option>
+                    <option value="Uso Gral" selected>Uso Gral</option>
                     <option value="Vehicular 1K">Vehicular 1K</option>
                     <option value="Vehicular">Vehicular</option>
                 </select>
@@ -248,7 +247,7 @@
                     document.getElementById("registroId").value = ex.id;
                     document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
                     document.getElementById("nuevoDps").value = ex.numero_dps || "";
-                    document.getElementById("nuevoOblea").value = ex.oblea || "";
+                    document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
                     document.getElementById("nuevoMarca").value = ex.marca || "";
                     document.getElementById("nuevoTipo").value = ex.tipo || "";
                     autocompletarAgente();
@@ -344,6 +343,7 @@
         document.getElementById("registroId").value = "";
         document.getElementById("nuevoExtintor").value = "";
         document.getElementById("nuevoDps").value = "";
+        document.getElementById("nuevoOblea").value = "Uso Gral"; // Vuelve a Uso Gral por defecto
         document.getElementById("nuevoMarca").value = "";
         document.getElementById("nuevoTipo").value = "";
         document.getElementById("nuevoAgente").value = "";
