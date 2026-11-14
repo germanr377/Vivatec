@@ -24,8 +24,15 @@
         
         .btn { background: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; }
         .btn:hover { background: #219653; }
+        .btn:disabled { background: #95a5a6; cursor: not-allowed; }
         .btn-volver { background: #7f8c8d; margin-top: 10px; }
         .btn-volver:hover { background: #626567; }
+
+        /* Barra de Progreso */
+        #progresoContainer { display: none; margin-top: 15px; background: #e8f8f5; border: 1px solid #27ae60; padding: 12px; border-radius: 4px; text-align: center; }
+        #textoProgreso { font-weight: bold; color: #16a085; font-size: 14px; }
+        .barra-externa { background: #ddd; border-radius: 4px; height: 12px; margin-top: 8px; overflow: hidden; }
+        #barraProgreso { background: #27ae60; width: 0%; height: 100%; transition: width 0.2s; }
 
         .table-container { margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; background: #fff; }
@@ -54,7 +61,15 @@
     <label>Área de Pegado (Columnas: N° Ext | Tipo | Capacidad | A.Fab | Marca | Vto P.H. | Vto Carga | N° DPS | Puesto | Ubicación):</label>
     <textarea id="txtPegar" placeholder="Hacé clic acá y apretá Ctrl + V para pegar los datos copiados de Excel..."></textarea>
 
-    <button class="btn" onclick="procesarPegado()">🔍 Procesar y Vista Previa</button>
+    <button id="btnProcesar" class="btn" onclick="procesarPegado()">🔍 Procesar y Vista Previa</button>
+
+    <!-- CONTENEDOR DE BARRA DE PROGRESO -->
+    <div id="progresoContainer">
+        <div id="textoProgreso">Subiendo registros... (0%)</div>
+        <div class="barra-externa">
+            <div id="barraProgreso"></div>
+        </div>
+    </div>
 
     <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
         <h3 style="margin: 0;">Vista Previa <span id="contadorRegistros" class="badge-count">0 registros</span></h3>
@@ -251,13 +266,31 @@
         let confirmar = confirm(`¿Estás seguro de que querés procesar la subida de estos ${datosProcesados.length} extintores? Se verificarán posibles duplicados.`);
         if (!confirmar) return;
 
+        // Mostrar barra de progreso y deshabilitar botones
+        let progresoContainer = document.getElementById("progresoContainer");
+        let textoProgreso = document.getElementById("textoProgreso");
+        let barraProgreso = document.getElementById("barraProgreso");
+        let btnSubir = document.getElementById("btnSubir");
+        let btnProcesar = document.getElementById("btnProcesar");
+
+        progresoContainer.style.display = "block";
+        btnSubir.disabled = true;
+        btnProcesar.disabled = true;
+
         let insertados = 0;
         let actualizados = 0;
         let omitidos = 0;
+        let total = datosProcesados.length;
+        let actual = 0;
 
         try {
             for (let item of datosProcesados) {
-                // Verificar si ya existe el extintor para este mismo cliente en la base de datos
+                actual++;
+                let porcentaje = Math.round((actual / total) * 100);
+                textoProgreso.textContent = `Subiendo registro ${actual} de ${total} (${porcentaje}%)`;
+                barraProgreso.style.width = porcentaje + "%";
+
+                // Verificar duplicados para este cliente y extintor
                 let { data: existente, error: errBusqueda } = await _supabase
                     .from('extintores')
                     .select('id')
@@ -284,7 +317,6 @@
                         omitidos++;
                     }
                 } else {
-                    // Si no existe, se inserta normalmente como nuevo
                     let { error: errInsert } = await _supabase
                         .from('extintores')
                         .insert([item]);
@@ -297,11 +329,32 @@
                 }
             }
 
+            // Ocultar progreso y reactivar botones
+            progresoContainer.style.display = "none";
+            barraProgreso.style.width = "0%";
+            btnSubir.disabled = false;
+            btnProcesar.disabled = false;
+
             alert(`🎉 ¡Importación finalizada!\n\n- Nuevos guardados: ${insertados}\n- Actualizados / Sobrescritos: ${actualizados}\n- Omitidos: ${omitidos}`);
-            window.location.href = 'gestion.html';
+
+            // LIMPIAR PANTALLA PARA NUEVA IMPORTACIÓN (Sin salir de la página)
+            document.getElementById("clienteGlobal").value = "";
+            document.getElementById("txtPegar").value = "";
+            document.getElementById("lblNuevoCliente").style.display = "none";
+            document.getElementById("btnSubir").style.display = "none";
+            datosProcesados = [];
+            document.getElementById("contadorRegistros").textContent = "0 registros listos";
+            document.querySelector("#tablaPreview tbody").innerHTML = `<tr><td colspan="11" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Completá el cliente, pegá los datos y procesalos.</td></tr>`;
+            
+            // Actualizar la lista de clientes predictiva por si se agregó uno nuevo
+            await cargarClientesGlobales();
+            document.getElementById("clienteGlobal").focus();
 
         } catch (err) {
             console.error("Error general al importar:", err);
+            progresoContainer.style.display = "none";
+            btnSubir.disabled = false;
+            btnProcesar.disabled = false;
             alert("Hubo un error al procesar la subida a Supabase. Verificá tu conexión a internet.");
         }
     }
