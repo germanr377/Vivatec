@@ -8,19 +8,25 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1050px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 1400px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
         
-        .filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; align-items: flex-end; }
+        .filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; align-items: flex-end; }
         .form-group { display: flex; flex-direction: column; }
-        label { font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
-        input, select { padding: 9px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        label { font-weight: bold; margin-bottom: 4px; color: #555; font-size: 12px; }
+        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; }
         
-        .btn-consultar { background: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; }
+        .acciones-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .btn-consultar { background: #2980b9; color: white; border: none; padding: 9px 20px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; }
+        .btn-consultar:hover { background: #1f618d; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 9px; text-align: center; font-size: 13px; }
-        th { background-color: #2c3e50; color: white; cursor: pointer; user-select: none; transition: background 0.2s; }
+        .btn-eliminar { background: #c0392b; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
+        .btn-eliminar:hover { background: #962d22; }
+
+        .table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #ddd; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: center; font-size: 12px; }
+        th { background-color: #2c3e50; color: white; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 1; }
         th:hover { background-color: #34495e; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         .sin-resultados { text-align: center; color: #7f8c8d; font-style: italic; padding: 20px; }
@@ -29,54 +35,100 @@
 <body>
 
 <div class="container">
-    <h2>📊 Panel de Consultas de Extintores</h2>
+    <h2>📊 Panel de Consultas y Gestión de Extintores</h2>
 
     <!-- FILTROS DE BÚSQUEDA -->
     <div class="filtros-grid">
         <div class="form-group">
-            <label for="filtroCliente">Cliente:</label>
+            <label>Cliente:</label>
             <select id="filtroCliente">
                 <option value="">-- Todos --</option>
             </select>
         </div>
         <div class="form-group">
-            <label for="filtroExtintor">N° Extintor:</label>
+            <label>N° Extintor:</label>
             <input type="text" id="filtroExtintor" placeholder="Ej: 6389130">
         </div>
         <div class="form-group">
-            <label for="filtroDps">N° DPS:</label>
+            <label>N° DPS:</label>
             <input type="text" id="filtroDps" placeholder="Ej: 5503020">
         </div>
         <div class="form-group">
-            <label for="fecha-desde">Vto. Desde:</label>
-            <input type="date" id="fecha-desde">
+            <label>Tipo:</label>
+            <input type="text" id="filtroTipo" placeholder="Ej: ABC">
         </div>
         <div class="form-group">
-            <label for="fecha-hasta">Vto. Hasta:</label>
-            <input type="date" id="fecha-hasta">
+            <label>Capacidad:</label>
+            <input type="text" id="filtroCapacidad" placeholder="Ej: 10">
+        </div>
+        <div class="form-group">
+            <label>Marca:</label>
+            <input type="text" id="filtroMarca" placeholder="Ej: Horizonte">
+        </div>
+        <div class="form-group">
+            <label>Año Fab.:</label>
+            <input type="text" id="filtroAnioFab" placeholder="Ej: 2024">
+        </div>
+        <div class="form-group">
+            <label>Puesto:</label>
+            <input type="text" id="filtroPuesto" placeholder="Ej: 1">
+        </div>
+        <div class="form-group">
+            <label>Ubicación:</label>
+            <input type="text" id="filtroUbicacion" placeholder="Ej: Pasillo">
+        </div>
+        <div class="form-group">
+            <label>Vto. P.H. Desde:</label>
+            <input type="date" id="ph-desde">
+        </div>
+        <div class="form-group">
+            <label>Vto. P.H. Hasta:</label>
+            <input type="date" id="ph-hasta">
+        </div>
+        <div class="form-group">
+            <label>Vto. Carga Desde:</label>
+            <input type="date" id="carga-desde">
+        </div>
+        <div class="form-group">
+            <label>Vto. Carga Hasta:</label>
+            <input type="date" id="carga-hasta">
         </div>
         <button class="btn-consultar" onclick="realizarConsulta()">🔍 Buscar</button>
     </div>
 
+    <!-- BARRA DE ACCIONES (Borrado masivo) -->
+    <div class="acciones-bar">
+        <span id="contadorSeleccionados" style="font-weight: bold; color: #555; font-size: 13px;"></span>
+        <button id="btnEliminarSeleccionados" class="btn-eliminar" onclick="eliminarSeleccionados()">🗑️ Eliminar Registros Tildados</button>
+    </div>
+
     <!-- TABLA DE RESULTADOS -->
-    <table id="tabla-resultados">
-        <thead>
-            <tr>
-                <th onclick="ordenarTabla('cliente')">Cliente ↕</th>
-                <th onclick="ordenarTabla('oblea')">Oblea ↕</th>
-                <th onclick="ordenarTabla('extintor_numero')">Extintor N° ↕</th>
-                <th onclick="ordenarTabla('numero_dps')">DPS ↕</th>
-                <th onclick="ordenarTabla('capacidad')">Capacidad ↕</th>
-                <th onclick="ordenarTabla('agente_extintor')">Ag. Extin. ↕</th>
-                <th onclick="ordenarTabla('vto_carga')">Vencimiento ↕</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="7" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-container">
+        <table id="tabla-resultados">
+            <thead>
+                <tr>
+                    <th style="width: 30px;"><input type="checkbox" id="checkTodos" onclick="toggleSeleccionarTodos(this)"></th>
+                    <th onclick="ordenarTabla('cliente')">Cliente ↕</th>
+                    <th onclick="ordenarTabla('oblea')">Oblea ↕</th>
+                    <th onclick="ordenarTabla('extintor_numero')">Extintor N° ↕</th>
+                    <th onclick="ordenarTabla('tipo')">Tipo ↕</th>
+                    <th onclick="ordenarTabla('capacidad')">Capacidad ↕</th>
+                    <th onclick="ordenarTabla('ano_fab')">A. Fab ↕</th>
+                    <th onclick="ordenarTabla('marca')">Marca ↕</th>
+                    <th onclick="ordenarTabla('vto_prueb_hidr')">Vto. P.H. ↕</th>
+                    <th onclick="ordenarTabla('vto_carga')">Vto. Carga ↕</th>
+                    <th onclick="ordenarTabla('numero_dps')">DPS ↕</th>
+                    <th onclick="ordenarTabla('identificacion_puesto')">Puesto ↕</th>
+                    <th onclick="ordenarTabla('ubicacion')">Ubicación ↕</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="13" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -87,12 +139,11 @@
     let resultadosGlobales = [];
     let ordenActual = { columna: 'vto_carga', ascendente: true };
 
-    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (MM/AAAA)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
         let partes = fechaSQL.split("-");
         if (partes.length === 3) {
-            return `${partes[1]}/${partes[0]}`; // Retorna MM/AAAA
+            return `${partes[1]}/${partes[0]}`; // MM/AAAA
         }
         return fechaSQL;
     }
@@ -119,20 +170,38 @@
         let cliente = document.getElementById('filtroCliente').value.trim();
         let extintor = document.getElementById('filtroExtintor').value.trim();
         let dps = document.getElementById('filtroDps').value.trim();
-        let desde = document.getElementById('fecha-desde').value;
-        let hasta = document.getElementById('fecha-hasta').value;
+        let tipo = document.getElementById('filtroTipo').value.trim();
+        let capacidad = document.getElementById('filtroCapacidad').value.trim();
+        let marca = document.getElementById('filtroMarca').value.trim();
+        let anioFab = document.getElementById('filtroAnioFab').value.trim();
+        let puesto = document.getElementById('filtroPuesto').value.trim();
+        let ubicacion = document.getElementById('filtroUbicacion').value.trim();
+        
+        let phDesde = document.getElementById('ph-desde').value;
+        let phHasta = document.getElementById('ph-hasta').value;
+        let cargaDesde = document.getElementById('carga-desde').value;
+        let cargaHasta = document.getElementById('carga-hasta').value;
 
         let tbody = document.querySelector('#tabla-resultados tbody');
-        tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
 
         try {
-            let query = _supabase.from('extintores').select('cliente, oblea, extintor_numero, numero_dps, capacidad, agente_extintor, vto_carga');
+            let query = _supabase.from('extintores').select('*');
 
             if (cliente) query = query.eq('cliente', cliente);
             if (extintor) query = query.eq('extintor_numero', extintor);
             if (dps) query = query.eq('numero_dps', dps);
-            if (desde) query = query.gte('vto_carga', desde);
-            if (hasta) query = query.lte('vto_carga', hasta);
+            if (tipo) query = query.ilike('tipo', `%${tipo}%`);
+            if (capacidad) query = query.eq('capacidad', capacidad);
+            if (marca) query = query.ilike('marca', `%${marca}%`);
+            if (anioFab) query = query.eq('ano_fab', parseInt(anioFab));
+            if (puesto) query = query.eq('identificacion_puesto', parseInt(puesto));
+            if (ubicacion) query = query.ilike('ubicacion', `%${ubicacion}%`);
+
+            if (phDesde) query = query.gte('vto_prueb_hidr', phDesde);
+            if (phHasta) query = query.lte('vto_prueb_hidr', phHasta);
+            if (cargaDesde) query = query.gte('vto_carga', cargaDesde);
+            if (cargaHasta) query = query.lte('vto_carga', cargaHasta);
 
             const { data, error } = await query.order('vto_carga', { ascending: true });
 
@@ -143,32 +212,86 @@
 
         } catch (error) {
             console.error("Error al consultar Supabase:", error);
-            tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
         }
     }
 
     function mostrarResultados(datos) {
         let tbody = document.querySelector('#tabla-resultados tbody');
         tbody.innerHTML = "";
+        document.getElementById('checkTodos').checked = false;
+        actualizarContadorSeleccionados();
 
         if (datos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
             return;
         }
 
         datos.forEach(fila => {
             let tr = document.createElement('tr');
             tr.innerHTML = `
+                <td><input type="checkbox" class="check-registro" value="${fila.id}" onclick="actualizarContadorSeleccionados()"></td>
                 <td>${fila.cliente || "-"}</td>
                 <td>${fila.oblea || "-"}</td>
                 <td>${fila.extintor_numero || "-"}</td>
-                <td>${fila.numero_dps || "-"}</td>
+                <td>${fila.tipo || "-"}</td>
                 <td>${fila.capacidad || "-"}</td>
-                <td><strong>${fila.agente_extintor || "-"}</strong></td>
+                <td>${fila.ano_fab || "-"}</td>
+                <td>${fila.marca || "-"}</td>
+                <td>${formatearFechaWeb(fila.vto_prueb_hidr)}</td>
                 <td>${formatearFechaWeb(fila.vto_carga)}</td>
+                <td>${fila.numero_dps || "-"}</td>
+                <td>${fila.identificacion_puesto !== null && fila.identificacion_puesto !== undefined ? fila.identificacion_puesto : "-"}</td>
+                <td>${fila.ubicacion || "-"}</td>
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    function toggleSeleccionarTodos(source) {
+        checkboxes = document.querySelectorAll('.check-registro');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+        actualizarContadorSeleccionados();
+    }
+
+    function actualizarContadorSeleccionados() {
+        let seleccionados = document.querySelectorAll('.check-registro:checked');
+        let btnEliminar = document.getElementById('btnEliminarSeleccionados');
+        let spanContador = document.getElementById('contadorSeleccionados');
+
+        if (seleccionados.length > 0) {
+            btnEliminar.style.display = 'block';
+            spanContador.textContent = `${seleccionados.length} registro(s) tildado(s)`;
+        } else {
+            btnEliminar.style.display = 'none';
+            spanContador.textContent = '';
+        }
+    }
+
+    async function eliminarSeleccionados() {
+        let seleccionados = document.querySelectorAll('.check-registro:checked');
+        if (seleccionados.length === 0) return;
+
+        let idsAEliminar = Array.from(seleccionados).map(cb => cb.value);
+
+        let confirmar = confirm(`⚠️ ¿Estás 100% seguro de que querés ELIMINAR los ${idsAEliminar.length} registros seleccionados de la base de datos?\n\nEsta acción no se puede deshacer.`);
+        if (!confirmar) return;
+
+        try {
+            const { error } = await _supabase
+                .from('extintores')
+                .delete()
+                .in('id', idsAEliminar);
+
+            if (error) throw error;
+
+            alert("🗑️ Los registros seleccionados fueron eliminados correctamente.");
+            realizarConsulta(); // Refrescar resultados
+
+        } catch (err) {
+            console.error("Error al eliminar registros:", err);
+            alert("Hubo un error al intentar eliminar los registros en Supabase.");
+        }
     }
 
     function ordenarTabla(columna) {
