@@ -16,8 +16,8 @@
         label { font-weight: bold; margin-bottom: 4px; color: #555; font-size: 12px; }
         input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; transition: background 0.3s, border-color 0.3s; }
         
-        /* ESTILO PARA CAMPOS CON FILTRO ACTIVO (Amarillo claro) */
-        .filtro-activo { background-color: #fef9e7 !important; border-color: #f1c40f !important; }
+        /* AMARILLO MÁS INTENSO Y VISIBLE PARA CAMPOS ACTIVOS */
+        .filtro-activo { background-color: #fff176 !important; border-color: #fbc02d !important; font-weight: bold; }
 
         .botones-grid { display: flex; gap: 8px; grid-column: span 2; }
         .btn-consultar { background: #2980b9; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; flex: 1; }
@@ -178,7 +178,7 @@
         }
     });
 
-    // Pinta de amarillo claro el campo si tiene contenido, lo limpia si está vacío
+    // Pinta con un amarillo bien visible el campo si tiene contenido
     function verificarCampo(input) {
         if (input.value && input.value.trim() !== "") {
             input.classList.add("filtro-activo");
@@ -340,7 +340,7 @@
 
         resultadosGlobales.sort((a, b) => {
             let valA = a[columna] !== null && a[columna] !== undefined ? String(a[columna]).toLowerCase() : "";
-            let valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna].toLowerCase()) : "";
+            let valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna]).toLowerCase() : "";
 
             let numA = parseFloat(valA);
             let numB = parseFloat(valB);
