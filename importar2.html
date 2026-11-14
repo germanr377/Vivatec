@@ -1,1 +1,169 @@
-jj
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Carga Masiva por Copiar y Pegar</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
+        p.instruction { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
+        
+        textarea { width: 100%; height: 120px; padding: 10px; border: 2px dashed #27ae60; border-radius: 4px; font-family: monospace; font-size: 13px; box-sizing: border-box; background: #f9fff9; margin-bottom: 15px; }
+        
+        .btn { background: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; }
+        .btn:hover { background: #219653; }
+        .btn-volver { background: #7f8c8d; margin-top: 10px; }
+        .btn-volver:hover { background: #626567; }
+
+        .table-container { margin-top: 25px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; background: #fff; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        th { background: #2c3e50; color: white; position: sticky; top: 0; }
+        tr:hover { background: #f1f1f1; }
+        
+        .badge-count { background: #2980b9; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Vivatec - Importación Masiva (Excel ➔ Base de Datos)</h2>
+    <p class="instruction">Copiá las filas de tu Excel (sin incluir los títulos de las columnas) y pegalas en el cuadro de abajo.</p>
+
+    <!-- Área para pegar desde Excel -->
+    <textarea id="txtPegar" placeholder="Hacé clic acá y apretá Ctrl + V para pegar los datos copiados de Excel..."></textarea>
+
+    <button class="btn" onclick="procesarPegado()">🔍 Procesar y Vista Previa</button>
+
+    <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;">Vista Previa <span id="contadorRegistros" class="badge-count">0 registros</span></h3>
+        <button id="btnSubir" class="btn" style="width: auto; background: #2980b9; display: none;" onclick="subirASupabase()">🚀 Confirmar y Subir a la Base de Datos</button>
+    </div>
+
+    <!-- Tabla de Vista Previa -->
+    <div class="table-container">
+        <table id="tablaPreview">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>N° Extintor</th>
+                    <th>N° DPS</th>
+                    <th>Tipo Oblea</th>
+                    <th>Marca</th>
+                    <th>Tipo</th>
+                    <th>Agente</th>
+                    <th>Capac.</th>
+                    <th>Año Fab.</th>
+                    <th>Ubicación</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="10" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Pegá los datos arriba para empezar.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn btn-volver" onclick="window.location.href='gestion.html'">⬅️ Volver al Panel de Gestión</button>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let datosProcesados = [];
+
+    function procesarPegado() {
+        let texto = document.getElementById("txtPegar").value.trim();
+        if (!texto) {
+            alert("⚠️ El cuadro está vacío. Copiá las celdas de Excel y pegalas primero.");
+            return;
+        }
+
+        let lineas = texto.split("\n");
+        datosProcesados = [];
+        let tbody = document.querySelector("#tablaPreview tbody");
+        tbody.innerHTML = "";
+
+        lineas.forEach((linea, index) => {
+            let columnas = linea.split("\t"); // Excel separa las columnas por tabulación al copiar
+
+            // Mapeo según el orden típico de tus columnas (ajustable según tu Excel):
+            // 0: Cliente, 1: N° Extintor, 2: N° DPS, 3: Oblea, 4: Marca, 5: Tipo, 6: Agente, 7: Capacidad, 8: Año Fab, 9: Ubicación
+            let item = {
+                cliente: columnas[0] ? columnas[0].trim() : "",
+                extintor_numero: columnas[1] ? columnas[1].trim() : "",
+                numero_dps: columnas[2] ? columnas[2].trim() : null,
+                oblea: columnas[3] ? columnas[3].trim() : "Uso Gral",
+                marca: columnas[4] ? columnas[4].trim().toUpperCase() : "",
+                tipo: columnas[5] ? columnas[5].trim().toUpperCase() : "",
+                agente_extintor: columnas[6] ? columnas[6].trim().toUpperCase() : "",
+                capacidad: columnas[7] ? columnas[7].trim() : "",
+                ano_fab: columnas[8] && !isNaN(columnas[8].trim()) ? parseInt(columnas[8].trim(), 10) : null,
+                ubicacion: columnas[9] ? columnas[9].trim() : ""
+            };
+
+            if (item.cliente && item.extintor_numero) {
+                datosProcesados.push(item);
+
+                // Agregar fila a la tabla visual de vista previa
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${item.cliente}</td>
+                    <td><b>${item.extintor_numero}</b></td>
+                    <td>${item.numero_dps || '-'}</td>
+                    <td>${item.oblea}</td>
+                    <td>${item.marca}</td>
+                    <td>${item.tipo}</td>
+                    <td>${item.agente_extintor}</td>
+                    <td>${item.capacidad}</td>
+                    <td>${item.ano_fab || '-'}</td>
+                    <td>${item.ubicacion}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+
+        document.getElementById("contadorRegistros").textContent = `${datosProcesados.length} registros listos`;
+        
+        if (datosProcesados.length > 0) {
+            document.getElementById("btnSubir").style.display = "block";
+            alert(`✅ Se procesaron ${datosProcesados.length} registros correctamente. Revisá la vista previa y hacé clic en 'Confirmar y Subir'.`);
+        } else {
+            alert("⚠️ No se pudieron reconocer los datos. Asegurate de copiar filas válidas que incluyan al menos el Cliente y el N° de Extintor.");
+        }
+    }
+
+    async function subirASupabase() {
+        if (datosProcesados.length === 0) return;
+
+        let confirmar = confirm(`¿Estás seguro de que querés subir estos ${datosProcesados.length} extintores a la base de datos de Supabase?`);
+        if (!confirmar) return;
+
+        try {
+            // Insertar en bloques por si son muchos registros
+            const { data, error } = await _supabase
+                .from('extintores')
+                .insert(datosProcesados);
+
+            if (error) throw error;
+
+            alert("🎉 ¡Todos los extintores fueron importados y guardados con éxito en la base de datos!");
+            window.location.href = 'gestion.html';
+
+        } catch (err) {
+            console.error("Error al importar:", err);
+            alert("Hubo un error al subir los datos a Supabase. Revisá la consola para más detalles.");
+        }
+    }
+</script>
+
+</body>
+</html>
