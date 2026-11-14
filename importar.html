@@ -141,10 +141,27 @@
         aviso.style.display = !encontrado ? "block" : "none";
     }
 
+    // Función de formato de fecha ultra robusta (maneja barras, guiones, puntos y años de 2 o 4 dígitos)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
-        let partes = fechaWeb.trim().split("/");
-        if (partes.length === 2) return `${partes[1]}-${partes[0].padStart(2, '0')}-01`;
+        let limpio = fechaWeb.trim();
+        // Reemplazar guiones o puntos por barras
+        limpio = limpio.replace(/[-\.]/g, '/');
+
+        let partes = limpio.split("/");
+        if (partes.length === 2) {
+            let mes = partes[0].trim().padStart(2, '0');
+            let anio = partes[1].trim();
+            
+            // Si el año viene en 2 dígitos (ej: "25"), pasarlo a "2025"
+            if (anio.length === 2) {
+                anio = "20" + anio;
+            }
+
+            if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
+                return `${anio}-${mes}-01`;
+            }
+        }
         return null;
     }
 
@@ -170,8 +187,6 @@
         lineas.forEach((linea) => {
             let columnas = linea.split("\t"); // Excel separa por tabulación
 
-            // Orden estricto actualizado:
-            // 0: N° Extintor, 1: Tipo, 2: Capacidad, 3: A.Fab, 4: Marca, 5: Vto P.H., 6: Vto Carga, 7: N° DPS, 8: Puesto, 9: Ubicación
             let extNum = columnas[0] ? columnas[0].trim() : "";
             
             if (extNum) {
