@@ -141,27 +141,34 @@
         aviso.style.display = !encontrado ? "block" : "none";
     }
 
-    // Función de formato de fecha ultra robusta (maneja barras, guiones, puntos y años de 2 o 4 dígitos)
+    // Función de fecha ultra flexible: soporta MM/AAAA, DD/MM/AAAA, con guiones o puntos, y años cortos (25 -> 2025)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let limpio = fechaWeb.trim();
-        // Reemplazar guiones o puntos por barras
-        limpio = limpio.replace(/[-\.]/g, '/');
+        limpio = limpio.replace(/[-\.]/g, '/'); // Cambiar guiones o puntos por barras
 
         let partes = limpio.split("/");
-        if (partes.length === 2) {
-            let mes = partes[0].trim().padStart(2, '0');
-            let anio = partes[1].trim();
-            
-            // Si el año viene en 2 dígitos (ej: "25"), pasarlo a "2025"
-            if (anio.length === 2) {
-                anio = "20" + anio;
-            }
+        let mes = "";
+        let anio = "";
 
-            if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
-                return `${anio}-${mes}-01`;
-            }
+        if (partes.length === 3) {
+            // Si viene con día (DD/MM/AAAA), agarramos la parte del medio (mes) y el año
+            mes = partes[1].trim().padStart(2, '0');
+            anio = partes[2].trim();
+        } else if (partes.length === 2) {
+            // Si viene directo como MM/AAAA
+            mes = partes[0].trim().padStart(2, '0');
+            anio = partes[1].trim();
         }
+
+        if (anio.length === 2) {
+            anio = "20" + anio; // Convertir "25" a "2025"
+        }
+
+        if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
+            return `${anio}-${mes}-01`;
+        }
+
         return null;
     }
 
