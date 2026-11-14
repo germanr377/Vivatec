@@ -9,20 +9,27 @@
     
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 1100px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
         p.instruction { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
         
-        textarea { width: 100%; height: 120px; padding: 10px; border: 2px dashed #27ae60; border-radius: 4px; font-family: monospace; font-size: 13px; box-sizing: border-box; background: #f9fff9; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; }
+
+        /* Aviso flotante de Cliente Nuevo */
+        .aviso-nuevo { font-size: 11px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
+
+        textarea { width: 100%; height: 100px; padding: 10px; border: 2px dashed #27ae60; border-radius: 4px; font-family: monospace; font-size: 13px; box-sizing: border-box; background: #f9fff9; margin-bottom: 15px; }
         
         .btn { background: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; }
         .btn:hover { background: #219653; }
         .btn-volver { background: #7f8c8d; margin-top: 10px; }
         .btn-volver:hover { background: #626567; }
 
-        .table-container { margin-top: 25px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; background: #fff; }
-        th, td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        .table-container { margin-top: 20px; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; background: #fff; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #eee; white-space: nowrap; }
         th { background: #2c3e50; color: white; position: sticky; top: 0; }
         tr:hover { background: #f1f1f1; }
         
@@ -33,9 +40,18 @@
 
 <div class="container">
     <h2>Vivatec - Importación Masiva (Excel ➔ Base de Datos)</h2>
-    <p class="instruction">Copiá las filas de tu Excel (sin incluir los títulos de las columnas) y pegalas en el cuadro de abajo.</p>
+    <p class="instruction">Seleccioná o escribí el cliente, luego copiá las filas de tu Excel en el orden indicado y pegalas abajo.</p>
+
+    <!-- Casilla independiente para el Cliente con Predictivo -->
+    <div class="form-group">
+        <label>Cliente para todos los registros a importar:</label>
+        <input type="text" id="clienteGlobal" list="listaClientes" placeholder="Escribí o seleccioná cliente..." oninput="verificarClienteNuevo()">
+        <datalist id="listaClientes"></datalist>
+        <div id="lblNuevoCliente" class="aviso-nuevo">✨ Nuevo Cliente</div>
+    </div>
 
     <!-- Área para pegar desde Excel -->
+    <label>Área de Pegado (Columnas: N° Ext | Tipo | Capacidad | A.Fab | Marca | Vto P.H. | Vto Carga | N° DPS):</label>
     <textarea id="txtPegar" placeholder="Hacé clic acá y apretá Ctrl + V para pegar los datos copiados de Excel..."></textarea>
 
     <button class="btn" onclick="procesarPegado()">🔍 Procesar y Vista Previa</button>
@@ -52,19 +68,18 @@
                 <tr>
                     <th>Cliente</th>
                     <th>N° Extintor</th>
-                    <th>N° DPS</th>
-                    <th>Tipo Oblea</th>
-                    <th>Marca</th>
                     <th>Tipo</th>
-                    <th>Agente</th>
-                    <th>Capac.</th>
-                    <th>Año Fab.</th>
-                    <th>Ubicación</th>
+                    <th>Capacidad</th>
+                    <th>A. Fab.</th>
+                    <th>Marca</th>
+                    <th>Vto P.H.</th>
+                    <th>Vto Carga</th>
+                    <th>N° DPS</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td colspan="10" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Pegá los datos arriba para empezar.</td>
+                    <td colspan="9" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Completá el cliente, pegá los datos y procesalos.</td>
                 </tr>
             </tbody>
         </table>
@@ -76,14 +91,74 @@
 <script>
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    
+    let _supabase = null;
+    let listaClientesExistentes = [];
     let datosProcesados = [];
 
+    // Cargar clientes existentes al abrir la página para el predictivo
+    window.addEventListener("load", async function() {
+        try {
+            if (typeof supabase !== 'undefined') {
+                _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                await cargarClientesGlobales();
+            }
+        } catch (e) {
+            console.warn("Supabase no se pudo inicializar (modo offline)");
+        }
+    });
+
+    async function cargarClientesGlobales() {
+        if (!_supabase) return;
+        const { data, error } = await _supabase
+            .from('extintores')
+            .select('cliente');
+
+        if (!error && data) {
+            listaClientesExistentes = [...new Set(data.map(item => item.cliente?.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+            let datalist = document.getElementById("listaClientes");
+            datalist.innerHTML = "";
+            listaClientesExistentes.forEach(cliente => {
+                let opt = document.createElement("option");
+                opt.value = cliente;
+                datalist.appendChild(opt);
+            });
+        }
+    }
+
+    // Detectar si el cliente escrito es nuevo en tiempo real
+    function verificarClienteNuevo() {
+        let val = document.getElementById("clienteGlobal").value.trim();
+        let aviso = document.getElementById("lblNuevoCliente");
+        
+        if (!val) {
+            aviso.style.display = "none";
+            return;
+        }
+
+        let encontrado = listaClientesExistentes.some(c => c.toLowerCase() === val.toLowerCase());
+        aviso.style.display = !encontrado ? "block" : "none";
+    }
+
+    function formatearFechaSQL(fechaWeb) {
+        if (!fechaWeb) return null;
+        let partes = fechaWeb.trim().split("/");
+        if (partes.length === 2) return `${partes[1]}-${partes[0].padStart(2, '0')}-01`;
+        return null;
+    }
+
     function procesarPegado() {
+        let cliente = document.getElementById("clienteGlobal").value.trim();
+        if (!cliente) {
+            alert("⚠️ Por favor, ingresá primero el nombre del cliente arriba.");
+            document.getElementById("clienteGlobal").focus();
+            return;
+        }
+
         let texto = document.getElementById("txtPegar").value.trim();
         if (!texto) {
-            alert("⚠️ El cuadro está vacío. Copiá las celdas de Excel y pegalas primero.");
+            alert("⚠️ El cuadro de pegado está vacío. Copiá las celdas de Excel y pegalas primero.");
             return;
         }
 
@@ -92,40 +167,40 @@
         let tbody = document.querySelector("#tablaPreview tbody");
         tbody.innerHTML = "";
 
-        lineas.forEach((linea, index) => {
-            let columnas = linea.split("\t"); // Excel separa las columnas por tabulación al copiar
+        lineas.forEach((linea) => {
+            let columnas = linea.split("\t"); // Excel separa por tabulación
 
-            // Mapeo según el orden típico de tus columnas (ajustable según tu Excel):
-            // 0: Cliente, 1: N° Extintor, 2: N° DPS, 3: Oblea, 4: Marca, 5: Tipo, 6: Agente, 7: Capacidad, 8: Año Fab, 9: Ubicación
-            let item = {
-                cliente: columnas[0] ? columnas[0].trim() : "",
-                extintor_numero: columnas[1] ? columnas[1].trim() : "",
-                numero_dps: columnas[2] ? columnas[2].trim() : null,
-                oblea: columnas[3] ? columnas[3].trim() : "Uso Gral",
-                marca: columnas[4] ? columnas[4].trim().toUpperCase() : "",
-                tipo: columnas[5] ? columnas[5].trim().toUpperCase() : "",
-                agente_extintor: columnas[6] ? columnas[6].trim().toUpperCase() : "",
-                capacidad: columnas[7] ? columnas[7].trim() : "",
-                ano_fab: columnas[8] && !isNaN(columnas[8].trim()) ? parseInt(columnas[8].trim(), 10) : null,
-                ubicacion: columnas[9] ? columnas[9].trim() : ""
-            };
+            // Orden estricto según pedido:
+            // 0: N° Extintor, 1: Tipo, 2: Capacidad, 3: A.Fab, 4: Marca, 5: Vto P.H., 6: Vto Carga, 7: N° DPS
+            let extNum = columnas[0] ? columnas[0].trim() : "";
+            
+            if (extNum) {
+                let item = {
+                    cliente: cliente,
+                    extintor_numero: extNum,
+                    tipo: columnas[1] ? columnas[1].trim().toUpperCase() : "",
+                    capacidad: columnas[2] ? columnas[2].trim() : "",
+                    ano_fab: columnas[3] && !isNaN(columnas[3].trim()) ? parseInt(columnas[3].trim(), 10) : null,
+                    marca: columnas[4] ? columnas[4].trim().toUpperCase() : "",
+                    vto_prueb_hidr: formatearFechaSQL(columnas[5] ? columnas[5].trim() : ""),
+                    vto_carga: formatearFechaSQL(columnas[6] ? columnas[6].trim() : ""),
+                    numero_dps: columnas[7] ? columnas[7].trim() : null
+                };
 
-            if (item.cliente && item.extintor_numero) {
                 datosProcesados.push(item);
 
-                // Agregar fila a la tabla visual de vista previa
+                // Agregar fila a la tabla visual (fechas legibles para la previa)
                 let tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td>${item.cliente}</td>
-                    <td><b>${item.extintor_numero}</b></td>
-                    <td>${item.numero_dps || '-'}</td>
-                    <td>${item.oblea}</td>
-                    <td>${item.marca}</td>
+                    <td><b>${item.cliente}</b></td>
+                    <td>${item.extintor_numero}</td>
                     <td>${item.tipo}</td>
-                    <td>${item.agente_extintor}</td>
                     <td>${item.capacidad}</td>
                     <td>${item.ano_fab || '-'}</td>
-                    <td>${item.ubicacion}</td>
+                    <td>${item.marca}</td>
+                    <td>${columnas[5] ? columnas[5].trim() : '-'}</td>
+                    <td>${columnas[6] ? columnas[6].trim() : '-'}</td>
+                    <td>${item.numero_dps || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             }
@@ -135,20 +210,24 @@
         
         if (datosProcesados.length > 0) {
             document.getElementById("btnSubir").style.display = "block";
-            alert(`✅ Se procesaron ${datosProcesados.length} registros correctamente. Revisá la vista previa y hacé clic en 'Confirmar y Subir'.`);
+            alert(`✅ Se procesaron ${datosProcesados.length} registros para el cliente "${cliente}". Revisá la vista previa.`);
         } else {
-            alert("⚠️ No se pudieron reconocer los datos. Asegurate de copiar filas válidas que incluyan al menos el Cliente y el N° de Extintor.");
+            alert("⚠️ No se pudieron reconocer los datos. Asegurate de copiar el orden correcto de columnas.");
         }
     }
 
     async function subirASupabase() {
         if (datosProcesados.length === 0) return;
 
+        if (!_supabase) {
+            alert("⚠️ No hay conexión a internet. Para subir los datos a Supabase necesitás estar conectado a la red.");
+            return;
+        }
+
         let confirmar = confirm(`¿Estás seguro de que querés subir estos ${datosProcesados.length} extintores a la base de datos de Supabase?`);
         if (!confirmar) return;
 
         try {
-            // Insertar en bloques por si son muchos registros
             const { data, error } = await _supabase
                 .from('extintores')
                 .insert(datosProcesados);
@@ -160,7 +239,7 @@
 
         } catch (err) {
             console.error("Error al importar:", err);
-            alert("Hubo un error al subir los datos a Supabase. Revisá la consola para más detalles.");
+            alert("Hubo un error al subir los datos a Supabase. Verificá tu conexión a internet.");
         }
     }
 </script>
