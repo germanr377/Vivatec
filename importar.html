@@ -9,7 +9,7 @@
     
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1100px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
         p.instruction { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
         
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Área para pegar desde Excel -->
-    <label>Área de Pegado (Columnas: N° Ext | Tipo | Capacidad | A.Fab | Marca | Vto P.H. | Vto Carga | N° DPS):</label>
+    <label>Área de Pegado (Columnas: N° Ext | Tipo | Capacidad | A.Fab | Marca | Vto P.H. | Vto Carga | N° DPS | Puesto | Ubicación):</label>
     <textarea id="txtPegar" placeholder="Hacé clic acá y apretá Ctrl + V para pegar los datos copiados de Excel..."></textarea>
 
     <button class="btn" onclick="procesarPegado()">🔍 Procesar y Vista Previa</button>
@@ -75,11 +75,13 @@
                     <th>Vto P.H.</th>
                     <th>Vto Carga</th>
                     <th>N° DPS</th>
+                    <th>Puesto</th>
+                    <th>Ubicación</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td colspan="9" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Completá el cliente, pegá los datos y procesalos.</td>
+                    <td colspan="11" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Completá el cliente, pegá los datos y procesalos.</td>
                 </tr>
             </tbody>
         </table>
@@ -96,7 +98,6 @@
     let listaClientesExistentes = [];
     let datosProcesados = [];
 
-    // Cargar clientes existentes al abrir la página para el predictivo
     window.addEventListener("load", async function() {
         try {
             if (typeof supabase !== 'undefined') {
@@ -127,7 +128,6 @@
         }
     }
 
-    // Detectar si el cliente escrito es nuevo en tiempo real
     function verificarClienteNuevo() {
         let val = document.getElementById("clienteGlobal").value.trim();
         let aviso = document.getElementById("lblNuevoCliente");
@@ -170,11 +170,13 @@
         lineas.forEach((linea) => {
             let columnas = linea.split("\t"); // Excel separa por tabulación
 
-            // Orden estricto según pedido:
-            // 0: N° Extintor, 1: Tipo, 2: Capacidad, 3: A.Fab, 4: Marca, 5: Vto P.H., 6: Vto Carga, 7: N° DPS
+            // Orden estricto actualizado:
+            // 0: N° Extintor, 1: Tipo, 2: Capacidad, 3: A.Fab, 4: Marca, 5: Vto P.H., 6: Vto Carga, 7: N° DPS, 8: Puesto, 9: Ubicación
             let extNum = columnas[0] ? columnas[0].trim() : "";
             
             if (extNum) {
+                let valPuesto = columnas[8] ? columnas[8].trim() : "";
+
                 let item = {
                     cliente: cliente,
                     extintor_numero: extNum,
@@ -184,12 +186,13 @@
                     marca: columnas[4] ? columnas[4].trim().toUpperCase() : "",
                     vto_prueb_hidr: formatearFechaSQL(columnas[5] ? columnas[5].trim() : ""),
                     vto_carga: formatearFechaSQL(columnas[6] ? columnas[6].trim() : ""),
-                    numero_dps: columnas[7] ? columnas[7].trim() : null
+                    numero_dps: columnas[7] ? columnas[7].trim() : null,
+                    identificacion_puesto: valPuesto && !isNaN(valPuesto) ? parseInt(valPuesto, 10) : null,
+                    ubicacion: columnas[9] ? columnas[9].trim() : ""
                 };
 
                 datosProcesados.push(item);
 
-                // Agregar fila a la tabla visual (fechas legibles para la previa)
                 let tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td><b>${item.cliente}</b></td>
@@ -201,6 +204,8 @@
                     <td>${columnas[5] ? columnas[5].trim() : '-'}</td>
                     <td>${columnas[6] ? columnas[6].trim() : '-'}</td>
                     <td>${item.numero_dps || '-'}</td>
+                    <td>${item.identificacion_puesto || '-'}</td>
+                    <td>${item.ubicacion || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             }
