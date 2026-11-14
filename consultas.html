@@ -27,6 +27,8 @@
         .btn-limpiar:hover { background: #626567; }
 
         .acciones-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .badge-total { background: #2980b9; color: white; padding: 5px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+        
         .btn-eliminar { background: #c0392b; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
         .btn-eliminar:hover { background: #962d22; }
 
@@ -108,9 +110,12 @@
         </div>
     </div>
 
-    <!-- BARRA DE ACCIONES (Borrado masivo) -->
+    <!-- BARRA DE ACCIONES (Contador de registros y Borrado masivo) -->
     <div class="acciones-bar">
-        <span id="contadorSeleccionados" style="font-weight: bold; color: #555; font-size: 13px;"></span>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span id="badgeTotal" class="badge-total">0 registros encontrados</span>
+            <span id="contadorSeleccionados" style="font-weight: bold; color: #555; font-size: 13px;"></span>
+        </div>
         <button id="btnEliminarSeleccionados" class="btn-eliminar" onclick="eliminarSeleccionados()">🗑️ Eliminar Registros Tildados</button>
     </div>
 
@@ -151,11 +156,12 @@
     let resultadosGlobales = [];
     let ordenActual = { columna: 'vto_carga', ascendente: true };
 
+    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (DD/MM/AAAA)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
         let partes = fechaSQL.split("-");
         if (partes.length === 3) {
-            return `${partes[1]}/${partes[0]}`; // MM/AAAA
+            return `${partes[2]}/${partes[1]}/${partes[0]}`; // Retorna DD/MM/AAAA
         }
         return fechaSQL;
     }
@@ -198,6 +204,7 @@
         resultadosGlobales = [];
         let tbody = document.querySelector('#tabla-resultados tbody');
         tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td></tr>`;
+        document.getElementById('badgeTotal').textContent = "0 registros encontrados";
         document.getElementById('checkTodos').checked = false;
         actualizarContadorSeleccionados();
     }
@@ -249,6 +256,7 @@
         } catch (error) {
             console.error("Error al consultar Supabase:", error);
             tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
+            document.getElementById('badgeTotal').textContent = "0 registros encontrados";
         }
     }
 
@@ -257,6 +265,9 @@
         tbody.innerHTML = "";
         document.getElementById('checkTodos').checked = false;
         actualizarContadorSeleccionados();
+
+        // Actualizar el contador de registros encontrados
+        document.getElementById('badgeTotal').textContent = `${datos.length} registro(s) encontrado(s)`;
 
         if (datos.length === 0) {
             tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
