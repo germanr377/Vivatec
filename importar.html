@@ -141,28 +141,25 @@
         aviso.style.display = !encontrado ? "block" : "none";
     }
 
-    // Función de fecha ultra flexible: soporta MM/AAAA, DD/MM/AAAA, con guiones o puntos, y años cortos (25 -> 2025)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let limpio = fechaWeb.trim();
-        limpio = limpio.replace(/[-\.]/g, '/'); // Cambiar guiones o puntos por barras
+        limpio = limpio.replace(/[-\.]/g, '/');
 
         let partes = limpio.split("/");
         let mes = "";
         let anio = "";
 
         if (partes.length === 3) {
-            // Si viene con día (DD/MM/AAAA), agarramos la parte del medio (mes) y el año
             mes = partes[1].trim().padStart(2, '0');
             anio = partes[2].trim();
         } else if (partes.length === 2) {
-            // Si viene directo como MM/AAAA
             mes = partes[0].trim().padStart(2, '0');
             anio = partes[1].trim();
         }
 
         if (anio.length === 2) {
-            anio = "20" + anio; // Convertir "25" a "2025"
+            anio = "20" + anio;
         }
 
         if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
@@ -192,7 +189,7 @@
         tbody.innerHTML = "";
 
         lineas.forEach((linea) => {
-            let columnas = linea.split("\t"); // Excel separa por tabulación
+            let columnas = linea.split("\t");
 
             let extNum = columnas[0] ? columnas[0].trim() : "";
             
@@ -251,22 +248,61 @@
             return;
         }
 
-        let confirmar = confirm(`¿Estás seguro de que querés subir estos ${datosProcesados.length} extintores a la base de datos de Supabase?`);
+        let confirmar = confirm(`¿Estás seguro de que querés procesar la subida de estos ${datosProcesados.length} extintores? Se verificarán posibles duplicados.`);
         if (!confirmar) return;
 
+        let insertados = 0;
+        let actualizados = 0;
+        let omitidos = 0;
+
         try {
-            const { data, error } = await _supabase
-                .from('extintores')
-                .insert(datosProcesados);
+            for (let item of datosProcesados) {
+                // Verificar si ya existe el extintor para este mismo cliente en la base de datos
+                let { data: existente, error: errBusqueda } = await _supabase
+                    .from('extintores')
+                    .select('id')
+                    .eq('cliente', item.cliente)
+                    .eq('extintor_numero', item.extintor_numero)
+                    .limit(1);
 
-            if (error) throw error;
+                if (!errBusqueda && existente && existente.length > 0) {
+                    let idExistente = existente[0].id;
+                    let sobrescribir = confirm(`⚠️ El extintor N° ${item.extintor_numero} ya está registrado en la base de datos para el cliente "${item.cliente}".\n\n¿Querés SOBRESCRIBIRLO con los datos nuevos?`);
+                    
+                    if (sobrescribir) {
+                        let { error: errUpdate } = await _supabase
+                            .from('extintores')
+                            .update(item)
+                            .eq('id', idExistente);
+                        
+                        if (!errUpdate) {
+                            actualizados++;
+                        } else {
+                            console.error("Error al actualizar:", errUpdate);
+                        }
+                    } else {
+                        omitidos++;
+                    }
+                } else {
+                    // Si no existe, se inserta normalmente como nuevo
+                    let { error: errInsert } = await _supabase
+                        .from('extintores')
+                        .insert([item]);
+                    
+                    if (!errInsert) {
+                        insertados++;
+                    } else {
+                        console.error("Error al insertar:", errInsert);
+                    }
+                }
+            }
 
-            alert("🎉 ¡Todos los extintores fueron importados y guardados con éxito en la base de datos!");
+            alert(`🎉 ¡Importación finalizada!\n\n- Nuevos guardados: ${insertados}\n- Actualizados / Sobrescritos: ${actualizados}\n- Omitidos: ${omitidos}`);
             window.location.href = 'gestion.html';
 
         } catch (err) {
-            console.error("Error al importar:", err);
-            alert("Hubo un error al subir los datos a Supabase. Verificá tu conexión a internet.");
+            console.error("Error general al importar:", err);
+            alert("Hubo un error al procesar la subida a Supabase. Verificá tu conexión a internet.");
         }
     }
 </script>
