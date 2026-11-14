@@ -87,20 +87,20 @@
             <input type="text" id="filtroUbicacion" placeholder="Ej: Pasillo" oninput="verificarCampo(this)">
         </div>
         <div class="form-group">
-            <label>Vto. P.H. Desde:</label>
-            <input type="date" id="ph-desde" onchange="verificarCampo(this)">
+            <label>Vto. P.H. Desde (Mes):</label>
+            <input type="month" id="ph-desde" onchange="verificarCampo(this)">
         </div>
         <div class="form-group">
-            <label>Vto. P.H. Hasta:</label>
-            <input type="date" id="ph-hasta" onchange="verificarCampo(this)">
+            <label>Vto. P.H. Hasta (Mes):</label>
+            <input type="month" id="ph-hasta" onchange="verificarCampo(this)">
         </div>
         <div class="form-group">
-            <label>Vto. Carga Desde:</label>
-            <input type="date" id="carga-desde" onchange="verificarCampo(this)">
+            <label>Vto. Carga Desde (Mes):</label>
+            <input type="month" id="carga-desde" onchange="verificarCampo(this)">
         </div>
         <div class="form-group">
-            <label>Vto. Carga Hasta:</label>
-            <input type="date" id="carga-hasta" onchange="verificarCampo(this)">
+            <label>Vto. Carga Hasta (Mes):</label>
+            <input type="month" id="carga-hasta" onchange="verificarCampo(this)">
         </div>
         
         <!-- BOTONES DE ACCIÓN DE FILTRO -->
@@ -220,10 +220,10 @@
         let puesto = document.getElementById('filtroPuesto').value.trim();
         let ubicacion = document.getElementById('filtroUbicacion').value.trim();
         
-        let phDesde = document.getElementById('ph-desde').value;
-        let phHasta = document.getElementById('ph-hasta').value;
-        let cargaDesde = document.getElementById('carga-desde').value;
-        let cargaHasta = document.getElementById('carga-hasta').value;
+        let phDesde = document.getElementById('ph-desde').value;     // Formato: AAAA-MM
+        let phHasta = document.getElementById('ph-hasta').value;     // Formato: AAAA-MM
+        let cargaDesde = document.getElementById('carga-desde').value; // Formato: AAAA-MM
+        let cargaHasta = document.getElementById('carga-hasta').value; // Formato: AAAA-MM
 
         let tbody = document.querySelector('#tabla-resultados tbody');
         tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
@@ -241,10 +241,11 @@
             if (puesto) query = query.eq('identificacion_puesto', parseInt(puesto));
             if (ubicacion) query = query.ilike('ubicacion', `%${ubicacion}%`);
 
-            if (phDesde) query = query.gte('vto_prueb_hidr', phDesde);
-            if (phHasta) query = query.lte('vto_prueb_hidr', phHasta);
-            if (cargaDesde) query = query.gte('vto_carga', cargaDesde);
-            if (cargaHasta) query = query.lte('vto_carga', cargaHasta);
+            // Adaptación de rangos de meses para consultar correctamente contra la base de datos (YYYY-MM-01)
+            if (phDesde) query = query.gte('vto_prueb_hidr', `${phDesde}-01`);
+            if (phHasta) query = query.lte('vto_prueb_hidr', `${phHasta}-01`);
+            if (cargaDesde) query = query.gte('vto_carga', `${cargaDesde}-01`);
+            if (cargaHasta) query = query.lte('vto_carga', `${cargaHasta}-01`);
 
             const { data, error } = await query.order('vto_carga', { ascending: true });
 
