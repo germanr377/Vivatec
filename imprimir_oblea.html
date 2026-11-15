@@ -89,15 +89,30 @@
             flex: 1;
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (Oculta guías y bordes de prueba) */
+        /* CONFIGURACIÓN DE IMPRESIÓN (Rota 90 grados y oculta guías) */
         @media print {
             body { background: #fff; padding: 0; }
             .no-print { display: none !important; }
-            .etiqueta-guia { display: none !important; } /* Oculta los títulos en la impresión */
-            .oblea-container { border: none; margin: 0; padding: 0; width: 100%; box-shadow: none; background: transparent !important; }
+            .etiqueta-guia { display: none !important; } 
+            
+            .oblea-container { 
+                border: none; 
+                margin: 0; 
+                padding: 0; 
+                width: 100%; 
+                box-shadow: none; 
+                background: transparent !important; 
+                /* ROTA TODO EL CONTENIDO 90 GRADOS AL IMPRIMIR */
+                transform: rotate(90deg);
+                transform-origin: top left;
+                position: absolute;
+                top: 0;
+                left: 100%;
+            }
+            
             .linea-uno { border-bottom: none; }
             .linea-vencimiento { border: none; background: transparent !important; }
-            .valor-dato, .venc-item span { font-size: 12px; } /* Ajuste opcional para impresión */
+            .valor-dato, .venc-item span { font-size: 12px; } 
         }
     </style>
 </head>
