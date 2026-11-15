@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", function() {
             transition: all 0.2s;
             background: transparent;
             cursor: pointer;
+            border: none;
         }
         .vivatec-nav-link:hover {
             background-color: #34495e;
@@ -41,6 +42,11 @@ document.addEventListener("DOMContentLoaded", function() {
             background-color: #2980b9;
             color: white;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        /* Estilo especial para el botón de salir con tono rojizo al pasar el mouse */
+        .vivatec-nav-link.logout:hover {
+            background-color: #c0392b;
+            color: white;
         }
         .vivatec-tooltip {
             position: absolute;
@@ -79,20 +85,22 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Lista de pantallas con sus íconos y descripciones (Extintor agregado en Gestión)
+    // Lista de pantallas y acciones del menú
     const items = [
-        { href: "gestion.html", icon: "🧯", label: "Gestión / Carga" },
-        { href: "consultas.html", icon: "📊", label: "Consultas y Filtros" },
-        { href: "importar.html", icon: "📥", label: "Importación Masiva" },
-        { href: "informes.html", icon: "📑", label: "Informes" }
+        { href: "gestion.html", icon: "🧯", label: "Gestión / Carga", type: "link" },
+        { href: "consultas.html", icon: "📊", label: "Consultas y Filtros", type: "link" },
+        { href: "importar.html", icon: "📥", label: "Importación Masiva", type: "link" },
+        { href: "informes.html", icon: "📑", label: "Informes", type: "link" },
+        { href: "#", icon: "🚪", label: "Cerrar Sesión", type: "logout" }
     ];
 
     let html = '<div class="vivatec-navbar">';
     items.forEach(item => {
-        const esActivo = paginaActual === item.href ? 'activo' : '';
+        const esActivo = (item.type === "link" && paginaActual === item.href) ? 'activo' : '';
+        const extraClass = item.type === "logout" ? 'logout' : '';
         html += `
             <div class="vivatec-nav-item">
-                <a href="${item.href}" class="vivatec-nav-link ${esActivo}">
+                <a href="${item.href}" class="vivatec-nav-link ${esActivo} ${extraClass}" data-type="${item.type}">
                     ${item.icon}
                 </a>
                 <div class="vivatec-tooltip">${item.label}</div>
@@ -103,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     contenedorMenu.innerHTML = html;
 
-    // Lógica de 1 clic (muestra descripción) y 2 clics rápidos (navega)
+    // Lógica inteligente: 1 clic (muestra descripción) y 2 clics rápidos (navega o ejecuta acción)
     const links = contenedorMenu.querySelectorAll('.vivatec-nav-link');
     links.forEach(link => {
         let clickTimer = null;
@@ -111,6 +119,7 @@ document.addEventListener("DOMContentLoaded", function() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const tooltip = this.parentElement.querySelector('.vivatec-tooltip');
+            const type = this.getAttribute('data-type');
 
             if (clickTimer === null) {
                 clickTimer = setTimeout(() => {
@@ -123,14 +132,31 @@ document.addEventListener("DOMContentLoaded", function() {
             } else {
                 clearTimeout(clickTimer);
                 clickTimer = null;
-                window.location.href = this.href;
+                
+                if (type === "logout") {
+                    ejecutarCierreSesion();
+                } else {
+                    window.location.href = this.href;
+                }
             }
         });
     });
 
+    // Ocultar tooltips si se hace clic fuera del menú
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.vivatec-navbar')) {
             document.querySelectorAll('.vivatec-tooltip').forEach(t => t.classList.remove('show'));
         }
     });
 });
+
+// Función global de cierre de sesión conectada a Supabase
+async function ejecutarCierreSesion() {
+    let confirmar = confirm("⚠️ ¿Estás seguro de que querés cerrar sesión?");
+    if (!confirmar) return;
+
+    if (typeof _supabase !== 'undefined') {
+        await _supabase.auth.signOut();
+    }
+    window.location.href = "login.html";
+}
