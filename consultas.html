@@ -201,6 +201,13 @@
     }
 
     window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
         const { data, error } = await _supabase
             .from('extintores')
             .select('cliente')
