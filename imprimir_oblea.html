@@ -42,7 +42,7 @@
         .linea-uno {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start; /* Alineado arriba para permitir el bloque debajo de Extintor N° */
             font-weight: bold;
             font-size: 12px;
             border-bottom: 1px solid #ccc;
@@ -69,41 +69,40 @@
             color: #000;
         }
 
-        /* BLOQUE DISTANCIA A */
-        .bloque-distancia-a {
-            margin-top: 30px; /* Ajustable con el slider */
-        }
-
-        /* NUEVO DISEÑO: Bloque de Vencimiento con recuadro y cajitas más juntas */
+        /* BLOQUE DE VENCIMIENTO (Justo debajo de Extintor N°) */
         .bloque-vencimiento-caja {
             border: 1.5px dashed #ccc;
-            padding: 6px;
+            padding: 4px;
             background: #fafafa;
             text-align: center;
-            width: 180px;
-            margin: auto;
+            display: inline-block;
         }
 
         .vencimiento-titulo {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             border-bottom: 1px dashed #ccc;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
         }
 
         .vencimiento-grid {
             display: flex;
             justify-content: center;
-            gap: 8px; /* Mantiene Mes y Año bien cerquita */
+            gap: 0; /* Cuadritos pegados sin espacio entre sí */
         }
 
         .venc-caja {
-            border: 1px solid #bbb;
-            padding: 3px 6px;
+            border: 1px solid #777;
+            padding: 2px 5px;
             background: #fff;
             text-align: center;
-            min-width: 50px;
+            min-width: 25px;
+        }
+
+        /* Hace que compartan la línea del medio sin duplicar el borde */
+        .venc-caja:first-child {
+            border-right: none; 
         }
 
         /* CONFIGURACIÓN DE IMPRESIÓN (Rota 90 grados y oculta guías) */
@@ -128,10 +127,10 @@
             }
             
             .linea-uno { border-bottom: none; }
-            .bloque-vencimiento-caja { border: none; background: transparent !important; }
+            .bloque-vencimiento-caja { border: none; background: transparent !important; padding: 0; }
             .vencimiento-titulo { border-bottom: none; }
-            .venc-caja { border: none; background: transparent !important; padding: 0; }
-            .valor-dato, .venc-caja .valor-dato { font-size: 13px; font-weight: bold; color: #c0392b; } 
+            .venc-caja { border: none; background: transparent !important; padding: 0 2px; }
+            .valor-dato, .venc-caja .valor-dato { font-size: 12px; font-weight: bold; color: #000; } 
         }
     </style>
 </head>
@@ -140,8 +139,8 @@
 <div class="control-panel no-print">
     <h3>🖨️ Calibración Oblea - Uso Gral</h3>
     <div style="margin-bottom: 12px;">
-        <label for="sliderDistancia">Distancia A (Espacio vertical): <span id="valDistancia">30</span>px</label>
-        <input type="range" id="sliderDistancia" min="5" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
+        <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
+        <input type="range" id="sliderDistancia" min="0" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
     </div>
     <div>
         <button class="btn-accion" onclick="window.print()">🖨️ Imprimir Oblea</button>
@@ -154,48 +153,52 @@
         VIVATEC - VISTA PREVIA (USO GENERAL)
     </div>
 
-    <!-- LÍNEA 1: Extintor N°, Año Fab, Vto PH, Capacidad, Agente -->
+    <!-- LÍNEA 1 -->
     <div class="linea-uno">
-        <div class="campo-item">
+        <!-- Columna 1: Extintor N° + Vencimiento justo abajo -->
+        <div class="campo-item" style="text-align: left; padding-left: 5px;">
             <span class="etiqueta-guia">Extintor N°</span>
             <span id="lblExtintor" class="valor-dato">-</span>
+
+            <!-- Bloque Vencimiento móvil con Distancia A -->
+            <div id="espacioA" style="margin-top: 30px;">
+                <div class="bloque-vencimiento-caja">
+                    <div class="vencimiento-titulo">
+                        <span class="etiqueta-guia">Vencimiento</span>
+                    </div>
+                    <div class="vencimiento-grid">
+                        <div class="venc-caja">
+                            <span class="etiqueta-guia">Mes</span>
+                            <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+                        </div>
+                        <div class="venc-caja">
+                            <span class="etiqueta-guia">Año</span>
+                            <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Columna 2: Año Fab -->
         <div class="campo-item">
             <span class="etiqueta-guia">Año Fab.</span>
             <span id="lblAnoFab" class="valor-dato">-</span>
         </div>
+        <!-- Columna 3: Vto P.H. -->
         <div class="campo-item">
             <span class="etiqueta-guia">Vto. P.H.</span>
             <span id="lblVtoPh" class="valor-dato">-</span>
         </div>
+        <!-- Columna 4: Capacidad -->
         <div class="campo-item">
             <span class="etiqueta-guia">Capacidad</span>
             <span id="lblCapacidad" class="valor-dato">-</span>
         </div>
+        <!-- Columna 5: Agente -->
         <div class="campo-item">
             <span class="etiqueta-guia">Agente</span>
             <span id="lblAgente" class="valor-dato">-</span>
-        </div>
-    </div>
-
-    <!-- DISTANCIA A (Controlada por el slider) -->
-    <div id="espacioA" class="bloque-distancia-a">
-        <!-- BLOQUE VENCIMIENTO -->
-        <div class="bloque-vencimiento-caja">
-            <div class="vencimiento-titulo">
-                <span class="etiqueta-guia">Vencimiento</span>
-                <span style="font-size: 9px; display:none;" class="impresion-solo">VENCIMIENTO</span>
-            </div>
-            <div class="vencimiento-grid">
-                <div class="venc-caja">
-                    <span class="etiqueta-guia">Mes</span>
-                    <span id="lblMesVto" class="valor-dato" style="font-size: 15px; color: #c0392b; font-weight: bold;">-</span>
-                </div>
-                <div class="venc-caja">
-                    <span class="etiqueta-guia">Año</span>
-                    <span id="lblAnioVto" class="valor-dato" style="font-size: 15px; color: #c0392b; font-weight: bold;">-</span>
-                </div>
-            </div>
         </div>
     </div>
 </div>
