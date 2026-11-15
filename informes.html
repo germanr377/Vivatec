@@ -228,7 +228,7 @@
         if (valor.length > 2 && valor.length <= 4) {
             valor = valor.substring(0, 2) + '/' + valor.substring(2);
         } else if (valor.length > 4) {
-            valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
+            valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(2, 8);
         }
         input.value = valor;
     }
@@ -259,26 +259,41 @@
         return fechaSQL;
     }
 
-    // CONVIERTE DD/MM/AAAA A YYYY-MM-DD PARA SQL (INCLUYENDO LÍMITES DE HORA EXACTOS)
-    function formatearFechaSQL(fechaWeb, esHasta = false) {
+    // --- ADAPTADORES INTERNOS PARA SUPABASE (A OCULTAS DEL USUARIO) ---
+
+    // Convierte "Desde" a formato YYYY-MM-DD
+    function formatearFechaSQLDesde(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
         if (partes.length === 3) {
             let dia = partes[0].padStart(2, '0');
             let mes = partes[1].padStart(2, '0');
             let anio = partes[2].trim();
-            
-            if (anio.length === 2) {
-                anio = "20" + anio;
-            }
-            
-            if (anio.length === 4) {
-                if (esHasta) {
-                    return `${anio}-${mes}-${dia}T23:59:59`;
-                } else {
-                    return `${anio}-${mes}-${dia}T00:00:00`;
-                }
-            }
+            if (anio.length === 2) anio = "20" + anio;
+            if (anio.length === 4) return `${anio}-${mes}-${dia}`;
+        }
+        return null;
+    }
+
+    // Convierte "Hasta" a formato YYYY-MM-DD sumando 1 día internamente (para usar con .lt)
+    // Esto garantiza que se incluyan todos los registros de la fecha límite sin errores de hora.
+    function formatearFechaSQLHasta(fechaWeb) {
+        if (!fechaWeb) return null;
+        let partes = fechaWeb.trim().split("/");
+        if (partes.length === 3) {
+            let dia = parseInt(partes[0], 10);
+            let mes = parseInt(partes[1], 10) - 1;
+            let anio = parseInt(partes[2].trim(), 10);
+            if (anio < 100) anio += 2000;
+
+            let fechaObj = new Date(anio, mes, dia);
+            fechaObj.setDate(fechaObj.getDate() + 1); // Suma un día internamente
+
+            let yyyy = fechaObj.getFullYear();
+            let mm = String(fechaObj.getMonth() + 1).padStart(2, '0');
+            let dd = String(fechaObj.getDate()).padStart(2, '0');
+
+            return `${yyyy}-${mm}-${dd}`;
         }
         return null;
     }
@@ -325,8 +340,9 @@
             return;
         }
 
-        const fechaDesdeSQL = inputDesde ? formatearFechaSQL(inputDesde, false) : null;
-        const fechaHastaSQL = inputHasta ? formatearFechaSQL(inputHasta, true) : null;
+        // Conversión oculta para Supabase
+        const fechaDesdeSQL = inputDesde ? formatearFechaSQLDesde(inputDesde) : null;
+        const fechaHastaSQL = inputHasta ? formatearFechaSQLHasta(inputHasta) : null;
 
         if ((inputDesde && !fechaDesdeSQL) || (inputHasta && !fechaHastaSQL)) {
             alert("Formato de fecha inválido. Utilizá DD/MM/AAAA.");
@@ -338,11 +354,11 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        // Lógica de filtrado inclusiva
+        // Lógica de consulta adaptada (gte para desde, lt con el día siguiente para hasta)
         if (fechaDesdeSQL && fechaHastaSQL) {
-            query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
+            query = query.gte(campoFecha, fechaDesdeSQL).lt(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
-            query = query.lte(campoFecha, fechaHastaSQL);
+            query = query.lt(campoFecha, fechaHastaSQL);
         } else if (fechaDesdeSQL && !fechaHastaSQL) {
             query = query.gte(campoFecha, fechaDesdeSQL);
         }
