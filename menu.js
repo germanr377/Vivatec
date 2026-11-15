@@ -2,15 +2,15 @@ document.addEventListener("DOMContentLoaded", function() {
     // Detectar en qué página estamos parados actualmente
     const paginaActual = window.location.pathname.split("/").pop() || "gestion.html";
 
-    // Inyectar los estilos CSS (con soporte para los tooltips/descripciones)
+    // Inyectar los estilos CSS con barra fina y dibujos ajustados a los bordes
     const style = document.createElement('style');
     style.innerHTML = `
         .vivatec-navbar {
             background-color: #2c3e50;
-            padding: 10px 20px;
-            border-radius: 6px;
+            padding: 2px 15px; /* Barra bien fina verticalmente */
+            border-radius: 4px;
             display: flex;
-            gap: 20px;
+            gap: 15px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             align-items: center;
@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", function() {
         .vivatec-nav-link {
             color: #bdc3c7;
             text-decoration: none;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 22px;
+            padding: 3px 10px; /* Dibujos bien pegados arriba y abajo */
+            border-radius: 3px;
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -40,16 +40,16 @@ document.addEventListener("DOMContentLoaded", function() {
         .vivatec-nav-link.activo {
             background-color: #2980b9;
             color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .vivatec-tooltip {
             position: absolute;
-            bottom: -35px;
+            bottom: -32px;
             left: 50%;
             transform: translateX(-50%);
             background-color: #34495e;
             color: white;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
             font-family: Arial, sans-serif;
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Lista de pantallas con sus íconos y descripciones (incluyendo informes.html)
+    // Lista de pantallas con sus íconos y descripciones
     const items = [
         { href: "gestion.html", icon: "🛠️", label: "Gestión / Carga" },
         { href: "consultas.html", icon: "📊", label: "Consultas y Filtros" },
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     contenedorMenu.innerHTML = html;
 
-    // Lógica de 1 clic (muestra la descripción) y 2 clics rápidos (navega)
+    // Lógica de 1 clic (muestra descripción) y 2 clics rápidos (navega)
     const links = contenedorMenu.querySelectorAll('.vivatec-nav-link');
     links.forEach(link => {
         let clickTimer = null;
@@ -115,22 +115,19 @@ document.addEventListener("DOMContentLoaded", function() {
             if (clickTimer === null) {
                 clickTimer = setTimeout(() => {
                     clickTimer = null;
-                    // 1 Clic: Muestra u oculta la descripción flotante
                     document.querySelectorAll('.vivatec-tooltip').forEach(t => {
                         if (t !== tooltip) t.classList.remove('show');
                     });
                     tooltip.classList.toggle('show');
-                }, 300); // Ventana de tiempo para detectar el doble clic
+                }, 300);
             } else {
                 clearTimeout(clickTimer);
                 clickTimer = null;
-                // 2 Clics rápidos: Va hacia la nueva página
                 window.location.href = this.href;
             }
         });
     });
 
-    // Ocultar descripciones si se hace clic en cualquier otra parte de la pantalla
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.vivatec-navbar')) {
             document.querySelectorAll('.vivatec-tooltip').forEach(t => t.classList.remove('show'));
