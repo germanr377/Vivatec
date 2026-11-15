@@ -17,14 +17,6 @@
         .form-group { flex: 1; min-width: 210px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; height: 42px; }
-        
-        /* Botones de acceso rápido para fechas */
-        .input-con-botones { display: flex; gap: 5px; align-items: center; }
-        .btn-hoy { background: #2980b9; color: white; border: none; padding: 0 12px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; white-space: nowrap; }
-        .btn-hoy:hover { background: #1f618d; }
-        
-        .btn-rapido { background: #34495e; color: white; border: none; padding: 0 8px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; white-space: nowrap; }
-        .btn-rapido:hover { background: #2c3e50; }
 
         .btn-search { background: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
         .btn-print { background: #27ae60; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
@@ -189,19 +181,11 @@
         </div>
         <div class="form-group">
             <label for="fechaDesde">Desde (DD/MM/AAAA):</label>
-            <div class="input-con-botones">
-                <input type="text" id="fechaDesde" placeholder="DD/MM/AAAA" maxlength="10">
-                <button type="button" class="btn-hoy" onclick="ponerFechaHoy()" title="Insertar fecha actual">Hoy</button>
-            </div>
+            <input type="text" id="fechaDesde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearEntradaFecha(this)">
         </div>
-        <div class="form-group" style="min-width: 250px;">
+        <div class="form-group">
             <label for="fechaHasta">Hasta (DD/MM/AAAA):</label>
-            <div class="input-con-botones">
-                <input type="text" id="fechaHasta" placeholder="DD/MM/AAAA" maxlength="10">
-                <button type="button" class="btn-rapido" onclick="sumarMesesAFechaHasta(1)" title="Sumar 1 mes">+1M</button>
-                <button type="button" class="btn-rapido" onclick="sumarMesesAFechaHasta(2)" title="Sumar 2 meses">+2M</button>
-                <button type="button" class="btn-rapido" onclick="sumarMesesAFechaHasta(3)" title="Sumar 3 meses">+3M</button>
-            </div>
+            <input type="text" id="fechaHasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearEntradaFecha(this)">
         </div>
         
         <button class="btn-search" onclick="generarInforme()">📊 Actualizar Vista</button>
@@ -222,23 +206,15 @@
     let columnaOrdenActual = 'extintor_numero';
     let ascendenteActual = true;
 
-    // BOTÓN HOY: Inserta la fecha actual en el campo Desde
-    function ponerFechaHoy() {
-        const hoy = new Date();
-        let dia = String(hoy.getDate()).padStart(2, '0');
-        let mes = String(hoy.getMonth() + 1).padStart(2, '0');
-        let anio = hoy.getFullYear();
-        document.getElementById("fechaDesde").value = `${dia}/${mes}/${anio}`;
-    }
-
-    // BOTONES +1M, +2M, +3M: Inserta la fecha actual más los meses en el campo Hasta
-    function sumarMesesAFechaHasta(mesesExtra) {
-        const fecha = new Date();
-        fecha.setMonth(fecha.getMonth() + mesesExtra);
-        let dia = String(fecha.getDate()).padStart(2, '0');
-        let mes = String(fecha.getMonth() + 1).padStart(2, '0');
-        let anio = fecha.getFullYear();
-        document.getElementById("fechaHasta").value = `${dia}/${mes}/${anio}`;
+    // AUTO-FORMATO MIENTRAS SE ESCRIBE (Inserta barras automáticamente)
+    function formatearEntradaFecha(input) {
+        let valor = input.value.replace(/\D/g, ''); // Deja solo números
+        if (valor.length > 2 && valor.length <= 4) {
+            valor = valor.substring(0, 2) + '/' + valor.substring(2);
+        } else if (valor.length > 4) {
+            valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
+        }
+        input.value = valor;
     }
 
     function formatearFechaWeb(fechaSQL) {
@@ -248,43 +224,47 @@
         return fechaSQL;
     }
 
-    // --- TRANSFORMACIÓN OCULTA PARA SUPABASE AL APRETAR "ACTUALIZAR VISTA" ---
-    function validarYConvertirFecha(fechaWeb) {
+    // --- ADAPTADORES OCULTOS PARA SUPABASE AL APRETAR "ACTUALIZAR VISTA" ---
+    
+    function validarYConvertirFechaDesde(fechaWeb) {
         if (!fechaWeb || fechaWeb.trim() === "") return null;
-        
         let partes = fechaWeb.trim().split("/");
         if (partes.length !== 3) return "INVALIDA";
 
         let dia = parseInt(partes[0], 10);
         let mes = parseInt(partes[1], 10);
-        let anioStr = partes[2].trim();
+        let anio = parseInt(partes[2].trim(), 10);
+        if (partes[2].trim().length === 2) anio += 2000;
 
-        if (isNaN(dia) || isNaN(mes) || anioStr === "") return "INVALIDA";
-
-        let anio = parseInt(anioStr, 10);
-        if (anioStr.length === 2) {
-            anio += 2000; // Convierte "27" de forma oculta en "2027"
-        } else if (anioStr.length !== 4) {
-            return "INVALIDA";
-        }
-
-        // Validación estricta de calendario
-        if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return "INVALIDA";
+        if (isNaN(dia) || isNaN(mes) || isNaN(anio) || mes < 1 || mes > 12 || dia < 1 || dia > 31) return "INVALIDA";
 
         let fechaObj = new Date(anio, mes - 1, dia);
-        if (
-            fechaObj.getFullYear() !== anio ||
-            fechaObj.getMonth() !== mes - 1 ||
-            fechaObj.getDate() !== dia
-        ) {
-            return "INVALIDA";
-        }
+        if (fechaObj.getFullYear() !== anio || fechaObj.getMonth() !== mes - 1 || fechaObj.getDate() !== dia) return "INVALIDA";
 
         let yyyy = fechaObj.getFullYear();
         let mm = String(fechaObj.getMonth() + 1).padStart(2, '0');
         let dd = String(fechaObj.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
 
-        return `${yyyy}-${mm}-${dd}`; // Formato limpio YYYY-MM-DD que Supabase ama
+    // Convierte "Hasta" y ajusta automáticamente al ÚLTIMO DÍA del mes para capturar vencimientos de fin de mes
+    function validarYConvertirFechaHasta(fechaWeb) {
+        if (!fechaWeb || fechaWeb.trim() === "") return null;
+        let partes = fechaWeb.trim().split("/");
+        if (partes.length !== 3) return "INVALIDA";
+
+        let mes = parseInt(partes[1], 10);
+        let anio = parseInt(partes[2].trim(), 10);
+        if (partes[2].trim().length === 2) anio += 2000;
+
+        if (isNaN(mes) || isNaN(anio) || mes < 1 || mes > 12) return "INVALIDA";
+
+        // Obtiene automáticamente el último día de ese mes (ej: 31 para agosto)
+        let ultimoDiaMes = new Date(anio, mes, 0).getDate();
+
+        let mm = String(mes).padStart(2, '0');
+        let dd = String(ultimoDiaMes).padStart(2, '0');
+        return `${anio}-${mm}-${dd}`;
     }
 
     function renderBool(valor) {
@@ -329,23 +309,22 @@
             return;
         }
 
-        // Conversión oculta al hacer clic en Actualizar Vista
         let fechaDesdeSQL = null;
         let fechaHastaSQL = null;
 
         if (inputDesde !== "") {
-            fechaDesdeSQL = validarYConvertirFecha(inputDesde);
+            fechaDesdeSQL = validarYConvertirFechaDesde(inputDesde);
             if (fechaDesdeSQL === "INVALIDA") {
-                alert("⚠️ La fecha 'Desde' es inválida. Verificá que el día, mes y año sean correctos (Ej: 01/01/2026).");
+                alert("⚠️ La fecha 'Desde' es inválida. Verificá el formato (Ej: 01/08/2027).");
                 document.getElementById("fechaDesde").focus();
                 return;
             }
         }
 
         if (inputHasta !== "") {
-            fechaHastaSQL = validarYConvertirFecha(inputHasta);
+            fechaHastaSQL = validarYConvertirFechaHasta(inputHasta);
             if (fechaHastaSQL === "INVALIDA") {
-                alert("⚠️ La fecha 'Hasta' es inválida. Verificá que el día, mes y año sean correctos (Ej: 31/12/2026).");
+                alert("⚠️ La fecha 'Hasta' es inválida. Verificá el formato (Ej: 30/08/2027).");
                 document.getElementById("fechaHasta").focus();
                 return;
             }
@@ -356,7 +335,7 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        // Consulta exacta y limpia a Supabase
+        // Consulta a Supabase con rango inclusivo
         if (fechaDesdeSQL && fechaHastaSQL) {
             query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
