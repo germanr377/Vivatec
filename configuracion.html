@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Configuración</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="menu.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 450px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; background: #fff; }
+        input:disabled { background: #e9ecef; color: #6c757d; }
+        .btn { background: #2980b9; color: white; border: none; padding: 12px; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; width: 100%; transition: background 0.3s; }
+        .btn:hover { background: #1f618d; }
+        #mensaje { margin-top: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚙️ Configuración de Cuenta</h2>
+    
+    <!-- Info del usuario actual -->
+    <div class="form-group">
+        <label>Usuario Conectado:</label>
+        <input type="text" id="usuarioEmail" disabled>
+    </div>
+
+    <hr>
+
+    <h3 style="font-size: 16px; color: #2c3e50; margin-bottom: 15px;">Cambiar Contraseña</h3>
+
+    <div class="form-group">
+        <label>Nueva Contraseña:</label>
+        <input type="password" id="nuevaPassword" placeholder="Mínimo 6 caracteres">
+    </div>
+    
+    <div class="form-group">
+        <label>Confirmar Nueva Contraseña:</label>
+        <input type="password" id="confirmarPassword" placeholder="Repetí la contraseña">
+    </div>
+
+    <button class="btn" onclick="actualizarPassword()">Actualizar Contraseña</button>
+    <div id="mensaje"></div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        // Mostrar el correo del usuario logueado en el campo deshabilitado
+        document.getElementById("usuarioEmail").value = session.user.email;
+    });
+
+    async function actualizarPassword() {
+        let nueva = document.getElementById("nuevaPassword").value.trim();
+        let confirmar = document.getElementById("confirmarPassword").value.trim();
+        let mensaje = document.getElementById("mensaje");
+
+        if (!nueva || !confirmar) {
+            mensaje.style.color = "#c0392b";
+            mensaje.textContent = "⚠️ Por favor, completá ambos campos.";
+            return;
+        }
+
+        if (nueva.length < 6) {
+            mensaje.style.color = "#c0392b";
+            mensaje.textContent = "⚠️ La contraseña debe tener al menos 6 caracteres.";
+            return;
+        }
+
+        if (nueva !== confirmar) {
+            mensaje.style.color = "#c0392b";
+            mensaje.textContent = "⚠️ Las contraseñas no coinciden.";
+            return;
+        }
+
+        mensaje.style.color = "#2980b9";
+        mensaje.textContent = "Actualizando contraseña...";
+
+        const { error } = await _supabase.auth.updateUser({ password: nueva });
+
+        if (error) {
+            mensaje.style.color = "#c0392b";
+            mensaje.textContent = "❌ Error al actualizar: " + error.message;
+        } else {
+            mensaje.style.color = "#27ae60";
+            mensaje.textContent = "✅ ¡Contraseña actualizada con éxito!";
+            document.getElementById("nuevaPassword").value = "";
+            document.getElementById("confirmarPassword").value = "";
+        }
+    }
+</script>
+
+</body>
+</html>
