@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <!-- BOTONERA DE ACCIÓN UNIFICADA -->
+        <!-- BOTONERIA DE ACCIÓN UNIFICADA -->
         <div class="action-buttons">
             <button class="btn-base btn-buscar" onclick="buscarExtintor()">🔍 Buscar</button>
             <button class="btn-base btn-recarga" onclick="aplicarRecarga()">⚡ Recarga</button>
@@ -249,13 +249,24 @@
         enModoRecarga = true;
     }
 
+    // REDIRECCIÓN AL NUEVO MÓDULO DE IMPRESIÓN VALIDANDO TIPO OBLEA
     function imprimirOblea() {
         let id = document.getElementById("registroId").value;
+        let tipoOblea = document.getElementById("nuevoOblea").value.trim();
+
         if (!id) {
             alert("⚠️ Primero debés buscar, cargar o guardar un extintor para poder imprimir su oblea.");
             return;
         }
-        alert("Botón 'Imprimir Oblea' presionado. Próximamente configuraremos su acción exacta.");
+
+        if (!tipoOblea) {
+            alert("⚠️ Es obligatorio contar con un 'Tipo Oblea' seleccionado para realizar la impresión.");
+            document.getElementById("nuevoOblea").focus();
+            return;
+        }
+
+        // Redirige al nuevo módulo pasando el ID por la URL
+        window.location.href = `imprimir_oblea.html?id=${id}`;
     }
 
     function verificarClienteNuevo() {
