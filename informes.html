@@ -190,14 +190,16 @@
         <div class="form-group">
             <label for="fechaDesde">Desde (DD/MM/AAAA):</label>
             <div class="input-con-botones">
-                <input type="text" id="fechaDesde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearEntradaFecha(this)">
+                <!-- Sin restricciones ni modificaciones automáticas mientras se escribe -->
+                <input type="text" id="fechaDesde" placeholder="DD/MM/AAAA" maxlength="10">
                 <button type="button" class="btn-hoy" onclick="ponerFechaHoy()" title="Insertar fecha actual">Hoy</button>
             </div>
         </div>
         <div class="form-group" style="min-width: 250px;">
             <label for="fechaHasta">Hasta (DD/MM/AAAA):</label>
             <div class="input-con-botones">
-                <input type="text" id="fechaHasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearEntradaFecha(this)">
+                <!-- Sin restricciones ni modificaciones automáticas mientras se escribe -->
+                <input type="text" id="fechaHasta" placeholder="DD/MM/AAAA" maxlength="10">
                 <button type="button" class="btn-rapido" onclick="sumarMesesAFechaHasta(1)" title="Sumar 1 mes">+1M</button>
                 <button type="button" class="btn-rapido" onclick="sumarMesesAFechaHasta(2)" title="Sumar 2 meses">+2M</button>
                 <button type="button" class="btn-rapido" onclick="sumarMesesAFechaHasta(3)" title="Sumar 3 meses">+3M</button>
@@ -222,18 +224,7 @@
     let columnaOrdenActual = 'extintor_numero';
     let ascendenteActual = true;
 
-    // AUTO-FORMATO MIENTRAS SE ESCRIBE PARA DD/MM/AAAA
-    function formatearEntradaFecha(input) {
-        let valor = input.value.replace(/\D/g, ''); // Deja solo números
-        if (valor.length > 2 && valor.length <= 4) {
-            valor = valor.substring(0, 2) + '/' + valor.substring(2);
-        } else if (valor.length > 4) {
-            valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(2, 8);
-        }
-        input.value = valor;
-    }
-
-    // BOTÓN HOY: Inserta la fecha actual en el campo Desde
+    // BOTÓN HOY: Inserta la fecha actual en el campo Desde (usuario ve formato normal)
     function ponerFechaHoy() {
         const hoy = new Date();
         let dia = String(hoy.getDate()).padStart(2, '0');
@@ -242,7 +233,7 @@
         document.getElementById("fechaDesde").value = `${dia}/${mes}/${anio}`;
     }
 
-    // BOTONES +1M, +2M, +3M: Inserta la fecha actual más los meses indicados en el campo Hasta
+    // BOTONES +1M, +2M, +3M: Inserta la fecha actual más los meses en el campo Hasta
     function sumarMesesAFechaHasta(mesesExtra) {
         const fecha = new Date();
         fecha.setMonth(fecha.getMonth() + mesesExtra);
@@ -259,9 +250,9 @@
         return fechaSQL;
     }
 
-    // --- ADAPTADORES INTERNOS PARA SUPABASE (A OCULTAS DEL USUARIO) ---
+    // --- ADAPTADORES OCULTOS (SOLO SE EJECUTAN AL APRETAR "ACTUALIZAR VISTA") ---
 
-    // Convierte "Desde" a formato YYYY-MM-DD
+    // Convierte "Desde" a formato YYYY-MM-DD (soporta años de 2 o 4 dígitos de forma invisible)
     function formatearFechaSQLDesde(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
@@ -275,8 +266,7 @@
         return null;
     }
 
-    // Convierte "Hasta" a formato YYYY-MM-DD sumando 1 día internamente (para usar con .lt)
-    // Esto garantiza que se incluyan todos los registros de la fecha límite sin errores de hora.
+    // Convierte "Hasta" a formato YYYY-MM-DD sumando 1 día internamente de forma invisible
     function formatearFechaSQLHasta(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
@@ -287,7 +277,7 @@
             if (anio < 100) anio += 2000;
 
             let fechaObj = new Date(anio, mes, dia);
-            fechaObj.setDate(fechaObj.getDate() + 1); // Suma un día internamente
+            fechaObj.setDate(fechaObj.getDate() + 1); // Suma un día internamente para capturar todo el mes/día exacto
 
             let yyyy = fechaObj.getFullYear();
             let mm = String(fechaObj.getMonth() + 1).padStart(2, '0');
@@ -340,7 +330,7 @@
             return;
         }
 
-        // Conversión oculta para Supabase
+        // Aquí ocurre la magia a espaldas del usuario al hacer clic en Actualizar Vista
         const fechaDesdeSQL = inputDesde ? formatearFechaSQLDesde(inputDesde) : null;
         const fechaHastaSQL = inputHasta ? formatearFechaSQLHasta(inputHasta) : null;
 
@@ -354,7 +344,7 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        // Lógica de consulta adaptada (gte para desde, lt con el día siguiente para hasta)
+        // Consulta a Supabase adaptada de forma invisible
         if (fechaDesdeSQL && fechaHastaSQL) {
             query = query.gte(campoFecha, fechaDesdeSQL).lt(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
