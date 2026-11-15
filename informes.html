@@ -259,14 +259,22 @@
         return fechaSQL;
     }
 
+    // CONVIERTE DD/MM/AAAA A YYYY-MM-DD PARA SQL (Y ADMITE AÑOS DE 2 DÍGITOS CONVIRTIÉNDOLOS A 20XX)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
         if (partes.length === 3) {
             let dia = partes[0].padStart(2, '0');
             let mes = partes[1].padStart(2, '0');
-            let anio = partes[2];
-            return `${anio}-${mes}-${dia}`;
+            let anio = partes[2].trim();
+            
+            if (anio.length === 2) {
+                anio = "20" + anio; // Convierte automáticamente "27" en "2027"
+            }
+            
+            if (anio.length === 4) {
+                return `${anio}-${mes}-${dia}`;
+            }
         }
         return null;
     }
@@ -328,16 +336,12 @@
 
         // Lógica de filtrado según qué campos estén completos
         if (fechaDesdeSQL && fechaHastaSQL) {
-            // Si ambos están completos: entre Desde y Hasta (inclusive)
             query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
-            // Si no hay Desde pero sí Hasta: menores o iguales a Hasta
             query = query.lte(campoFecha, fechaHastaSQL);
         } else if (fechaDesdeSQL && !fechaHastaSQL) {
-            // Si hay Desde pero no Hasta: mayores o iguales a Desde
             query = query.gte(campoFecha, fechaDesdeSQL);
         }
-        // Si ambos están vacíos, trae todos los extintores del cliente
 
         const { data, error } = await query.limit(500);
 
