@@ -79,9 +79,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Lista de pantallas con sus íconos y descripciones
+    // Lista de pantallas con sus íconos y descripciones (Extintor agregado en Gestión)
     const items = [
-        { href: "gestion.html", icon: "🛠️", label: "Gestión / Carga" },
+        { href: "gestion.html", icon: "🧯", label: "Gestión / Carga" },
         { href: "consultas.html", icon: "📊", label: "Consultas y Filtros" },
         { href: "importar.html", icon: "📥", label: "Importación Masiva" },
         { href: "informes.html", icon: "📑", label: "Informes" }
