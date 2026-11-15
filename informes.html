@@ -248,7 +248,7 @@
         return fechaSQL;
     }
 
-    // --- VALIDACIÓN ESTRICTA Y CONVERSIÓN SEGURA A YYYY-MM-DD ---
+    // --- TRANSFORMACIÓN OCULTA PARA SUPABASE AL APRETAR "ACTUALIZAR VISTA" ---
     function validarYConvertirFecha(fechaWeb) {
         if (!fechaWeb || fechaWeb.trim() === "") return null;
         
@@ -263,12 +263,12 @@
 
         let anio = parseInt(anioStr, 10);
         if (anioStr.length === 2) {
-            anio += 2000; // Ej: "27" pasa a ser "2027"
+            anio += 2000; // Convierte "27" de forma oculta en "2027"
         } else if (anioStr.length !== 4) {
             return "INVALIDA";
         }
 
-        // Verificación estricta de rangos de calendario reales (bloquea días como 45)
+        // Validación estricta de calendario
         if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return "INVALIDA";
 
         let fechaObj = new Date(anio, mes - 1, dia);
@@ -284,7 +284,7 @@
         let mm = String(fechaObj.getMonth() + 1).padStart(2, '0');
         let dd = String(fechaObj.getDate()).padStart(2, '0');
 
-        return `${yyyy}-${mm}-${dd}`;
+        return `${yyyy}-${mm}-${dd}`; // Formato limpio YYYY-MM-DD que Supabase ama
     }
 
     function renderBool(valor) {
@@ -329,6 +329,7 @@
             return;
         }
 
+        // Conversión oculta al hacer clic en Actualizar Vista
         let fechaDesdeSQL = null;
         let fechaHastaSQL = null;
 
@@ -355,7 +356,7 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        // Consulta exacta e inclusiva con gte y lte
+        // Consulta exacta y limpia a Supabase
         if (fechaDesdeSQL && fechaHastaSQL) {
             query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
