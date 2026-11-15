@@ -74,19 +74,36 @@
             margin-top: 30px; /* Ajustable con el slider */
         }
 
-        /* VENCIMIENTO: Mes y Año */
-        .linea-vencimiento {
-            display: flex;
-            justify-content: space-around;
-            font-weight: bold;
-            text-align: center;
+        /* NUEVO DISEÑO: Bloque de Vencimiento con recuadro y cajitas más juntas */
+        .bloque-vencimiento-caja {
             border: 1.5px dashed #ccc;
-            padding: 8px;
+            padding: 6px;
             background: #fafafa;
+            text-align: center;
+            width: 180px;
+            margin: auto;
         }
 
-        .venc-item {
-            flex: 1;
+        .vencimiento-titulo {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 3px;
+        }
+
+        .vencimiento-grid {
+            display: flex;
+            justify-content: center;
+            gap: 8px; /* Mantiene Mes y Año bien cerquita */
+        }
+
+        .venc-caja {
+            border: 1px solid #bbb;
+            padding: 3px 6px;
+            background: #fff;
+            text-align: center;
+            min-width: 50px;
         }
 
         /* CONFIGURACIÓN DE IMPRESIÓN (Rota 90 grados y oculta guías) */
@@ -102,7 +119,7 @@
                 width: 100%; 
                 box-shadow: none; 
                 background: transparent !important; 
-                /* ROTA TODO EL CONTENIDO 90 GRADOS AL IMPRIMIR */
+                /* Rota todo el contenido 90 grados al imprimir */
                 transform: rotate(90deg);
                 transform-origin: top left;
                 position: absolute;
@@ -111,8 +128,10 @@
             }
             
             .linea-uno { border-bottom: none; }
-            .linea-vencimiento { border: none; background: transparent !important; }
-            .valor-dato, .venc-item span { font-size: 12px; } 
+            .bloque-vencimiento-caja { border: none; background: transparent !important; }
+            .vencimiento-titulo { border-bottom: none; }
+            .venc-caja { border: none; background: transparent !important; padding: 0; }
+            .valor-dato, .venc-caja .valor-dato { font-size: 13px; font-weight: bold; color: #c0392b; } 
         }
     </style>
 </head>
@@ -161,15 +180,21 @@
 
     <!-- DISTANCIA A (Controlada por el slider) -->
     <div id="espacioA" class="bloque-distancia-a">
-        <!-- VENCIMIENTO: Mes y Año separados -->
-        <div class="linea-vencimiento">
-            <div class="venc-item">
-                <span class="etiqueta-guia">Mes Vencimiento</span>
-                <span id="lblMesVto" style="font-size: 16px; color: #c0392b;">-</span>
+        <!-- BLOQUE VENCIMIENTO -->
+        <div class="bloque-vencimiento-caja">
+            <div class="vencimiento-titulo">
+                <span class="etiqueta-guia">Vencimiento</span>
+                <span style="font-size: 9px; display:none;" class="impresion-solo">VENCIMIENTO</span>
             </div>
-            <div class="venc-item">
-                <span class="etiqueta-guia">Año Vencimiento</span>
-                <span id="lblAnioVto" style="font-size: 16px; color: #c0392b;">-</span>
+            <div class="vencimiento-grid">
+                <div class="venc-caja">
+                    <span class="etiqueta-guia">Mes</span>
+                    <span id="lblMesVto" class="valor-dato" style="font-size: 15px; color: #c0392b; font-weight: bold;">-</span>
+                </div>
+                <div class="venc-caja">
+                    <span class="etiqueta-guia">Año</span>
+                    <span id="lblAnioVto" class="valor-dato" style="font-size: 15px; color: #c0392b; font-weight: bold;">-</span>
+                </div>
             </div>
         </div>
     </div>
