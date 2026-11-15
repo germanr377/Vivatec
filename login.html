@@ -67,17 +67,17 @@
         if (error) {
             errorDiv.style.display = "block";
         } else {
-            window.location.href = "gestion.html"; // Te manda al panel principal al ingresar
+            window.location.href = "gestion.html";
         }
     }
 
-    // FUNCIÓN PARA RECUPERAR CONTRASEÑA
     async function recuperarContrasena() {
         let email = prompt("Ingresá tu correo electrónico registrado para recuperar la contraseña:");
         if (!email || email.trim() === "") return;
 
+        // ⚠️ ACÁ: Reemplazá "tu-proyecto.vercel.app" por el link real con el que entrás a tu app en Vercel
         const { error } = await _supabase.auth.resetPasswordForEmail(email.trim(), {
-            redirectTo: window.location.origin + "/configuracion.html"
+            redirectTo: "https://tu-proyecto.vercel.app/configuracion.html"
         });
 
         if (error) {
