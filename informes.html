@@ -146,7 +146,8 @@
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
             .container { position: absolute; left: 0; top: 0; width: 100% !important; box-shadow: none; padding: 0; }
-            .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
+            /* Ocultamos filtros, botones, cabeceras de página y la barra de menú inyectada por menu.js */
+            .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado, nav, header, [id*="menu"], [class*="menu"] { display: none !important; }
             .planilla-wrapper { display: block !important; overflow: visible; }
             
             .pagina-hoja { page-break-after: always; break-after: page; margin-bottom: 0; }
