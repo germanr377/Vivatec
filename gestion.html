@@ -27,9 +27,9 @@
         .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
-        /* MODO RECARGA (Fondo Amarillo) */
-        .modo-recarga { border-color: #f1c40f !important; background-color: #fef9e7 !important; }
-        .modo-recarga .oblea-header { color: #b7950b; border-bottom-color: #f1c40f; }
+        /* MODO RECARGA (Fondo Amarillo Intenso) */
+        .modo-recarga { border-color: #fbc02d !important; background-color: #fff176 !important; }
+        .modo-recarga .oblea-header { color: #7d6608; border-bottom-color: #fbc02d; }
 
         /* Avisos flotantes */
         .aviso-nuevo { font-size: 11px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
@@ -240,7 +240,7 @@
             verificarDpsNuevo();
         }
 
-        // 4. Cambiar interfaz a modo recarga (fondo amarillo)
+        // 4. Cambiar interfaz a modo recarga (fondo amarillo intenso)
         let contenedor = document.getElementById("contenedorPrincipal");
         contenedor.classList.remove("modo-existente");
         contenedor.classList.add("modo-recarga");
@@ -323,7 +323,6 @@
             let anio = partes[1].trim();
 
             if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
-                // Calcula automáticamente el último día del mes (28, 29, 30 o 31)
                 let ultimoDia = new Date(parseInt(anio, 10), parseInt(mes, 10), 0).getDate();
                 let diaStr = String(ultimoDia).padStart(2, '0');
 
