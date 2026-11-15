@@ -77,7 +77,97 @@
 
         // ⚠️ ACÁ: Reemplazá "tu-proyecto.vercel.app" por el link real con el que entrás a tu app en Vercel
         const { error } = await _supabase.auth.resetPasswordForEmail(email.trim(), {
-            redirectTo: "https://tu-proyecto.vercel.app/configuracion.html"
+            redirectTo: "https://<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Iniciar Sesión</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); width: 100%; max-width: 350px; }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 13px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .btn { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
+        .btn:hover { background: #1f618d; }
+        .error-msg { color: #c0392b; font-size: 12px; text-align: center; margin-top: 10px; display: none; }
+        .forgot-password { text-align: center; margin-top: 15px; }
+        .forgot-password a { color: #2980b9; font-size: 13px; text-decoration: none; }
+        .forgot-password a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h2>Vivatec - Acceso</h2>
+    <div class="form-group">
+        <label>Correo Electrónico:</label>
+        <input type="email" id="email" placeholder="tucorreo@vivatec.com">
+    </div>
+    <div class="form-group">
+        <label>Contraseña:</label>
+        <input type="password" id="pass" placeholder="••••••••">
+    </div>
+    <button class="btn" onclick="iniciarSesion()">🔑 Ingresar</button>
+    
+    <!-- ENLACE DE RECUPERACIÓN -->
+    <div class="forgot-password">
+        <a href="#" onclick="recuperarContrasena()">¿Te olvidaste tu contraseña?</a>
+    </div>
+
+    <div id="errorMsg" class="error-msg">Correo o contraseña incorrectos.</div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function iniciarSesion() {
+        let email = document.getElementById("email").value.trim();
+        let password = document.getElementById("pass").value.trim();
+        let errorDiv = document.getElementById("errorMsg");
+        errorDiv.style.display = "none";
+
+        if (!email || !password) {
+            alert("Por favor, completá ambos campos.");
+            return;
+        }
+
+        const { data, error } = await _supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            errorDiv.style.display = "block";
+        } else {
+            window.location.href = "gestion.html";
+        }
+    }
+
+    async function recuperarContrasena() {
+        let email = prompt("Ingresá tu correo electrónico registrado para recuperar la contraseña:");
+        if (!email || email.trim() === "") return;
+
+        // ⚠️ ACÁ: Reemplazá "tu-proyecto.vercel.app" por el link real con el que entrás a tu app en Vercel
+        const { error } = await _supabase.auth.resetPasswordForEmail(email.trim(), {
+            redirectTo: "https://https://vivatec.vercel.app/login.html/configuracion.html"
+        });
+
+        if (error) {
+            alert("❌ Error al enviar el correo: " + error.message);
+        } else {
+            alert("✉️ ¡Correo enviado con éxito! Revisá tu bandeja de entrada o spam para restablecer tu contraseña.");
+        }
+    }
+</script>
+</body>
+</html>/configuracion.html"
         });
 
         if (error) {
