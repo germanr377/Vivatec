@@ -314,10 +314,22 @@
         return fechaSQL;
     }
 
+    // CONVIERTE MM/AAAA AL ÚLTIMO DÍA EXACTO DEL MES PARA LA BASE DE DATOS (AÑO-MES-DÍA)
     function formatearFechaSQL(fechaWeb) {
         if (!fechaWeb) return null;
         let partes = fechaWeb.trim().split("/");
-        if (partes.length === 2) return `${partes[1]}-${partes[0].padStart(2, '0')}-01`;
+        if (partes.length === 2) {
+            let mes = partes[0].trim().padStart(2, '0');
+            let anio = partes[1].trim();
+
+            if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
+                // Calcula automáticamente el último día del mes (28, 29, 30 o 31)
+                let ultimoDia = new Date(parseInt(anio, 10), parseInt(mes, 10), 0).getDate();
+                let diaStr = String(ultimoDia).padStart(2, '0');
+
+                return `${anio}-${mes}-${diaStr}`;
+            }
+        }
         return null;
     }
 
