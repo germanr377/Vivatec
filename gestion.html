@@ -128,11 +128,11 @@
             </div>
             <div class="form-group" style="flex: none; width: 14ch;">
                 <label>Venc. P.H. (MM/AAAA):</label>
-                <input type="text" id="nuevoVencPH" placeholder="MM/AAAA" onblur="validarFormatoMesAnio(this)">
+                <input type="text" id="nuevoVencPH" placeholder="MM/AAAA" maxlength="7" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
             </div>
             <div class="form-group" style="flex: none; width: 14ch;">
                 <label>Venc. Carga (MM/AAAA):</label>
-                <input type="text" id="nuevoVencCarga" placeholder="MM/AAAA" onblur="validarFormatoMesAnio(this)">
+                <input type="text" id="nuevoVencCarga" placeholder="MM/AAAA" maxlength="7" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
             </div>
             <div class="form-group" style="flex: none; width: 10ch;">
                 <label>Puesto:</label>
@@ -292,6 +292,15 @@
             document.getElementById("nuevoAgente").value = "";
             input.focus();
         }
+    }
+
+    // AUTO-FORMATO MIENTRAS SE ESCRIBE (AGREGA LA BARRA SOLA)
+    function formatearEntradaMesAnio(input) {
+        let valor = input.value.replace(/\D/g, ''); // Deja solo números
+        if (valor.length > 2) {
+            valor = valor.substring(0, 2) + '/' + valor.substring(2, 6);
+        }
+        input.value = valor;
     }
 
     function validarFormatoMesAnio(input) {
