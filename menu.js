@@ -150,11 +150,8 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// Función global de cierre de sesión conectada a Supabase
+// Función global de cierre de sesión sin confirmación previa
 async function ejecutarCierreSesion() {
-    let confirmar = confirm("⚠️ ¿Estás seguro de que querés cerrar sesión?");
-    if (!confirmar) return;
-
     if (typeof _supabase !== 'undefined') {
         await _supabase.auth.signOut();
     }
