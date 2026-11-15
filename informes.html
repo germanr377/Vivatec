@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Planilla de Control de Extintores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script src="menu.js"></script>
+    <script src="menu.js"></script>
 
     <style>
-
-
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
         .container { max-width: 1400px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
@@ -134,9 +131,8 @@
             text-transform: uppercase;
         }
         .ref-center { text-align: center !important; }
-        .ref-box { height: 18px; } /* Cajas vacías para firma y espaciador */
+        .ref-box { height: 18px; }
         
-        /* CLASES PARA ELIMINAR BORDES INTERNOS EN EL BLOQUE DE FIRMA */
         .no-b-bottom { border-bottom: none !important; padding-bottom: 2px !important; }
         .no-b-mid { border-top: none !important; border-bottom: none !important; padding-top: 2px !important; padding-bottom: 2px !important; }
         .no-b-top { border-top: none !important; padding-top: 2px !important; padding-bottom: 20px !important; }
@@ -153,7 +149,6 @@
             .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado { display: none !important; }
             .planilla-wrapper { display: block !important; overflow: visible; }
             
-            /* CONGELA LOS TAMAÑOS AL IMPRIMIR */
             .pagina-hoja { page-break-after: always; break-after: page; margin-bottom: 0; }
             .tabla-principal { width: 920px !important; }
             .tabla-referencias { width: 145px !important; }
@@ -180,7 +175,6 @@
                 <option value="vto_prueb_hidr">Vencimiento Prueba Hidráulica (P.H.)</option>
             </select>
         </div>
-        <!-- NUEVO CAMPO DE FRECUENCIA -->
         <div class="form-group">
             <label for="frecuenciaDias">Frecuencia (Días):</label>
             <input type="number" id="frecuenciaDias" value="30" min="1" step="1">
@@ -236,6 +230,13 @@
     }
 
     window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
         const { data, error } = await _supabase.from('extintores').select('cliente').not('cliente', 'is', null);
         if (!error && data) {
             const clientesUnicos = [...new Set(data.map(item => item.cliente).filter(Boolean))].sort();
@@ -308,7 +309,7 @@
 
     function renderizarPlanilla() {
         const cliente = document.getElementById("filtroCliente").value.trim();
-        const frecuenciaVal = document.getElementById("frecuenciaDias").value || "30"; // Captura el valor del input
+        const frecuenciaVal = document.getElementById("frecuenciaDias").value || "30";
         const wrapper = document.getElementById("planillaWrapper");
         const mensaje = document.getElementById("mensajeEstado");
         
@@ -337,7 +338,6 @@
             return ascendenteActual ? " ▲" : " ▼";
         };
 
-        // ESTRUCTURA DEL PANEL LATERAL CON LA FRECUENCIA DINÁMICA
         const panelReferenciasHTML = `
             <table class="tabla-referencias">
                 <tr><td class="ref-center" style="font-size:9px; padding:6px 0;">FRECUENCIA: ${frecuenciaVal} DIAS</td></tr>
@@ -353,7 +353,6 @@
                 
                 <tr><td class="ref-box"></td></tr>
                 
-                <!-- BLOQUE SIN BORDES HORIZONTALES -->
                 <tr><td class="ref-center no-b-bottom">SERVICIO TERCERIZADO</td></tr>
                 <tr><td class="ref-center no-b-mid">VIVATEC</td></tr>
                 <tr><td class="ref-center no-b-mid">RESPONSABLE:</td></tr>
@@ -362,12 +361,10 @@
                 <tr><td class="ref-center no-b-mid">C.I.P.B.A - MAT.51142</td></tr>
                 <tr><td class="no-b-top">FIRMA:</td></tr> 
                 
-                <!-- 3 RENGLONES VACÍOS -->
                 <tr><td class="ref-box"></td></tr>
                 <tr><td class="ref-box"></td></tr>
                 <tr><td class="ref-box"></td></tr>
                 
-                <!-- RENGLONES FINALES (Borde divisor eliminado con estilos en línea) -->
                 <tr><td class="ref-center" style="font-size: 11px; font-weight: 900; border-bottom: none !important;">VIVATEC</td></tr>
                 <tr><td class="ref-center" style="border-top: none !important;">REGISTRO DPS 382</td></tr>
             </table>
@@ -394,8 +391,7 @@
                         <col style="width: 70px;">  <!-- N-DPS -->
                         <col style="width: 55px;">  <!-- PUESTO -->
                         <col style="width: 220px;"> <!-- UBICACION -->
-                        <!-- BOOLEANAS (20px) -->
-                        <col style="width: 20px;"> 
+                        <col style="width: 20px;">  
                         <col style="width: 20px;">
                         <col style="width: 20px;">
                         <col style="width: 20px;">
@@ -431,7 +427,6 @@
                             <th class="th-columna" onclick="ordenarPor('identificacion_puesto')">PUESTO${flecha('identificacion_puesto')}</th>
                             <th class="th-columna" onclick="ordenarPor('ubicacion')">UBICACIÓN${flecha('ubicacion')}</th>
                             
-                            <!-- COLUMNAS BOOLEANAS -->
                             <th class="th-columna"><div class="texto-vertical">CARGA</div></th>
                             <th class="th-columna"><div class="texto-vertical">PRECINTO</div></th>
                             <th class="th-columna"><div class="texto-vertical">BALIZA</div></th>
