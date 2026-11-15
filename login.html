@@ -16,6 +16,9 @@
         .btn { background: #2980b9; color: white; border: none; padding: 12px; width: 100%; font-size: 15px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: background 0.3s; }
         .btn:hover { background: #1f618d; }
         .error-msg { color: #c0392b; font-size: 12px; text-align: center; margin-top: 10px; display: none; }
+        .forgot-password { text-align: center; margin-top: 15px; }
+        .forgot-password a { color: #2980b9; font-size: 13px; text-decoration: none; }
+        .forgot-password a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -31,6 +34,12 @@
         <input type="password" id="pass" placeholder="••••••••">
     </div>
     <button class="btn" onclick="iniciarSesion()">🔑 Ingresar</button>
+    
+    <!-- ENLACE DE RECUPERACIÓN -->
+    <div class="forgot-password">
+        <a href="#" onclick="recuperarContrasena()">¿Te olvidaste tu contraseña?</a>
+    </div>
+
     <div id="errorMsg" class="error-msg">Correo o contraseña incorrectos.</div>
 </div>
 
@@ -59,6 +68,22 @@
             errorDiv.style.display = "block";
         } else {
             window.location.href = "gestion.html"; // Te manda al panel principal al ingresar
+        }
+    }
+
+    // FUNCIÓN PARA RECUPERAR CONTRASEÑA
+    async function recuperarContrasena() {
+        let email = prompt("Ingresá tu correo electrónico registrado para recuperar la contraseña:");
+        if (!email || email.trim() === "") return;
+
+        const { error } = await _supabase.auth.resetPasswordForEmail(email.trim(), {
+            redirectTo: window.location.origin + "/configuracion.html"
+        });
+
+        if (error) {
+            alert("❌ Error al enviar el correo: " + error.message);
+        } else {
+            alert("✉️ ¡Correo enviado con éxito! Revisá tu bandeja de entrada o spam para restablecer tu contraseña.");
         }
     }
 </script>
