@@ -85,12 +85,13 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Lista de pantallas y acciones del menú
+    // Lista de pantallas y acciones del menú (con Configuración y Logout directo)
     const items = [
         { href: "gestion.html", icon: "🧯", label: "Gestión / Carga", type: "link" },
         { href: "consultas.html", icon: "📊", label: "Consultas y Filtros", type: "link" },
         { href: "importar.html", icon: "📥", label: "Importación Masiva", type: "link" },
         { href: "informes.html", icon: "📑", label: "Informes", type: "link" },
+        { href: "configuracion.html", icon: "⚙️", label: "Configuración", type: "link" },
         { href: "#", icon: "🚪", label: "Cerrar Sesión", type: "logout" }
     ];
 
@@ -150,7 +151,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-// Función global de cierre de sesión sin confirmación previa
+// Función global de cierre de sesión directa (sin confirmación previa)
 async function ejecutarCierreSesion() {
     if (typeof _supabase !== 'undefined') {
         await _supabase.auth.signOut();
