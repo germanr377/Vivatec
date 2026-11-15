@@ -248,8 +248,8 @@
         return fechaSQL;
     }
 
-    // --- VALIDACIÓN ESTRICTA Y ADAPTACIÓN OCULTA ---
-    function validarYConvertirFecha(fechaWeb, esHasta = false) {
+    // --- VALIDACIÓN ESTRICTA Y CONVERSIÓN SEGURA A YYYY-MM-DD ---
+    function validarYConvertirFecha(fechaWeb) {
         if (!fechaWeb || fechaWeb.trim() === "") return null;
         
         let partes = fechaWeb.trim().split("/");
@@ -268,10 +268,9 @@
             return "INVALIDA";
         }
 
-        // Verificación estricta de rangos de calendario reales
+        // Verificación estricta de rangos de calendario reales (bloquea días como 45)
         if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return "INVALIDA";
 
-        // Comprobación matemática de fecha real (evita días como 31 de junio o mes 13)
         let fechaObj = new Date(anio, mes - 1, dia);
         if (
             fechaObj.getFullYear() !== anio ||
@@ -279,11 +278,6 @@
             fechaObj.getDate() !== dia
         ) {
             return "INVALIDA";
-        }
-
-        // Si es el campo "Hasta", sumamos 1 día internamente para capturar todo el día límite completo
-        if (esHasta) {
-            fechaObj.setDate(fechaObj.getDate() + 1);
         }
 
         let yyyy = fechaObj.getFullYear();
@@ -335,12 +329,11 @@
             return;
         }
 
-        // Validación y conversión estricta al hacer clic en Actualizar Vista
         let fechaDesdeSQL = null;
         let fechaHastaSQL = null;
 
         if (inputDesde !== "") {
-            fechaDesdeSQL = validarYConvertirFecha(inputDesde, false);
+            fechaDesdeSQL = validarYConvertirFecha(inputDesde);
             if (fechaDesdeSQL === "INVALIDA") {
                 alert("⚠️ La fecha 'Desde' es inválida. Verificá que el día, mes y año sean correctos (Ej: 01/01/2026).");
                 document.getElementById("fechaDesde").focus();
@@ -349,7 +342,7 @@
         }
 
         if (inputHasta !== "") {
-            fechaHastaSQL = validarYConvertirFecha(inputHasta, true);
+            fechaHastaSQL = validarYConvertirFecha(inputHasta);
             if (fechaHastaSQL === "INVALIDA") {
                 alert("⚠️ La fecha 'Hasta' es inválida. Verificá que el día, mes y año sean correctos (Ej: 31/12/2026).");
                 document.getElementById("fechaHasta").focus();
@@ -362,11 +355,11 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        // Consulta a Supabase adaptada de forma invisible y segura
+        // Consulta exacta e inclusiva con gte y lte
         if (fechaDesdeSQL && fechaHastaSQL) {
-            query = query.gte(campoFecha, fechaDesdeSQL).lt(campoFecha, fechaHastaSQL);
+            query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
-            query = query.lt(campoFecha, fechaHastaSQL);
+            query = query.lte(campoFecha, fechaHastaSQL);
         } else if (fechaDesdeSQL && !fechaHastaSQL) {
             query = query.gte(campoFecha, fechaDesdeSQL);
         }
