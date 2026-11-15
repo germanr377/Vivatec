@@ -19,7 +19,13 @@
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; height: 42px; }
 
         .btn-search { background: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
+        .btn-search:hover { background: #1f618d; }
+
         .btn-print { background: #27ae60; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
+        .btn-print:hover { background: #219653; }
+
+        .btn-clear { background: #7f8c8d; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
+        .btn-clear:hover { background: #6c7a89; }
 
         #mensajeEstado { margin-top: 15px; font-weight: bold; color: #e67e22; text-align: center; }
 
@@ -146,14 +152,14 @@
             body * { visibility: hidden; }
             .container, .container * { visibility: visible; }
             .container { position: absolute; left: 0; top: 0; width: 100% !important; box-shadow: none; padding: 0; }
-            .filtros-panel, .btn-print, .btn-search, h2, #mensajeEstado, nav, header, [id*="menu"], [class*="menu"] { display: none !important; }
+            .filtros-panel, .btn-print, .btn-search, .btn-clear, h2, #mensajeEstado, nav, header, [id*="menu"], [class*="menu"] { display: none !important; }
             .planilla-wrapper { display: block !important; overflow: visible; }
             
             .pagina-hoja { page-break-after: always; break-after: page; margin-bottom: 0; }
             .tabla-principal { width: 920px !important; }
             .tabla-referencias { width: 145px !important; }
         }
-        @media (max-width: 768px) { .filtros-panel { flex-direction: column; } .form-group, .btn-search, .btn-print { width: 100%; } }
+        @media (max-width: 768px) { .filtros-panel { flex-direction: column; } .form-group, .btn-search, .btn-print, .btn-clear { width: 100%; } }
     </style>
 </head>
 <body>
@@ -189,6 +195,7 @@
         </div>
         
         <button class="btn-search" onclick="generarInforme()">📊 Actualizar Vista</button>
+        <button class="btn-clear" onclick="limpiarFiltros()">🧹 Limpiar</button>
         <button class="btn-print" onclick="window.print()">🖨️ Imprimir Planilla A4</button>
     </div>
 
@@ -206,7 +213,7 @@
     let columnaOrdenActual = 'extintor_numero';
     let ascendenteActual = true;
 
-    // AUTO-FORMATO MIENTRAS SE ESCRIBE (Inserta barras automáticamente)
+    // AUTO-FORMATO MIENTRAS SE ESCRIBE PARA DD/MM/AAAA (Inserta barras automáticamente)
     function formatearEntradaFecha(input) {
         let valor = input.value.replace(/\D/g, ''); // Deja solo números
         if (valor.length > 2 && valor.length <= 4) {
@@ -215,6 +222,18 @@
             valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
         }
         input.value = valor;
+    }
+
+    // BOTÓN LIMPIAR: Resetea todos los campos y oculta los resultados
+    function limpiarFiltros() {
+        document.getElementById("filtroCliente").value = "";
+        document.getElementById("tipoFecha").value = "vto_carga";
+        document.getElementById("frecuenciaDias").value = "30";
+        document.getElementById("fechaDesde").value = "";
+        document.getElementById("fechaHasta").value = "";
+        document.getElementById("mensajeEstado").textContent = "Por favor, seleccioná un cliente para ver la planilla.";
+        document.getElementById("planillaWrapper").style.display = "none";
+        datosGlobales = [];
     }
 
     function formatearFechaWeb(fechaSQL) {
@@ -259,7 +278,6 @@
 
         if (isNaN(mes) || isNaN(anio) || mes < 1 || mes > 12) return "INVALIDA";
 
-        // Obtiene automáticamente el último día de ese mes (ej: 31 para agosto)
         let ultimoDiaMes = new Date(anio, mes, 0).getDate();
 
         let mm = String(mes).padStart(2, '0');
@@ -335,7 +353,6 @@
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
 
-        // Consulta a Supabase con rango inclusivo
         if (fechaDesdeSQL && fechaHastaSQL) {
             query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
         } else if (!fechaDesdeSQL && fechaHastaSQL) {
