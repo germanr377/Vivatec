@@ -1,1 +1,211 @@
-imprimir
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Imprimir Oblea (Uso Gral)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
+        
+        /* Panel de control superior (solo visible en pantalla, se oculta al imprimir) */
+        .control-panel { max-width: 500px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
+        .control-panel label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px; color: #333; }
+        .control-panel input[type="range"] { width: 100%; cursor: pointer; }
+        .btn-accion { background: #2980b9; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn-accion:hover { background: #1f618d; }
+        .btn-volver { background: #7f8c8d; }
+        .btn-volver:hover { background: #626567; }
+
+        /* Contenedor de la Oblea (Uso Gral) */
+        .oblea-container {
+            width: 420px;
+            border: 2px solid #000;
+            background: #fff;
+            margin: auto;
+            padding: 15px;
+            box-sizing: border-box;
+            position: relative;
+            font-size: 12px;
+        }
+
+        .header-oblea {
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 8px;
+        }
+
+        /* LÍNEA 1: Extintor N°, Año Fabricación, Venc PH, Capacidad, Agente Extintor */
+        .linea-uno {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 11px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 6px;
+        }
+
+        .campo-item {
+            text-align: center;
+            flex: 1;
+        }
+        .campo-item span {
+            display: block;
+            font-size: 8.5px;
+            color: #555;
+            text-transform: uppercase;
+        }
+
+        /* BLOQUE DISTANCIA A */
+        .bloque-distancia-a {
+            margin-top: 30px; /* Se ajusta dinámicamente con el slider */
+        }
+
+        /* VENCIMIENTO: Mes y Año separados */
+        .linea-vencimiento {
+            display: flex;
+            justify-content: space-around;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            border: 1.5px dashed #000;
+            padding: 8px;
+            background: #fdfdfd;
+        }
+
+        .venc-item span {
+            display: block;
+            font-size: 9px;
+            color: #333;
+            text-transform: uppercase;
+        }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .no-print { display: none !important; }
+            .oblea-container { border: none; margin: 0; padding: 2px; width: 100%; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="control-panel no-print">
+    <h3>🖨️ Parametrización Oblea - Uso Gral</h3>
+    <div style="margin-bottom: 12px;">
+        <label for="sliderDistancia">Distancia A (Espacio vertical): <span id="valDistancia">30</span>px</label>
+        <input type="range" id="sliderDistancia" min="5" max="120" value="30" oninput="cambiarDistanciaA(this.value)">
+    </div>
+    <div>
+        <button class="btn-accion" onclick="window.print()">🖨️ Imprimir Oblea</button>
+        <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Volver a Gestión</button>
+    </div>
+</div>
+
+<div class="oblea-container" id="obleaCard">
+    <div class="header-oblea">
+        VIVATEC - OBLEA USO GENERAL (REG. DPS 382)
+    </div>
+
+    <!-- LÍNEA 1: Extintor N°, Año Fab, Vto PH, Capacidad, Agente -->
+    <div class="linea-uno">
+        <div class="campo-item"><span>Extintor N°</span><span id="lblExtintor">-</span></div>
+        <div class="campo-item"><span>Año Fab.</span><span id="lblAnoFab">-</span></div>
+        <div class="campo-item"><span>Vto. P.H.</span><span id="lblVtoPh">-</span></div>
+        <div class="campo-item"><span>Capacidad</span><span id="lblCapacidad">-</span></div>
+        <div class="campo-item"><span>Agente</span><span id="lblAgente">-</span></div>
+    </div>
+
+    <!-- DISTANCIA A (Controlada por el slider) -->
+    <div id="espacioA" class="bloque-distancia-a">
+        <!-- VENCIMIENTO: Mes y Año separados -->
+        <div class="linea-vencimiento">
+            <div class="venc-item">
+                <span>Mes Vencimiento</span>
+                <span id="lblMesVto" style="font-size: 16px; color: #c0392b; margin-top: 2px;">-</span>
+            </div>
+            <div class="venc-item">
+                <span>Año Vencimiento</span>
+                <span id="lblAnioVto" style="font-size: 16px; color: #c0392b; margin-top: 2px;">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Función para ajustar la distancia A en tiempo real desde el slider
+    function cambiarDistanciaA(valor) {
+        document.getElementById("valDistancia").textContent = valor;
+        document.getElementById("espacioA").style.marginTop = valor + "px";
+    }
+
+    window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        // Obtener el ID de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const idRegistro = urlParams.get('id');
+
+        if (!idRegistro) {
+            alert("⚠️ No se especificó el ID del equipo para imprimir.");
+            window.location.href = "gestion.html";
+            return;
+        }
+
+        try {
+            // Consultar datos en Supabase
+            const { data, error } = await _supabase
+                .from('extintores')
+                .select('*')
+                .eq('id', idRegistro)
+                .single();
+
+            if (error || !data) {
+                alert("⚠️ No se encontró el registro en la base de datos.");
+                window.location.href = "gestion.html";
+                return;
+            }
+
+            // Rellenar datos en la oblea
+            document.getElementById("lblExtintor").textContent = data.extintor_numero || "-";
+            document.getElementById("lblAnoFab").textContent = data.ano_fab || "-";
+            document.getElementById("lblVtoPh").textContent = formatearFechaWeb(data.vto_prueb_hidr);
+            document.getElementById("lblCapacidad").textContent = data.capacidad ? data.capacidad + " kg" : "-";
+            document.getElementById("lblAgente").textContent = data.agente_extintor || "-";
+
+            // Extraer Mes (MM) y Año (AAAA) de la fecha de carga (`vto_carga` en formato YYYY-MM-DD)
+            if (data.vto_carga) {
+                let partes = data.vto_carga.split("-");
+                if (partes.length === 3) {
+                    document.getElementById("lblAnioVto").textContent = partes[0]; // AAAA
+                    document.getElementById("lblMesVto").textContent = partes[1];   // MM
+                }
+            }
+
+        } catch (err) {
+            console.error("Error al cargar datos de oblea:", err);
+            alert("Ocurrió un error al obtener los datos del equipo.");
+        }
+    });
+
+    function formatearFechaWeb(fechaSQL) {
+        if (!fechaSQL) return "-";
+        let partes = fechaSQL.split("-");
+        if (partes.length === 3) return `${partes[1]}/${partes[0]}`; 
+        return fechaSQL;
+    }
+</script>
+</body>
+</html>
