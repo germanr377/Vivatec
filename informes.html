@@ -295,18 +295,15 @@
             });
         }
         
-        // Guardamos la fecha actual formateada para las cabeceras de la planilla al imprimir
         const hoy = new Date();
         window.fechaHoyStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
-        
-        // NOTA: Los campos "Desde" y "Hasta" se inician vacíos para evitar confusiones a pedido del usuario.
     });
 
     async function generarInforme() {
         const cliente = document.getElementById("filtroCliente").value.trim();
         const campoFecha = document.getElementById("tipoFecha").value;
-        const inputDesde = document.getElementById("fechaDesde").value;
-        const inputHasta = document.getElementById("fechaHasta").value;
+        const inputDesde = document.getElementById("fechaDesde").value.trim();
+        const inputHasta = document.getElementById("fechaHasta").value.trim();
         const mensaje = document.getElementById("mensajeEstado");
         const wrapper = document.getElementById("planillaWrapper");
 
@@ -316,8 +313,8 @@
             return;
         }
 
-        const fechaDesdeSQL = formatearFechaSQL(inputDesde);
-        const fechaHastaSQL = formatearFechaSQL(inputHasta);
+        const fechaDesdeSQL = inputDesde ? formatearFechaSQL(inputDesde) : null;
+        const fechaHastaSQL = inputHasta ? formatearFechaSQL(inputHasta) : null;
 
         if ((inputDesde && !fechaDesdeSQL) || (inputHasta && !fechaHastaSQL)) {
             alert("Formato de fecha inválido. Utilizá DD/MM/AAAA.");
@@ -328,7 +325,19 @@
         wrapper.innerHTML = "";
 
         let query = _supabase.from('extintores').select('*').eq('cliente', cliente);
-        if (fechaDesdeSQL && fechaHastaSQL) query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
+
+        // Lógica de filtrado según qué campos estén completos
+        if (fechaDesdeSQL && fechaHastaSQL) {
+            // Si ambos están completos: entre Desde y Hasta (inclusive)
+            query = query.gte(campoFecha, fechaDesdeSQL).lte(campoFecha, fechaHastaSQL);
+        } else if (!fechaDesdeSQL && fechaHastaSQL) {
+            // Si no hay Desde pero sí Hasta: menores o iguales a Hasta
+            query = query.lte(campoFecha, fechaHastaSQL);
+        } else if (fechaDesdeSQL && !fechaHastaSQL) {
+            // Si hay Desde pero no Hasta: mayores o iguales a Desde
+            query = query.gte(campoFecha, fechaDesdeSQL);
+        }
+        // Si ambos están vacíos, trae todos los extintores del cliente
 
         const { data, error } = await query.limit(500);
 
@@ -340,7 +349,7 @@
         }
 
         if (data.length === 0) {
-            mensaje.textContent = "No se encontraron extintores.";
+            mensaje.textContent = "No se encontraron extintores con los filtros indicados.";
             wrapper.style.display = "none";
             return;
         }
