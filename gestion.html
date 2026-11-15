@@ -6,8 +6,7 @@
     <title>Vivatec - Gestión y Carga de Extintores</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="menu.js"></script>
-
+    <script src="menu.js"></script>
     
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
@@ -168,6 +167,13 @@
     let enModoRecarga = false;
 
     window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
         await cargarListasGlobales();
     });
 
