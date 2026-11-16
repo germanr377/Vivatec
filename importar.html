@@ -1,0 +1,23 @@
+async function cargarClientesGlobales() {
+        if (!_supabase) return;
+        // CONSULTA ACTUALIZADA A LA TABLA MAESTRA DE CLIENTES
+        const { data, error } = await _supabase
+            .from('clientes')
+            .select('nombre_cliente, razon_social')
+            .order('nombre_cliente', { ascending: true });
+
+        if (!error && data) {
+            listaClientesExistentes = data.map(item => item.nombre_cliente?.trim()).filter(Boolean);
+
+            let datalist = document.getElementById("listaClientes");
+            datalist.innerHTML = "";
+            data.forEach(c => {
+                let opt = document.createElement("option");
+                opt.value = c.nombre_cliente;
+                if (c.razon_social) {
+                    opt.textContent = c.razon_social;
+                }
+                datalist.appendChild(opt);
+            });
+        }
+    }
