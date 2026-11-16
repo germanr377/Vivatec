@@ -85,13 +85,12 @@ Document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Lista de pantallas y acciones del menú (Incluye Clientes)
+    // Lista de pantallas y acciones del menú (con Configuración y Logout directo)
     const items = [
         { href: "gestion.html", icon: "🧯", label: "Gestión / Carga", type: "link" },
         { href: "consultas.html", icon: "📊", label: "Consultas y Filtros", type: "link" },
         { href: "importar.html", icon: "📥", label: "Importación Masiva", type: "link" },
         { href: "informes.html", icon: "📑", label: "Informes", type: "link" },
-        { href: "clientes.html", icon: "🏢", label: "Clientes", type: "link" },
         { href: "configuracion.html", icon: "⚙️", label: "Configuración", type: "link" },
         { href: "#", icon: "🚪", label: "Cerrar Sesión", type: "logout" }
     ];
