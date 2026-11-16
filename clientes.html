@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vivatec - Gestión de Clientes</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Menú Compartido -->
+    <script src="menu.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1100px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
@@ -104,7 +106,7 @@
                     <th>Observaciones</th>
                     <th style="text-align: center;">Acciones</th>
                 </tr>
-            </i>
+            </thead>
             <tbody id="tablaClientesBody">
                 <!-- Se llena dinámicamente con JS -->
             </tbody>
