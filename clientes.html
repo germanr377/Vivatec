@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Gestión de Clientes</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1100px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        
+        .header-seccion { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2980b9; padding-bottom: 10px; margin-bottom: 20px; }
+        .header-seccion h2 { margin: 0; color: #2c3e50; }
+
+        .btn { background: #2980b9; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #1f618d; }
+        .btn-volver { background: #7f8c8d; }
+        .btn-volver:hover { background: #626567; }
+        .btn-eliminar { background: #c0392b; padding: 5px 10px; font-size: 11px; }
+        .btn-eliminar:hover { background: #962d22; }
+        .btn-editar { background: #f39c12; padding: 5px 10px; font-size: 11px; color: white; }
+        .btn-editar:hover { background: #d68910; }
+
+        /* Formulario de Carga / Edición */
+        .form-card { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        .form-group input, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
+        .form-group textarea { resize: vertical; height: 40px; }
+        .form-acciones { margin-top: 15px; text-align: right; }
+
+        /* Tabla de Clientes */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #2980b9; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+
+        .acciones-td { white-space: nowrap; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-seccion">
+        <h2>🏢 Directorio de Clientes</h2>
+        <div>
+            <button class="btn btn-volver" onclick="window.location.href='gestion.html'">⬅️ Volver a Gestión</button>
+        </div>
+    </div>
+
+    <!-- Formulario para Nuevo / Editar Cliente -->
+    <div class="form-card">
+        <h3 id="formTitulo" style="margin-top: 0; font-size: 15px; color: #2980b9;">➕ Agregar Nuevo Cliente</h3>
+        <input type="hidden" id="clienteId">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nombre Comercial / Corto *</label>
+                <input type="text" id="nombre_cliente" placeholder="Ej: Supermercado Don Juan" required>
+            </div>
+            <div class="form-group">
+                <label>Razón Social (Legal)</label>
+                <input type="text" id="razon_social" placeholder="Ej: Don Juan S.R.L.">
+            </div>
+            <div class="form-group">
+                <label>CUIT</label>
+                <input type="text" id="cuit" placeholder="Ej: 30-71234567-9">
+            </div>
+            <div class="form-group">
+                <label>Nombre de Contacto</label>
+                <input type="text" id="nombre_contacto" placeholder="Ej: Carlos Pérez">
+            </div>
+            <div class="form-group">
+                <label>Dirección / Domicilio</label>
+                <input type="text" id="direccion" placeholder="Ej: San Martín 450, Mza">
+            </div>
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="text" id="telefono" placeholder="Ej: 2614567890">
+            </div>
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+            <label>Observaciones / Notas</label>
+            <textarea id="observaciones" placeholder="Ej: Atienden por la mañana, portón trasero..."></textarea>
+        </div>
+        <div class="form-acciones">
+            <button class="btn" id="btnGuardar" onclick="guardarCliente()">💾 Guardar Cliente</button>
+            <button class="btn btn-volver" id="btnCancelar" onclick="limpiarFormulario()" style="display:none;">❌ Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Listado de Clientes -->
+    <h3 style="font-size: 14px; color: #555;">Clientes Registrados</h3>
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre Comercial</th>
+                    <th>Razón Social</th>
+                    <th>CUIT</th>
+                    <th>Contacto</th>
+                    <th>Dirección</th>
+                    <th>Teléfono</th>
+                    <th>Observaciones</th>
+                    <th style="text-align: center;">Acciones</th>
+                </tr>
+            </i>
+            <tbody id="tablaClientesBody">
+                <!-- Se llena dinámicamente con JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 🔒 SEGURIDAD: Validar sesión activa al cargar la página
+    window.addEventListener("load", async function() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+        cargarClientes();
+    });
+
+    // Función para obtener y listar los clientes
+    async function cargarClientes() {
+        const { data, error } = await _supabase
+            .from('clientes')
+            .select('*')
+            .order('nombre_cliente', { ascending: true });
+
+        if (error) {
+            console.error("Error al cargar clientes:", error);
+            alert("⚠️ Error al obtener la lista de clientes.");
+            return;
+        }
+
+        const tbody = document.getElementById("tablaClientesBody");
+        tbody.innerHTML = "";
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777;">No hay clientes registrados todavía.</td></tr>`;
+            return;
+        }
+
+        data.forEach(c => {
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><strong>${c.nombre_cliente || '-'}</strong></td>
+                <td>${c.razon_social || '-'}</td>
+                <td>${c.cuit || '-'}</td>
+                <td>${c.nombre_contacto || '-'}</td>
+                <td>${c.direccion || '-'}</td>
+                <td>${c.telefono || '-'}</td>
+                <td>${c.observaciones || '-'}</td>
+                <td class="acciones-td">
+                    <button class="btn btn-editar" onclick="prepararEdicion('${c.id}', '${escapeHtml(c.nombre_cliente)}', '${escapeHtml(c.razon_social || '')}', '${escapeHtml(c.cuit || '')}', '${escapeHtml(c.nombre_contacto || '')}', '${escapeHtml(c.direccion || '')}', '${escapeHtml(c.telefono || '')}', '${escapeHtml(c.observaciones || '')}')">✏️</button>
+                    <button class="btn btn-eliminar" onclick="eliminarCliente('${c.id}')">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Guardar o Actualizar Cliente
+    async function guardarCliente() {
+        const id = document.getElementById("clienteId").value;
+        const nombre_cliente = document.getElementById("nombre_cliente").value.trim();
+        const razon_social = document.getElementById("razon_social").value.trim();
+        const cuit = document.getElementById("cuit").value.trim();
+        const nombre_contacto = document.getElementById("nombre_contacto").value.trim();
+        const direccion = document.getElementById("direccion").value.trim();
+        const telefono = document.getElementById("telefono").value.trim();
+        const observaciones = document.getElementById("observaciones").value.trim();
+
+        if (!nombre_cliente) {
+            alert("⚠️ El nombre comercial del cliente es obligatorio.");
+            return;
+        }
+
+        const datosCliente = {
+            nombre_cliente,
+            razon_social: razon_social || null,
+            cuit: cuit || null,
+            nombre_contacto: nombre_contacto || null,
+            direccion: direccion || null,
+            telefono: telefono || null,
+            observaciones: observaciones || null
+        };
+
+        if (id) {
+            // Actualizar cliente existente
+            const { error } = await _supabase
+                .from('clientes')
+                .update(datosCliente)
+                .eq('id', id);
+
+            if (error) {
+                alert("⚠️ Error al actualizar el cliente: " + error.message);
+                return;
+            }
+            alert("✅ Cliente actualizado con éxito.");
+        } else {
+            // Crear nuevo cliente
+            const { error } = await _supabase
+                .from('clientes')
+                .insert([datosCliente]);
+
+            if (error) {
+                alert("⚠️ Error al guardar el cliente (¿El CUIT ya existe?): " + error.message);
+                return;
+            }
+            alert("✅ Cliente guardado con éxito.");
+        }
+
+        limpiarFormulario();
+        cargarClientes();
+    }
+
+    // Preparar formulario para editar
+    function prepararEdicion(id, nombre, razon, cuit, contacto, direccion, telefono, observaciones) {
+        document.getElementById("clienteId").value = id;
+        document.getElementById("nombre_cliente").value = nombre !== 'null' ? nombre : '';
+        document.getElementById("razon_social").value = razon !== 'null' ? razon : '';
+        document.getElementById("cuit").value = cuit !== 'null' ? cuit : '';
+        document.getElementById("nombre_contacto").value = contacto !== 'null' ? contacto : '';
+        document.getElementById("direccion").value = direccion !== 'null' ? direccion : '';
+        document.getElementById("telefono").value = telefono !== 'null' ? telefono : '';
+        document.getElementById("observaciones").value = observaciones !== 'null' ? observaciones : '';
+
+        document.getElementById("formTitulo").textContent = "✏️ Editar Cliente";
+        document.getElementById("btnGuardar").textContent = "💾 Actualizar Cliente";
+        document.getElementById("btnCancelar").style.display = "inline-block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Limpiar formulario
+    function limpiarFormulario() {
+        document.getElementById("clienteId").value = "";
+        document.getElementById("nombre_cliente").value = "";
+        document.getElementById("razon_social").value = "";
+        document.getElementById("cuit").value = "";
+        document.getElementById("nombre_contacto").value = "";
+        document.getElementById("direccion").value = "";
+        document.getElementById("telefono").value = "";
+        document.getElementById("observaciones").value = "";
+
+        document.getElementById("formTitulo").textContent = "➕ Agregar Nuevo Cliente";
+        document.getElementById("btnGuardar").textContent = "💾 Guardar Cliente";
+        document.getElementById("btnCancelar").style.display = "none";
+    }
+
+    // Eliminar Cliente
+    async function eliminarCliente(id) {
+        if (!confirm("⚠️ ¿Estás seguro de eliminar este cliente?")) return;
+
+        const { error } = await _supabase
+            .from('clientes')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert("⚠️ No se pudo eliminar el cliente: " + error.message);
+            return;
+        }
+
+        alert("🗑️ Cliente eliminado correctamente.");
+        cargarClientes();
+    }
+
+    // Utilidad para limpiar comillas en los botones de edición
+    function escapeHtml(text) {
+        return text.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+    }
+</script>
+
+</body>
+</html>
