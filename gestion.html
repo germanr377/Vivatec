@@ -127,12 +127,12 @@
                 <input type="number" id="nuevoAFabricacion" placeholder="2024">
             </div>
             <div class="form-group" style="flex: none; width: 14ch;">
-                <label>Venc. P.H. (MM/AAAA):</label>
-                <input type="text" id="nuevoVencPH" placeholder="MM/AAAA" maxlength="7" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
+                <label>Venc. P.H. (MM/AA):</label>
+                <input type="text" id="nuevoVencPH" placeholder="MM/AA" maxlength="5" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
             </div>
             <div class="form-group" style="flex: none; width: 14ch;">
-                <label>Venc. Carga (MM/AAAA):</label>
-                <input type="text" id="nuevoVencCarga" placeholder="MM/AAAA" maxlength="7" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
+                <label>Venc. Carga (MM/AA):</label>
+                <input type="text" id="nuevoVencCarga" placeholder="MM/AA" maxlength="5" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
             </div>
             <div class="form-group" style="flex: none; width: 10ch;">
                 <label>Puesto:</label>
@@ -214,16 +214,17 @@
         }
     }
 
-    // BOTÓN RECARGA: Actualiza carga, calcula P.H. y si da el año en curso, suma 5 años más
+    // BOTÓN RECARGA: Actualiza carga, calcula P.H. (MM/AA) y si da el año en curso, suma 5 años más
     function aplicarRecarga() {
         let ahora = new Date();
         let mesActual = ahora.getMonth() + 1;
         let anioActual = ahora.getFullYear();
         let mesActualStr = String(mesActual).padStart(2, '0');
-        let proximoAnioCarga = anioActual + 1;
+        let anioActualDosDigitos = String(anioActual).slice(-2);
+        let proximoAnioCargaDosDigitos = String(anioActual + 1).slice(-2);
 
-        // 1. Asignar nuevo vencimiento de carga
-        document.getElementById("nuevoVencCarga").value = `${mesActualStr}/${proximoAnioCarga}`;
+        // 1. Asignar nuevo vencimiento de carga (MM/AA)
+        document.getElementById("nuevoVencCarga").value = `${mesActualStr}/${proximoAnioCargaDosDigitos}`;
 
         // 2. Recálculo estricto de P.H.
         let anoFabInput = document.getElementById("nuevoAFabricacion").value.trim();
@@ -239,6 +240,11 @@
 
         let anoFab = parseInt(anoFabInput, 10);
         if (!isNaN(anoFab)) {
+            // Si el usuario ingresó un año de 2 dígitos (ej: 14), convertirlo a 4 dígitos
+            if (anoFab < 100) {
+                anoFab += (anoFab > 50 ? 1900 : 2000);
+            }
+
             let diferencia = anioActual - anoFab;
             let division = diferencia / 5;
             let redondeadoArriba = Math.ceil(division); 
@@ -250,7 +256,8 @@
                 nuevoAnioPh += 5;
             }
 
-            document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
+            let nuevoAnioPhDosDigitos = String(nuevoAnioPh).slice(-2);
+            document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPhDosDigitos}`;
         } else {
             alert("⚠️ Por favor, ingresá el 'Año Fab.' del extintor para poder calcular el nuevo Venc. P.H.");
         }
@@ -313,10 +320,11 @@
         }
     }
 
+    // MASCARA MM/AA
     function formatearEntradaMesAnio(input) {
         let valor = input.value.replace(/\D/g, ''); 
         if (valor.length > 2) {
-            valor = valor.substring(0, 2) + '/' + valor.substring(2, 6);
+            valor = valor.substring(0, 2) + '/' + valor.substring(2, 4);
         }
         input.value = valor;
     }
@@ -325,18 +333,22 @@
         let val = input.value.trim();
         if (!val) return;
 
-        let regex = /^(0[1-9]|1[0-2])\/\d{4}$/;
+        let regex = /^(0[1-9]|1[0-2])\/\d{2}$/;
         if (!regex.test(val)) {
-            alert("⚠️ Formato incorrecto. Debe ingresar el mes y año en formato MM/AAAA (Ej: 08/2029).");
+            alert("⚠️ Formato incorrecto. Debe ingresar el mes y año en formato MM/AA (Ej: 11/28).");
             input.value = "";
             input.focus();
         }
     }
 
+    // CONVERSIÓN DE MM/AA A FORMATO SQL (AAAA-MM-DD para el último día del mes)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
-        if (partes.length === 3) return `${partes[1]}/${partes[0]}`;
+        if (partes.length === 3) {
+            let anioCorto = partes[0].slice(-2);
+            return `${partes[1]}/${anioCorto}`;
+        }
         return fechaSQL;
     }
 
@@ -345,12 +357,13 @@
         let partes = fechaWeb.trim().split("/");
         if (partes.length === 2) {
             let mes = partes[0].trim().padStart(2, '0');
-            let anio = partes[1].trim();
+            let anioCorto = partes[1].trim();
 
-            if (anio.length === 4 && !isNaN(mes) && !isNaN(anio)) {
-                let ultimoDia = new Date(parseInt(anio, 10), parseInt(mes, 10), 0).getDate();
+            if (anioCorto.length === 2 && !isNaN(mes) && !isNaN(anioCorto)) {
+                let anioCompleto = 2000 + parseInt(anioCorto, 10);
+                let ultimoDia = new Date(anioCompleto, parseInt(mes, 10), 0).getDate();
                 let diaStr = String(ultimoDia).padStart(2, '0');
-                return `${anio}-${mes}-${diaStr}`;
+                return `${anioCompleto}-${mes}-${diaStr}`;
             }
         }
         return null;
