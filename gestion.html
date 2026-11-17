@@ -214,7 +214,7 @@
         }
     }
 
-    // BOTÓN RECARGA: Actualiza carga, calcula P.H. siempre con tu fórmula exacta y solicita nuevo DPS
+    // BOTÓN RECARGA: Actualiza carga, calcula P.H. y si da el año en curso, suma 5 años más
     function aplicarRecarga() {
         let ahora = new Date();
         let mesActual = ahora.getMonth() + 1;
@@ -225,7 +225,7 @@
         // 1. Asignar nuevo vencimiento de carga
         document.getElementById("nuevoVencCarga").value = `${mesActualStr}/${proximoAnioCarga}`;
 
-        // 2. Recálculo estricto de P.H. con la fórmula solicitada
+        // 2. Recálculo estricto de P.H.
         let anoFabInput = document.getElementById("nuevoAFabricacion").value.trim();
         let vencPhActual = document.getElementById("nuevoVencPH").value.trim();
         
@@ -244,6 +244,11 @@
             let redondeadoArriba = Math.ceil(division); 
             let x = redondeadoArriba * 5;
             let nuevoAnioPh = anoFab + x;
+
+            // ⚠️ REGLA: Si el año calculado es igual al año actual, sumarle 5 años más
+            if (nuevoAnioPh === anioActual) {
+                nuevoAnioPh += 5;
+            }
 
             document.getElementById("nuevoVencPH").value = `${mesPh}/${nuevoAnioPh}`;
         } else {
