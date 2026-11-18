@@ -189,17 +189,18 @@
     function verificarPredictivo() {
         const val = document.getElementById("nombre_cliente").value.trim().toLowerCase();
         const lbl = document.getElementById("lblEstadoCliente");
-        const idActual = document.getElementById("clienteId").value;
 
         if (!val) {
             lbl.innerHTML = "";
+            document.getElementById("clienteId").value = "";
             return;
         }
 
         const encontrado = clientesCache.find(c => c.nombre_cliente && c.nombre_cliente.toLowerCase() === val);
+        const coincideParcial = clientesCache.some(c => c.nombre_cliente && c.nombre_cliente.toLowerCase().startsWith(val));
         
         if (encontrado) {
-            // Si coincide exactamente con uno existente, cargamos sus datos para edición/visualización rápida
+            // Si coincide exactamente con uno existente, cargamos sus datos para edición rápida
             document.getElementById("clienteId").value = encontrado.id;
             document.getElementById("razon_social").value = encontrado.razon_social || '';
             document.getElementById("cuit").value = encontrado.cuit || '';
@@ -212,16 +213,21 @@
             document.getElementById("formTitulo").textContent = "✏️ Editar Cliente Existente";
             document.getElementById("btnGuardar").textContent = "💾 Actualizar Cliente";
             document.getElementById("btnCancelar").style.display = "inline-block";
-        } else {
-            // Si no coincide, se marca como NUEVO
+        } else if (coincideParcial) {
+            // Mientras escribe y coincide parcialmente con sugerencias, mantenemos limpio el ID
             document.getElementById("clienteId").value = "";
-            lbl.innerHTML = `<span class="badge-estado badge-nuevo">✨ Nuevo (Se agregará a la lista)</span>`;
+            lbl.innerHTML = `<span class="badge-estado badge-existente">🔍 Buscando...</span>`;
+        } else {
+            // Si no coincide con ninguno, se marca como NUEVO
+            document.getElementById("clienteId").value = "";
+            lbl.innerHTML = `<span class="badge-estado badge-nuevo">✨ Nuevo (Se agregará)</span>`;
             document.getElementById("formTitulo").textContent = "➕ Agregar Nuevo Cliente";
             document.getElementById("btnGuardar").textContent = "💾 Guardar Cliente";
+            document.getElementById("btnCancelar").style.display = "none";
         }
     }
 
-    // Filtrar la lista de abajo utilizando los datos colocados en los campos superiores
+    // Filtrar la lista de abajo utilizando los datos colocados en los campos superiores al presionar Buscar
     function filtrarClientesPorCampos() {
         const fNombre = document.getElementById("nombre_cliente").value.trim().toLowerCase();
         const fRazon = document.getElementById("razon_social").value.trim().toLowerCase();
@@ -256,7 +262,6 @@
             ordenAscendente = true;
         }
 
-        // Actualizar flechas visuales en los th
         ['nombre_cliente', 'razon_social', 'cuit', 'nombre_contacto', 'direccion', 'telefono', 'observaciones'].forEach(col => {
             const span = document.getElementById(`sort_${col}`);
             if (span) span.textContent = '↕';
@@ -281,7 +286,7 @@
         tbody.innerHTML = "";
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777;">No se encontraron clientes con los filtros aplicados.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777;">No se encontraron clientes con los criterios indicados.</td></tr>`;
             return;
         }
 
@@ -417,14 +422,14 @@
         await cargarClientes();
     }
 
-    // Utilidad para escapar texto y prevenir XSS
+    // Utilidad para escapar texto y prevenir XSS (Corregida la sintaxis)
     function escapeHtml(text) {
         if (!text) return '';
         return text
             .toString()
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
-            .replace(>g, "&gt;")
+            .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
