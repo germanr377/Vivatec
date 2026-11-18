@@ -87,6 +87,7 @@
         </div>
         <div class="form-acciones">
             <button class="btn" id="btnGuardar" onclick="guardarCliente()">💾 Guardar Cliente</button>
+            <button class="btn btn-volver" id="btnLimpiar" onclick="limpiarFormulario()">🧹 Limpiar</button>
             <button class="btn btn-volver" id="btnCancelar" onclick="limpiarFormulario()" style="display:none;">❌ Cancelar</button>
         </div>
     </div>
@@ -238,6 +239,7 @@
         document.getElementById("formTitulo").textContent = "✏️ Editar Cliente";
         document.getElementById("btnGuardar").textContent = "💾 Actualizar Cliente";
         document.getElementById("btnCancelar").style.display = "inline-block";
+        document.getElementById("btnLimpiar").style.display = "none";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -255,6 +257,7 @@
         document.getElementById("formTitulo").textContent = "➕ Agregar Nuevo Cliente";
         document.getElementById("btnGuardar").textContent = "💾 Guardar Cliente";
         document.getElementById("btnCancelar").style.display = "none";
+        document.getElementById("btnLimpiar").style.display = "inline-block";
     }
 
     // Eliminar Cliente
