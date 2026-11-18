@@ -311,7 +311,7 @@
 
     function validarTipo(input) {
         let valor = input.value.trim().toUpperCase();
-        let permitidos = ["A", "ABC", "BC", "K"];
+        let permitidos = ["A","AB", "ABC", "BC", "K"];
         if (valor && !permitidos.includes(valor)) {
             alert("⚠️ Tipo inválido. Los tipos permitidos son: A, ABC, BC o K.");
             input.value = "";
