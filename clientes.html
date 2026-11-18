@@ -18,24 +18,33 @@
         .btn:hover { background: #1f618d; }
         .btn-volver { background: #7f8c8d; }
         .btn-volver:hover { background: #626567; }
+        .btn-buscar { background: #27ae60; }
+        .btn-buscar:hover { background: #219653; }
         .btn-eliminar { background: #c0392b; padding: 5px 10px; font-size: 11px; }
         .btn-eliminar:hover { background: #962d22; }
         .btn-editar { background: #f39c12; padding: 5px 10px; font-size: 11px; color: white; }
         .btn-editar:hover { background: #d68910; }
 
-        /* Formulario de Carga / Edición */
+        /* Formulario de Carga / Edición / Búsqueda */
         .form-card { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 6px; margin-bottom: 25px; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #555; display: flex; justify-content: space-between; }
         .form-group input, .form-group textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         .form-group textarea { resize: vertical; height: 40px; }
-        .form-acciones { margin-top: 15px; text-align: right; }
+        .form-acciones { margin-top: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+        /* Badge de estado (Nuevo / Existente) */
+        .badge-estado { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: normal; }
+        .badge-nuevo { background: #e8f8f5; color: #16a085; border: 1px solid #a3e4d7; }
+        .badge-existente { background: #ebf5fb; color: #2980b9; border: 1px solid #aed6f1; }
 
         /* Tabla de Clientes */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #2980b9; color: white; }
+        th { background: #2980b9; color: white; cursor: pointer; user-select: none; }
+        th:hover { background: #2471a3; }
+        th span { font-size: 10px; float: right; }
         tr:nth-child(even) { background: #f9f9f9; }
 
         .acciones-td { white-space: nowrap; text-align: center; }
@@ -51,14 +60,19 @@
         </div>
     </div>
 
-    <!-- Formulario para Nuevo / Editar Cliente -->
+    <!-- Formulario / Panel de Filtros y Carga -->
     <div class="form-card">
-        <h3 id="formTitulo" style="margin-top: 0; font-size: 15px; color: #2980b9;">➕ Agregar Nuevo Cliente</h3>
+        <h3 id="formTitulo" style="margin-top: 0; font-size: 15px; color: #2980b9;">
+            ➕ Agregar / Buscar Cliente <span id="spanBadgeEstado"></span>
+        </h3>
         <input type="hidden" id="clienteId">
         <div class="form-grid">
             <div class="form-group">
-                <label>Nombre Comercial / Corto *</label>
-                <input type="text" id="nombre_cliente" placeholder="Ej: Supermercado Don Juan" required>
+                <label>Nombre Comercial / Corto * <span id="lblEstadoCliente"></span></label>
+                <input type="text" id="nombre_cliente" list="sugerenciasClientes" placeholder="Ej: Supermercado Don Juan" oninput="verificarPredictivo()">
+                <datalist id="sugerenciasClientes">
+                    <!-- Se llena dinámicamente -->
+                </datalist>
             </div>
             <div class="form-group">
                 <label>Razón Social (Legal)</label>
@@ -86,25 +100,29 @@
             <textarea id="observaciones" placeholder="Ej: Atienden por la mañana, portón trasero..."></textarea>
         </div>
         <div class="form-acciones">
+            <button class="btn btn-buscar" onclick="filtrarClientesPorCampos()">🔍 Buscar</button>
             <button class="btn" id="btnGuardar" onclick="guardarCliente()">💾 Guardar Cliente</button>
-            <button class="btn btn-volver" id="btnLimpiar" onclick="limpiarFormulario()">🧹 Limpiar</button>
-            <button class="btn btn-volver" id="btnCancelar" onclick="limpiarFormulario()" style="display:none;">❌ Cancelar</button>
+            <button class="btn btn-volver" id="btnLimpiar" onclick="limpiarFormularioYFiltros()">🧹 Limpiar / Ver Todos</button>
+            <button class="btn btn-volver" id="btnCancelar" onclick="limpiarFormularioYFiltros()" style="display:none;">❌ Cancelar</button>
         </div>
     </div>
 
     <!-- Listado de Clientes -->
-    <h3 style="font-size: 14px; color: #555;">Clientes Registrados</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <h3 id="tituloLista" style="font-size: 14px; color: #555; margin: 0;">Clientes Registrados</h3>
+        <span id="contadorResultados" style="font-size: 12px; color: #777;"></span>
+    </div>
     <div style="overflow-x: auto;">
         <table>
             <thead>
                 <tr>
-                    <th>Nombre Comercial</th>
-                    <th>Razón Social</th>
-                    <th>CUIT</th>
-                    <th>Contacto</th>
-                    <th>Dirección</th>
-                    <th>Teléfono</th>
-                    <th>Observaciones</th>
+                    <th onclick="ordenarTabla('nombre_cliente')">Nombre Comercial <span id="sort_nombre_cliente">↕</span></th>
+                    <th onclick="ordenarTabla('razon_social')">Razón Social <span id="sort_razon_social">↕</span></th>
+                    <th onclick="ordenarTabla('cuit')">CUIT <span id="sort_cuit">↕</span></th>
+                    <th onclick="ordenarTabla('nombre_contacto')">Contacto <span id="sort_nombre_contacto">↕</span></th>
+                    <th onclick="ordenarTabla('direccion')">Dirección <span id="sort_direccion">↕</span></th>
+                    <th onclick="ordenarTabla('telefono')">Teléfono <span id="sort_telefono">↕</span></th>
+                    <th onclick="ordenarTabla('observaciones')">Observaciones <span id="sort_observaciones">↕</span></th>
                     <th style="text-align: center;">Acciones</th>
                 </tr>
             </thead>
@@ -120,6 +138,11 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let clientesCache = [];
+    let clientesFiltrados = [];
+    let columnaOrdenActual = 'nombre_cliente';
+    let ordenAscendente = true;
+
     // 🔒 SEGURIDAD: Validar sesión activa al cargar la página
     window.addEventListener("load", async function() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -127,7 +150,7 @@
             window.location.href = "login.html";
             return;
         }
-        cargarClientes();
+        await cargarClientes();
     });
 
     // Función para obtener y listar los clientes
@@ -143,27 +166,138 @@
             return;
         }
 
+        clientesCache = data || [];
+        clientesFiltrados = [...clientesCache];
+        actualizarDatalist();
+        renderizarTabla(clientesFiltrados);
+    }
+
+    // Actualizar el datalist predictivo
+    function actualizarDatalist() {
+        const datalist = document.getElementById("sugerenciasClientes");
+        datalist.innerHTML = "";
+        clientesCache.forEach(c => {
+            if (c.nombre_cliente) {
+                let option = document.createElement("option");
+                option.value = c.nombre_cliente;
+                datalist.appendChild(option);
+            }
+        });
+    }
+
+    // Predictivo: detecta si el nombre escrito coincide con uno existente o es nuevo
+    function verificarPredictivo() {
+        const val = document.getElementById("nombre_cliente").value.trim().toLowerCase();
+        const lbl = document.getElementById("lblEstadoCliente");
+        const idActual = document.getElementById("clienteId").value;
+
+        if (!val) {
+            lbl.innerHTML = "";
+            return;
+        }
+
+        const encontrado = clientesCache.find(c => c.nombre_cliente && c.nombre_cliente.toLowerCase() === val);
+        
+        if (encontrado) {
+            // Si coincide exactamente con uno existente, cargamos sus datos para edición/visualización rápida
+            document.getElementById("clienteId").value = encontrado.id;
+            document.getElementById("razon_social").value = encontrado.razon_social || '';
+            document.getElementById("cuit").value = encontrado.cuit || '';
+            document.getElementById("nombre_contacto").value = encontrado.nombre_contacto || '';
+            document.getElementById("direccion").value = encontrado.direccion || '';
+            document.getElementById("telefono").value = encontrado.telefono || '';
+            document.getElementById("observaciones").value = encontrado.observaciones || '';
+            
+            lbl.innerHTML = `<span class="badge-estado badge-existente">📋 Existente (Editando)</span>`;
+            document.getElementById("formTitulo").textContent = "✏️ Editar Cliente Existente";
+            document.getElementById("btnGuardar").textContent = "💾 Actualizar Cliente";
+            document.getElementById("btnCancelar").style.display = "inline-block";
+        } else {
+            // Si no coincide, se marca como NUEVO
+            document.getElementById("clienteId").value = "";
+            lbl.innerHTML = `<span class="badge-estado badge-nuevo">✨ Nuevo (Se agregará a la lista)</span>`;
+            document.getElementById("formTitulo").textContent = "➕ Agregar Nuevo Cliente";
+            document.getElementById("btnGuardar").textContent = "💾 Guardar Cliente";
+        }
+    }
+
+    // Filtrar la lista de abajo utilizando los datos colocados en los campos superiores
+    function filtrarClientesPorCampos() {
+        const fNombre = document.getElementById("nombre_cliente").value.trim().toLowerCase();
+        const fRazon = document.getElementById("razon_social").value.trim().toLowerCase();
+        const fCuit = document.getElementById("cuit").value.trim().toLowerCase();
+        const fContacto = document.getElementById("nombre_contacto").value.trim().toLowerCase();
+        const fDireccion = document.getElementById("direccion").value.trim().toLowerCase();
+        const fTelefono = document.getElementById("telefono").value.trim().toLowerCase();
+        const fObservaciones = document.getElementById("observaciones").value.trim().toLowerCase();
+
+        clientesFiltrados = clientesCache.filter(c => {
+            let match = true;
+            if (fNombre && (!c.nombre_cliente || !c.nombre_cliente.toLowerCase().includes(fNombre))) match = false;
+            if (fRazon && (!c.razon_social || !c.razon_social.toLowerCase().includes(fRazon))) match = false;
+            if (fCuit && (!c.cuit || !c.cuit.toLowerCase().includes(fCuit))) match = false;
+            if (fContacto && (!c.nombre_contacto || !c.nombre_contacto.toLowerCase().includes(fContacto))) match = false;
+            if (fDireccion && (!c.direccion || !c.direccion.toLowerCase().includes(fDireccion))) match = false;
+            if (fTelefono && (!c.telefono || !c.telefono.toLowerCase().includes(fTelefono))) match = false;
+            if (fObservaciones && (!c.observaciones || !c.observaciones.toLowerCase().includes(fObservaciones))) match = false;
+            return match;
+        });
+
+        renderizarTabla(clientesFiltrados);
+        document.getElementById("contadorResultados").textContent = `(${clientesFiltrados.length} resultados encontrados)`;
+    }
+
+    // Ordenar tabla al hacer clic en los encabezados
+    function ordenarTabla(columna) {
+        if (columnaOrdenActual === columna) {
+            ordenAscendente = !ordenAscendente;
+        } else {
+            columnaOrdenActual = columna;
+            ordenAscendente = true;
+        }
+
+        // Actualizar flechas visuales en los th
+        ['nombre_cliente', 'razon_social', 'cuit', 'nombre_contacto', 'direccion', 'telefono', 'observaciones'].forEach(col => {
+            const span = document.getElementById(`sort_${col}`);
+            if (span) span.textContent = '↕';
+        });
+        document.getElementById(`sort_${columna}`).textContent = ordenAscendente ? '▲' : '▼';
+
+        clientesFiltrados.sort((a, b) => {
+            let valA = (a[columna] || '').toString().toLowerCase();
+            let valB = (b[columna] || '').toString().toLowerCase();
+
+            if (valA < valB) return ordenAscendente ? -1 : 1;
+            if (valA > valB) return ordenAscendente ? 1 : -1;
+            return 0;
+        });
+
+        renderizarTabla(clientesFiltrados);
+    }
+
+    // Renderizar la tabla de clientes
+    function renderizarTabla(data) {
         const tbody = document.getElementById("tablaClientesBody");
         tbody.innerHTML = "";
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777;">No hay clientes registrados todavía.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #777;">No se encontraron clientes con los filtros aplicados.</td></tr>`;
             return;
         }
 
         data.forEach(c => {
             let tr = document.createElement("tr");
             tr.innerHTML = `
-                <td><strong>${c.nombre_cliente || '-'}</strong></td>
-                <td>${c.razon_social || '-'}</td>
-                <td>${c.cuit || '-'}</td>
-                <td>${c.nombre_contacto || '-'}</td>
-                <td>${c.direccion || '-'}</td>
-                <td>${c.telefono || '-'}</td>
-                <td>${c.observaciones || '-'}</td>
+                <td><strong>${escapeHtml(c.nombre_cliente || '-')}</strong></td>
+                <td>${escapeHtml(c.razon_social || '-')}</td>
+                <td>${escapeHtml(c.cuit || '-')}</td>
+                <td>${escapeHtml(c.nombre_contacto || '-')}</td>
+                <td>${escapeHtml(c.direccion || '-')}</td>
+                <td>${escapeHtml(c.telefono || '-')}</td>
+                <td>${escapeHtml(c.observaciones || '-')}</td>
                 <td class="acciones-td">
-                    <button class="btn btn-editar" onclick="prepararEdicion('${c.id}', '${escapeHtml(c.nombre_cliente)}', '${escapeHtml(c.razon_social || '')}', '${escapeHtml(c.cuit || '')}', '${escapeHtml(c.nombre_contacto || '')}', '${escapeHtml(c.direccion || '')}', '${escapeHtml(c.telefono || '')}', '${escapeHtml(c.observaciones || '')}')">✏️</button>
-                    <button class="btn btn-eliminar" onclick="eliminarCliente('${c.id}')">🗑️</button>
+                    <button class="btn btn-editar" onclick="prepararEdicion('${c.id}')" title="Editar">✏️</button>
+                    <button class="btn btn-eliminar" onclick="eliminarCliente('${c.id}')" title="Eliminar">🗑️</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -197,7 +331,6 @@
         };
 
         if (id) {
-            // Actualizar cliente existente
             const { error } = await _supabase
                 .from('clientes')
                 .update(datosCliente)
@@ -209,7 +342,6 @@
             }
             alert("✅ Cliente actualizado con éxito.");
         } else {
-            // Crear nuevo cliente
             const { error } = await _supabase
                 .from('clientes')
                 .insert([datosCliente]);
@@ -221,30 +353,33 @@
             alert("✅ Cliente guardado con éxito.");
         }
 
-        limpiarFormulario();
-        cargarClientes();
+        limpiarFormularioYFiltros();
+        await cargarClientes();
     }
 
-    // Preparar formulario para editar
-    function prepararEdicion(id, nombre, razon, cuit, contacto, direccion, telefono, observaciones) {
-        document.getElementById("clienteId").value = id;
-        document.getElementById("nombre_cliente").value = nombre !== 'null' ? nombre : '';
-        document.getElementById("razon_social").value = razon !== 'null' ? razon : '';
-        document.getElementById("cuit").value = cuit !== 'null' ? cuit : '';
-        document.getElementById("nombre_contacto").value = contacto !== 'null' ? contacto : '';
-        document.getElementById("direccion").value = direccion !== 'null' ? direccion : '';
-        document.getElementById("telefono").value = telefono !== 'null' ? telefono : '';
-        document.getElementById("observaciones").value = observaciones !== 'null' ? observaciones : '';
+    // Preparar formulario para editar buscando por ID desde la tabla
+    function prepararEdicion(id) {
+        const c = clientesCache.find(item => item.id == id);
+        if (!c) return;
+
+        document.getElementById("clienteId").value = c.id;
+        document.getElementById("nombre_cliente").value = c.nombre_cliente || '';
+        document.getElementById("razon_social").value = c.razon_social || '';
+        document.getElementById("cuit").value = c.cuit || '';
+        document.getElementById("nombre_contacto").value = c.nombre_contacto || '';
+        document.getElementById("direccion").value = c.direccion || '';
+        document.getElementById("telefono").value = c.telefono || '';
+        document.getElementById("observaciones").value = c.observaciones || '';
 
         document.getElementById("formTitulo").textContent = "✏️ Editar Cliente";
+        document.getElementById("lblEstadoCliente").innerHTML = `<span class="badge-estado badge-existente">📋 Existente</span>`;
         document.getElementById("btnGuardar").textContent = "💾 Actualizar Cliente";
         document.getElementById("btnCancelar").style.display = "inline-block";
-        document.getElementById("btnLimpiar").style.display = "none";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Limpiar formulario
-    function limpiarFormulario() {
+    // Limpiar formulario y restablecer la tabla completa
+    function limpiarFormularioYFiltros() {
         document.getElementById("clienteId").value = "";
         document.getElementById("nombre_cliente").value = "";
         document.getElementById("razon_social").value = "";
@@ -253,11 +388,15 @@
         document.getElementById("direccion").value = "";
         document.getElementById("telefono").value = "";
         document.getElementById("observaciones").value = "";
+        document.getElementById("lblEstadoCliente").innerHTML = "";
 
-        document.getElementById("formTitulo").textContent = "➕ Agregar Nuevo Cliente";
+        document.getElementById("formTitulo").textContent = "➕ Agregar / Buscar Cliente";
         document.getElementById("btnGuardar").textContent = "💾 Guardar Cliente";
         document.getElementById("btnCancelar").style.display = "none";
-        document.getElementById("btnLimpiar").style.display = "inline-block";
+        
+        clientesFiltrados = [...clientesCache];
+        renderizarTabla(clientesFiltrados);
+        document.getElementById("contadorResultados").textContent = "";
     }
 
     // Eliminar Cliente
@@ -275,12 +414,19 @@
         }
 
         alert("🗑️ Cliente eliminado correctamente.");
-        cargarClientes();
+        await cargarClientes();
     }
 
-    // Utilidad para limpiar comillas en los botones de edición
+    // Utilidad para escapar texto y prevenir XSS
     function escapeHtml(text) {
-        return text.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+        if (!text) return '';
+        return text
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(>g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 </script>
 
