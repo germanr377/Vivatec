@@ -208,6 +208,22 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const CAMPOS_HISTORIAL = [
+        "cliente",
+        "extintor_numero",
+        "numero_dps",
+        "oblea",
+        "marca",
+        "tipo",
+        "agente_extintor",
+        "capacidad",
+        "ano_fab",
+        "vto_prueb_hidr",
+        "vto_carga",
+        "identificacion_puesto",
+        "ubicacion"
+    ];
+
     let listaClientesOficiales = [];
     let sugerenciasFiltradas = [];
     let indiceSugerenciaActiva = 0;
@@ -216,6 +232,7 @@
     let listaDpsExistentes = [];
     let enModoRecarga = false;
     let ultimaConsultaDuplicado = "";
+    let registroOriginalCargado = null;
 
     window.addEventListener("load", async function() {
         // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
@@ -230,6 +247,45 @@
         await cargarClientesEnPredictivo();
         await cargarListasGlobales();
     });
+
+    // Fecha de hoy en formato AAAA-MM-DD (zona horaria local)
+    function obtenerFechaHoySQL() {
+        const hoy = new Date();
+        const anio = hoy.getFullYear();
+        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoy.getDate()).padStart(2, '0');
+        return `${anio}-${mes}-${dia}`;
+    }
+
+    function normalizarValorComparacion(val) {
+        if (val === null || val === undefined || val === "") return null;
+        if (typeof val === "number") return Number.isNaN(val) ? null : val;
+        return String(val).trim();
+    }
+
+    function huboCambiosEnCampos(anterior, actual) {
+        if (!anterior) return true;
+        return CAMPOS_HISTORIAL.some(campo => {
+            return normalizarValorComparacion(anterior[campo]) !== normalizarValorComparacion(actual[campo]);
+        });
+    }
+
+    async function registrarEnHistorialRevisiones(extintorId, datosRegistro) {
+        if (!extintorId) return { error: new Error("Falta extintor_id para historial_revisiones") };
+
+        const payloadHistorial = {
+            extintor_id: extintorId,
+            fecha_revision: obtenerFechaHoySQL()
+        };
+
+        CAMPOS_HISTORIAL.forEach(campo => {
+            payloadHistorial[campo] = datosRegistro[campo] ?? null;
+        });
+
+        return await _supabase
+            .from('historial_revisiones')
+            .insert([payloadHistorial]);
+    }
 
     // Buscar al presionar Enter en N° Extintor o N° DPS
     function configurarBusquedaPorEnter() {
@@ -252,7 +308,6 @@
             .select('nombre_cliente, razon_social')
             .order('nombre_cliente', { ascending: true });
 
-        const inputCliente = document.getElementById("nuevoCliente");
         listaClientesOficiales = [];
 
         if (error) {
@@ -326,7 +381,6 @@
             return;
         }
 
-        // Prioriza los que empiezan con lo escrito y luego los que lo contienen
         const empiezanCon = listaClientesOficiales.filter(c =>
             c.nombre.toLowerCase().startsWith(filtro)
         );
@@ -384,7 +438,6 @@
         indiceSugerenciaActiva = 0;
     }
 
-    // Valida que el cliente escrito exista en la lista oficial y devuelve su nombre exacto (o null si no existe)
     function obtenerClienteOficialValido(texto) {
         let limpio = (texto || "").trim().toLowerCase();
         if (!limpio) return null;
@@ -416,7 +469,6 @@
         }
     }
 
-    // Convierte un texto MM/AA o fecha AAAA-MM-DD a objeto Date del último día del mes
     function obtenerUltimoDiaDeFecha(valor) {
         if (!valor) return null;
         let limpio = String(valor).trim();
@@ -438,7 +490,6 @@
         return null;
     }
 
-    // Formatea un Date al último día de su mes en formato MM/AA
     function formatearMesAnioDesdeDate(fecha) {
         let ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
         let mesStr = String(ultimoDiaMes.getMonth() + 1).padStart(2, '0');
@@ -446,9 +497,6 @@
         return `${mesStr}/${anioCortoStr}`;
     }
 
-    // BOTÓN RECARGA:
-    // 1. Nuevo vto carga = mismo mes en curso, último día del mes, 1 año después de la fecha actual.
-    // 2. Si el nuevo vto carga es mayor al vto actual de PH, el nuevo vto PH = vto carga + 4 años (último día del mes).
     function aplicarRecarga() {
         let ahora = new Date();
         let anioCarga = ahora.getFullYear() + 1;
@@ -479,7 +527,6 @@
         enModoRecarga = true;
     }
 
-    // REDIRECCIÓN AL MÓDULO DE IMPRESIÓN VALIDANDO TIPO OBLEA
     function imprimirOblea() {
         let id = document.getElementById("registroId").value;
         let tipoOblea = document.getElementById("nuevoOblea").value.trim();
@@ -523,7 +570,6 @@
         }
     }
 
-    // MASCARA MM/AA
     function formatearEntradaMesAnio(input) {
         let valor = input.value.replace(/\D/g, ''); 
         if (valor.length > 2) {
@@ -544,7 +590,6 @@
         }
     }
 
-    // CONVERSIÓN DE MM/AA A FORMATO SQL (AAAA-MM-DD para el último día del mes)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "";
         let partes = fechaSQL.split("-");
@@ -646,6 +691,11 @@
         document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
         document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
 
+        registroOriginalCargado = {};
+        CAMPOS_HISTORIAL.forEach(campo => {
+            registroOriginalCargado[campo] = ex[campo] ?? null;
+        });
+
         ultimaConsultaDuplicado = `${ex.cliente || ""}|${ex.extintor_numero || ""}|${ex.numero_dps || ""}`;
 
         let contenedor = document.getElementById("contenedorPrincipal");
@@ -705,6 +755,7 @@
                 } else if (clienteActual) {
                     let otroCliente = data[0].cliente || "Otro cliente";
                     document.getElementById("registroId").value = "";
+                    registroOriginalCargado = null;
                     mostrarAvisoDuplicado(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroCliente}". Podés guardarlo igual ya que es de otro cliente.`);
                 } else {
                     ocultarAvisoDuplicado();
@@ -751,44 +802,76 @@
         };
 
         let resultado;
+        let idAfectado = idExistente ? parseInt(idExistente, 10) : null;
+
         if (idExistente) {
-            resultado = await _supabase.from('extintores').update(datosRegistro).eq('id', idExistente);
+            resultado = await _supabase
+                .from('extintores')
+                .update(datosRegistro)
+                .eq('id', idExistente)
+                .select()
+                .single();
         } else {
-            resultado = await _supabase.from('extintores').insert([datosRegistro]);
+            resultado = await _supabase
+                .from('extintores')
+                .insert([datosRegistro])
+                .select()
+                .single();
         }
 
         if (resultado.error) {
             console.error("Error al guardar:", resultado.error);
             alert("Hubo un error al guardar el extintor en la base de datos.");
-        } else {
-            ocultarAvisoDuplicado();
-            await cargarListasGlobales();
-
-            const btn = document.getElementById("btnGuardar");
-            btn.innerHTML = "✅ ¡Operación Exitosa!";
-            btn.classList.add("success");
-
-            setTimeout(() => {
-                btn.innerHTML = "💾 Guardar / Actualizar";
-                btn.classList.remove("success", "existente-btn");
-
-                if (enModoRecarga) {
-                    let contenedor = document.getElementById("contenedorPrincipal");
-                    contenedor.classList.remove("modo-recarga");
-                    contenedor.classList.add("modo-existente");
-                    document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
-                    btn.textContent = "🔄 Actualizar Extintor";
-                    btn.classList.add("existente-btn");
-                    
-                    if (!idExistente) {
-                        buscarExtintorSilencioso();
-                    }
-                    enModoRecarga = false;
-                } else {
-                    limpiarFormulario();
-                }
-            }, 2000);
+            return;
         }
+
+        if (resultado.data && resultado.data.id) {
+            idAfectado = resultado.data.id;
+            document.getElementById("registroId").value = idAfectado;
+        }
+
+        const debeRegistrarHistorial = !idExistente || enModoRecarga || huboCambiosEnCampos(registroOriginalCargado, datosRegistro);
+
+        if (debeRegistrarHistorial && idAfectado) {
+            const histRes = await registrarEnHistorialRevisiones(idAfectado, datosRegistro);
+            if (histRes.error) {
+                console.error("Error al guardar en historial_revisiones:", histRes.error);
+                alert("⚠️ El extintor se guardó, pero hubo un error al registrar en historial_revisiones.");
+            }
+        }
+
+        registroOriginalCargado = {};
+        CAMPOS_HISTORIAL.forEach(campo => {
+            registroOriginalCargado[campo] = datosRegistro[campo] ?? null;
+        });
+
+        ocultarAvisoDuplicado();
+        await cargarListasGlobales();
+
+        const btn = document.getElementById("btnGuardar");
+        btn.innerHTML = "✅ ¡Operación Exitosa!";
+        btn.classList.add("success");
+
+        setTimeout(() => {
+            btn.innerHTML = "💾 Guardar / Actualizar";
+            btn.classList.remove("success", "existente-btn");
+
+            if (enModoRecarga) {
+                let contenedor = document.getElementById("contenedorPrincipal");
+                contenedor.classList.remove("modo-recarga");
+                contenedor.classList.add("modo-existente");
+                document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
+                btn.textContent = "🔄 Actualizar Extintor";
+                btn.classList.add("existente-btn");
+                
+                if (!idExistente) {
+                    buscarExtintorSilencioso();
+                }
+                enModoRecarga = false;
+            } else {
+                limpiarFormulario();
+            }
+        }, 2000);
     }
 
     async function buscarExtintorSilencioso() {
@@ -838,6 +921,7 @@
 
     function limpiarFormulario() {
         document.getElementById("registroId").value = "";
+        registroOriginalCargado = null;
         document.getElementById("nuevoCliente").value = "";
         document.getElementById("nuevoExtintor").value = "";
         document.getElementById("nuevoDps").value = "";
