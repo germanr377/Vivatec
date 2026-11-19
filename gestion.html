@@ -153,3 +153,29 @@
                 <input type="text" id="nuevoUbicacion" >
             </div>
         </div>
+
+<!-- BOTONERIA DE ACCIÓN UNIFICADA -->
+        <div class="action-buttons">
+            <button class="btn-base btn-buscar" onclick="buscarExtintor()">🔍 Buscar</button>
+            <button class="btn-base btn-recarga" onclick="aplicarRecarga()">⚡ Recarga</button>
+            <button class="btn-base btn-print" onclick="imprimirOblea()">🖨️ Imprimir Oblea</button>
+            <button id="btnGuardar" class="btn-base btn-save" onclick="guardarOActualizar()">💾 Guardar / Actualizar</button>
+            <button class="btn-base btn-delete" onclick="eliminarExtintor()">🗑️ Eliminar</button>
+            <button class="btn-base btn-clean" onclick="limpiarFormulario()">🧹 Limpiar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let listaClientesOficiales = [];
+    let sugerenciasFiltradas = [];
+    let indiceSugerenciaActiva = 0;
+
+    let listaExtintoresExistentes = [];
+    let listaDpsExistentes = [];
+    let enModoRecarga = false;
+    let ultimaConsultaDuplicado = "";
