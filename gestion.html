@@ -128,4 +128,43 @@
                 <input type="text" id="nuevoExtintor" oninput="verificarExtintorNuevo()" onblur="verificarDuplicado()">
                 <div id="lblNuevoExtintor" class="aviso-nuevo">✨
 
+Nuevo Extintor</div>
+            </div>
+            <div class="form-group" style="flex: none; width: 16ch;">
+                <label>N° DPS:</label>
+                <input type="text" id="nuevoDps" oninput="verificarDpsNuevo()" onblur="verificarDuplicado()">
+                <div id="lblNuevoDps" class="aviso-nuevo">✨ Nuevo DPS</div>
+            </div>
+        </div>
+
+        <!-- Aviso no bloqueante para duplicados de otro cliente -->
+        <div id="avisoDuplicadoCliente" class="aviso-duplicado-inline"></div>
+
+        <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Agente Extintor, Capacidad -->
+        <div class="form-row">
+            <div class="form-group" style="flex: none; width: 16ch;">
+                <label>Tipo Oblea:</label>
+                <select id="nuevoOblea">
+                    <option value="Uso Gral" selected>Uso Gral</option>
+                    <option value="Vehicular 1K">Vehicular 1K</option>
+                    <option value="Vehicular">Vehicular</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Marca:</label>
+                <input type="text" id="nuevoMarca">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Tipo (A, AB, ABC, BC, K):</label>
+                <input type="text" id="nuevoTipo"  oninput="autocompletarAgente()" onblur="validarTipo(this)">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Agente Extintor:</label>
+                <input type="text" id="nuevoAgente" >
+            </div>
+            <div class="form-group" style="flex: none; width: 12ch;">
+                <label>Capacidad:</label>
+                <input type="text" id="nuevoCapacidad" >
+            </div>
+        </div>
        
