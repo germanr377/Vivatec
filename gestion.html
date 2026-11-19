@@ -412,3 +412,23 @@ function validarClienteOficialSinBucle() {
         let anioCortoStr = String(ultimoDiaMes.getFullYear()).slice(-2);
         return `${mesStr}/${anioCortoStr}`;
     }
+
+// BOTÓN RECARGA:
+    // 1. Nuevo vto carga = mismo mes en curso, último día del mes, 1 año después de la fecha actual.
+    // 2. Si el nuevo vto carga es mayor al vto actual de PH, el nuevo vto PH = vto carga + 4 años (último día del mes).
+    function aplicarRecarga() {
+        let ahora = new Date();
+        let anioCarga = ahora.getFullYear() + 1;
+        let mesCarga = ahora.getMonth() + 1;
+        let fechaNuevaCarga = new Date(anioCarga, mesCarga, 0);
+
+        document.getElementById("nuevoVencCarga").value = formatearMesAnioDesdeDate(fechaNuevaCarga);
+
+        let vencPhActualTexto = document.getElementById("nuevoVencPH").value.trim();
+        let fechaPhActual = obtenerUltimoDiaDeFecha(vencPhActualTexto);
+
+        if (!fechaPhActual || fechaNuevaCarga.getTime() > fechaPhActual.getTime()) {
+            let fechaNuevoPh = new Date(anioCarga + 4, mesCarga, 0);
+            document.getElementById("nuevoVencPH").value = formatearMesAnioDesdeDate(fechaNuevoPh);
+        }
+
