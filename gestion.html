@@ -78,3 +78,26 @@
             margin-bottom: 12px;
             font-weight: bold;
         }
+
+
+        <!-- FILA 1: Cliente (Predictivo con Enter), N° Extintor, DPS -->
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+                <label>Cliente *:</label>
+                <input type="text" id="nuevoCliente"  autocomplete="off" required>
+                <div id="sugerenciasClientes" class="sugerencias-lista"></div>
+            </div>
+            <div class="form-group" style="flex: none; width: 16ch;">
+                <label>N° Extintor:</label>
+                <input type="text" id="nuevoExtintor" oninput="verificarExtintorNuevo()" onblur="verificarDuplicado()">
+                <div id="lblNuevoExtintor" class="aviso-nuevo">✨ Nuevo Extintor</div>
+            </div>
+            <div class="form-group" style="flex: none; width: 16ch;">
+                <label>N° DPS:</label>
+                <input type="text" id="nuevoDps" oninput="verificarDpsNuevo()" onblur="verificarDuplicado()">
+                <div id="lblNuevoDps" class="aviso-nuevo">✨ Nuevo DPS</div>
+            </div>
+        </div>
+
+        <!-- Aviso no bloqueante para duplicados de otro cliente -->
+        <div id="avisoDuplicadoCliente" class="aviso-duplicado-inline"></div>
