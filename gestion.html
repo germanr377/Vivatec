@@ -129,3 +129,27 @@
                 <input type="text" id="nuevoCapacidad" >
             </div>
         </div>
+
+  <!-- FILA 3: Año Fab, Vencimientos y Ubicación -->
+        <div class="form-row">
+            <div class="form-group" style="flex: none; width: 10ch;">
+                <label>Año Fab.:</label>
+                <input type="number" id="nuevoAFabricacion">
+            </div>
+            <div class="form-group" style="flex: none; width: 14ch;">
+                <label>Venc. P.H. (MM/AA):</label>
+                <input type="text" id="nuevoVencPH"  maxlength="5" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
+            </div>
+            <div class="form-group" style="flex: none; width: 14ch;">
+                <label>Venc. Carga (MM/AA):</label>
+                <input type="text" id="nuevoVencCarga"  maxlength="5" oninput="formatearEntradaMesAnio(this)" onblur="validarFormatoMesAnio(this)">
+            </div>
+            <div class="form-group" style="flex: none; width: 10ch;">
+                <label>Puesto:</label>
+                <input type="number" id="nuevoPuesto" >
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Ubicación:</label>
+                <input type="text" id="nuevoUbicacion" >
+            </div>
+        </div>
