@@ -179,3 +179,31 @@
     let listaDpsExistentes = [];
     let enModoRecarga = false;
     let ultimaConsultaDuplicado = "";
+
+window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        configurarPredictivoClientes();
+        configurarBusquedaPorEnter();
+        await cargarClientesEnPredictivo();
+        await cargarListasGlobales();
+    });
+
+    // Buscar al presionar Enter en N° Extintor o N° DPS
+    function configurarBusquedaPorEnter() {
+        ["nuevoExtintor", "nuevoDps"].forEach(id => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    buscarExtintor();
+                }
+            });
+        });
+    }
