@@ -509,3 +509,40 @@ function verificarExtintorNuevo() {
             input.focus();
         }
     }
+
+   // CONVERSIÓN DE MM/AA A FORMATO SQL (AAAA-MM-DD para el último día del mes)
+    function formatearFechaWeb(fechaSQL) {
+        if (!fechaSQL) return "";
+        let partes = fechaSQL.split("-");
+        if (partes.length === 3) {
+            let anioCorto = partes[0].slice(-2);
+            return `${partes[1]}/${anioCorto}`;
+        }
+        return fechaSQL;
+    }
+
+    function formatearFechaSQL(fechaWeb) {
+        if (!fechaWeb) return null;
+        let partes = fechaWeb.trim().split("/");
+        if (partes.length === 2) {
+            let mes = partes[0].trim().padStart(2, '0');
+            let anioCorto = partes[1].trim();
+
+            if (anioCorto.length === 2 && !isNaN(mes) && !isNaN(anioCorto)) {
+                let anioCompleto = 2000 + parseInt(anioCorto, 10);
+                let ultimoDia = new Date(anioCompleto, parseInt(mes, 10), 0).getDate();
+                let diaStr = String(ultimoDia).padStart(2, '0');
+                return `${anioCompleto}-${mes}-${diaStr}`;
+            }
+        }
+        return null;
+    }
+
+    function autocompletarAgente() {
+        let tipo = document.getElementById("nuevoTipo").value.trim().toUpperCase();
+        let agenteInput = document.getElementById("nuevoAgente");
+        if (tipo === "ABC") agenteInput.value = "PQS";
+        else if (tipo === "BC") agenteInput.value = "CO2";
+        else if (tipo === "A") agenteInput.value = "AFFF";
+        else if (tipo === "K") agenteInput.value = "K";
+    }
