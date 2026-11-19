@@ -34,6 +34,22 @@ document.addEventListener("DOMContentLoaded", function() {
             cursor: pointer;
             border: none;
         }
+        .vivatec-nav-link.icono-papiro {
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif;
+            font-style: italic;
+            font-weight: 900;
+            font-size: 21px;
+            line-height: 1;
+            padding: 2px 8px;
+            border: 1px solid rgba(245, 222, 179, 0.35);
+            border-radius: 4px;
+            color: #f3e5ab;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+        }
+        .vivatec-nav-link.icono-papiro:hover {
+            border-color: #f3e5ab;
+            color: #fff8dc;
+        }
         .vivatec-nav-link:hover {
             background-color: #34495e;
             color: #fff;
@@ -42,6 +58,10 @@ document.addEventListener("DOMContentLoaded", function() {
             background-color: #2980b9;
             color: white;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .vivatec-nav-link.icono-papiro.activo {
+            border-color: #fff8dc;
+            color: #fff;
         }
         /* Estilo especial para el botón de salir con tono rojizo al pasar el mouse */
         .vivatec-nav-link.logout:hover {
@@ -85,10 +105,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Lista de pantallas y acciones del menú (Incluye Clientes)
+    // Lista de pantallas y acciones del menú (Incluye Historial y Clientes)
     const items = [
         { href: "gestion.html", icon: "🧯", label: "Gestión / Carga", type: "link" },
         { href: "consultas.html", icon: "📊", label: "Consultas y Filtros", type: "link" },
+        { href: "historial.html", icon: "H", label: "Historial", type: "link", extraClass: "icono-papiro" },
         { href: "importar.html", icon: "📥", label: "Importación Masiva", type: "link" },
         { href: "informes.html", icon: "📑", label: "Informes", type: "link" },
         { href: "clientes.html", icon: "🏢", label: "Clientes", type: "link" },
@@ -99,10 +120,11 @@ document.addEventListener("DOMContentLoaded", function() {
     let html = '<div class="vivatec-navbar">';
     items.forEach(item => {
         const esActivo = (item.type === "link" && paginaActual === item.href) ? 'activo' : '';
-        const extraClass = item.type === "logout" ? 'logout' : '';
+        const logoutClass = item.type === "logout" ? 'logout' : '';
+        const customClass = item.extraClass || '';
         html += `
             <div class="vivatec-nav-item">
-                <a href="${item.href}" class="vivatec-nav-link ${esActivo} ${extraClass}" data-type="${item.type}">
+                <a href="${item.href}" class="vivatec-nav-link ${esActivo} ${logoutClass} ${customClass}" data-type="${item.type}">
                     ${item.icon}
                 </a>
                 <div class="vivatec-tooltip">${item.label}</div>
