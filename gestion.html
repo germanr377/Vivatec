@@ -595,3 +595,22 @@ let registroACargar = data[0];
         }
     }
 
+function cargarDatosEnFormulario(ex) {
+        ocultarAvisoDuplicado();
+        document.getElementById("registroId").value = ex.id;
+        document.getElementById("nuevoCliente").value = ex.cliente || "";
+        document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
+        document.getElementById("nuevoDps").value = ex.numero_dps || "";
+        document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
+        document.getElementById("nuevoMarca").value = ex.marca || "";
+        document.getElementById("nuevoTipo").value = ex.tipo || "";
+        document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
+        document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
+        document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
+        document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
+        document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
+        document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
+        document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+
+        ultimaConsultaDuplicado = `${ex.cliente || ""}|${ex.extintor_numero || ""}|${ex.numero_dps || ""}`;
+
