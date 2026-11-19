@@ -313,3 +313,41 @@ input.addEventListener("blur", () => {
         listaDiv.innerHTML = "";
         sugerenciasFiltradas.forEach((c, idx) => {
             const item = document.createElement("div");
+
+item.className = "sugerencia-item" + (idx === 0 ? " activa" : "");
+            item.innerHTML = `${c.nombre}` + (c.razon ? ` <span class="sugerencia-sub">(${c.razon})</span>` : "");
+            item.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                seleccionarClientePredictivo(c.nombre);
+            });
+            listaDiv.appendChild(item);
+        });
+
+        listaDiv.style.display = "block";
+    }
+
+    function actualizarResaltadoSugerencia() {
+        const items = document.querySelectorAll("#sugerenciasClientes .sugerencia-item");
+        items.forEach((el, idx) => {
+            el.classList.toggle("activa", idx === indiceSugerenciaActiva);
+            if (idx === indiceSugerenciaActiva) {
+                el.scrollIntoView({ block: "nearest" });
+            }
+        });
+    }
+
+    function seleccionarClientePredictivo(nombreCliente) {
+        const input = document.getElementById("nuevoCliente");
+        input.value = nombreCliente;
+        cerrarSugerenciasClientes();
+        ultimaConsultaDuplicado = "";
+        verificarDuplicado();
+        document.getElementById("nuevoExtintor").focus();
+    }
+
+    function cerrarSugerenciasClientes() {
+        const listaDiv = document.getElementById("sugerenciasClientes");
+        listaDiv.style.display = "none";
+        sugerenciasFiltradas = [];
+        indiceSugerenciaActiva = 0;
+    }
