@@ -98,4 +98,34 @@
         .btn-save.success { background: #2980b9 !important; }
         .btn-save.existente-btn { background: #d35400 !important; }
 
+  .btn-delete { background: #c0392b; }
+        .btn-delete:hover { background: #962d22; }
+
+        .btn-clean { background: #7f8c8d; }
+        .btn-clean:hover { background: #626567; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Vivatec - Panel de Gestión de Extintores</h2>
+
+    <div id="contenedorPrincipal" class="oblea-preview">
+        <div id="tituloForm" class="oblea-header">PANEL DE CONTROL DE EQUIPOS</div>
+
+        <!-- ID oculto para saber si estamos editando un registro existente -->
+        <input type="hidden" id="registroId">
+
+        <!-- FILA 1: Cliente (Predictivo con Enter), N° Extintor, DPS -->
+        <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+                <label>Cliente *:</label>
+                <input type="text" id="nuevoCliente"  autocomplete="off" required>
+                <div id="sugerenciasClientes" class="sugerencias-lista"></div>
+            </div>
+            <div class="form-group" style="flex: none; width: 16ch;">
+                <label>N° Extintor:</label>
+                <input type="text" id="nuevoExtintor" oninput="verificarExtintorNuevo()" onblur="verificarDuplicado()">
+                <div id="lblNuevoExtintor" class="aviso-nuevo">✨
+
        
