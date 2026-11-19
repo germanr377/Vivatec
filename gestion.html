@@ -351,3 +351,11 @@ item.className = "sugerencia-item" + (idx === 0 ? " activa" : "");
         sugerenciasFiltradas = [];
         indiceSugerenciaActiva = 0;
     }
+
+// Valida que el cliente escrito exista en la lista oficial y devuelve su nombre exacto (o null si no existe)
+    function obtenerClienteOficialValido(texto) {
+        let limpio = (texto || "").trim().toLowerCase();
+        if (!limpio) return null;
+        const encontrado = listaClientesOficiales.find(c => c.nombre.toLowerCase() === limpio);
+        return encontrado ? encontrado.nombre : null;
+    }
