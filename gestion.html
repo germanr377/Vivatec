@@ -121,12 +121,12 @@
         <div class="form-row">
             <div class="form-group" style="flex: 1;">
                 <label>Cliente *:</label>
-                <input type="text" id="nuevoCliente" placeholder="Cargando clientes oficiales..." autocomplete="off" required>
+                <input type="text" id="nuevoCliente" autocomplete="off" required>
                 <div id="sugerenciasClientes" class="sugerencias-lista"></div>
             </div>
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>N° Extintor:</label>
-                <input type="text" id="nuevoExtintor" placeholder="Ej: 6389130" oninput="verificarExtintorNuevo()" onblur="verificarDuplicado()">
+                <input type="text" id="nuevoExtintor" oninput="verificarExtintorNuevo()" onblur="verificarDuplicado()">
                 <div id="lblNuevoExtintor" class="aviso-nuevo">✨ Nuevo Extintor</div>
             </div>
             <div class="form-group" style="flex: none; width: 16ch;">
@@ -155,7 +155,7 @@
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Tipo (A, AB, ABC, BC, K):</label>
-                <input type="text" id="nuevoTipo" placeholder="Ej: ABC" oninput="autocompletarAgente()" onblur="validarTipo(this)">
+                <input type="text" id="nuevoTipo" oninput="autocompletarAgente()" onblur="validarTipo(this)">
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Agente Extintor:</label>
