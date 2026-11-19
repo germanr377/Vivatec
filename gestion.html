@@ -207,3 +207,33 @@ window.addEventListener("load", async function() {
             });
         });
     }
+
+  // LLENAR EL LISTADO PREDICTIVO EXCLUSIVAMENTE CON LA TABLA CLIENTES
+    async function cargarClientesEnPredictivo() {
+        const { data, error } = await _supabase
+            .from('clientes')
+            .select('nombre_cliente, razon_social')
+            .order('nombre_cliente', { ascending: true });
+
+        const inputCliente = document.getElementById("nuevoCliente");
+        listaClientesOficiales = [];
+
+        if (error) {
+            console.error("Error al cargar clientes:", error);
+            inputCliente.placeholder = "Error al cargar clientes";
+            alert("⚠️ Error al obtener el directorio de clientes.");
+            return;
+        }
+
+        inputCliente.placeholder = "Escribí o elegí un cliente oficial...";
+
+        if (data) {
+            data.forEach(c => {
+                if (!c.nombre_cliente) return;
+                listaClientesOficiales.push({
+                    nombre: c.nombre_cliente.trim(),
+                    razon: c.razon_social ? c.razon_social.trim() : ""
+                });
+            });
+        }
+    }
