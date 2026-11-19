@@ -779,6 +779,42 @@ async function buscarExtintorSilencioso() {
         }
 
         let confirmar = confirm(`¿Estás 100% seguro de que querés ELIMINAR el extintor N° ${extintorNum} del cliente "${cliente}" de la base de datos?\n\nEsta acción no se puede deshacer.`);
+   if (!confirmar) return;
+
+        try {
+            const { error } = await _supabase
+                .from('extintores')
+                .delete()
+                .eq('id', idExistente);
+
+            if (error) throw error;
+
+            await cargarListasGlobales();
+            alert("🗑️ El extintor fue eliminado correctamente de la base de datos.");
+            limpiarFormulario();
+
+        } catch (err) {
+            console.error("Error al eliminar:", err);
+            alert("Ocurrió un error al intentar eliminar el registro.");
+        }
+    }
+
+    function limpiarFormulario() {
+        document.getElementById("registroId").value = "";
+        document.getElementById("nuevoCliente").value = "";
+        document.getElementById("nuevoExtintor").value = "";
+        document.getElementById("nuevoDps").value = "";
+        document.getElementById("nuevoOblea").value = "Uso Gral";
+        document.getElementById("nuevoMarca").value = "";
+        document.getElementById("nuevoTipo").value = "";
+        document.getElementById("nuevoAgente").value = "";
+        document.getElementById("nuevoCapacidad").value = "";
+        document.getElementById("nuevoAFabricacion").value = "";
+        document.getElementById("nuevoVencPH").value = "";
+        document.getElementById("nuevoVencCarga").value = "";
+        document.getElementById("nuevoPuesto").value = "";
+        document.getElementById("nuevoUbicacion").value = "";
+       
 
 
 
