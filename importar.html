@@ -249,6 +249,15 @@
         return null;
     }
 
+    function formatearFechaVisual(fechaSQL, rawOriginal = "") {
+        if (!fechaSQL) {
+            return rawOriginal ? `⚠️ ${rawOriginal}` : "-";
+        }
+        const partes = fechaSQL.split("-");
+        if (partes.length !== 3) return fechaSQL;
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
     function procesarPegado() {
         const cliente = document.getElementById("clienteGlobal").value.trim();
         if (!cliente) {
@@ -305,8 +314,8 @@
                     <td>${item.capacidad || "-"}</td>
                     <td>${item.ano_fab || "-"}</td>
                     <td>${item.marca || "-"}</td>
-                    <td>${item.vto_prueb_hidr || (vtoPhRaw ? `⚠️ ${vtoPhRaw}` : "-")}</td>
-                    <td>${item.vto_carga || (vtoCargaRaw ? `⚠️ ${vtoCargaRaw}` : "-")}</td>
+                    <td>${formatearFechaVisual(item.vto_prueb_hidr, vtoPhRaw)}</td>
+                    <td>${formatearFechaVisual(item.vto_carga, vtoCargaRaw)}</td>
                     <td>${item.numero_dps || "-"}</td>
                     <td>${item.identificacion_puesto ?? "-"}</td>
                     <td>${item.ubicacion || "-"}</td>
