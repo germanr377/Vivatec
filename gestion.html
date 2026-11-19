@@ -571,3 +571,27 @@ async function buscarExtintor() {
                 return;
             }
 
+let registroACargar = data[0];
+
+            if (data.length > 1 && !clienteFiltro) {
+                let mensaje = "Se encontraron varios registros con ese número. Elegí el cliente:\n";
+                data.forEach((item, index) => {
+                    mensaje += `[${index + 1}] Cliente: ${item.cliente} (Extintor: ${item.extintor_numero}, DPS: ${item.numero_dps || '-'})\n`;
+                });
+                let seleccion = prompt(mensaje + "\nIngresá el número de opción:");
+                let idx = parseInt(seleccion) - 1;
+                if (isNaN(idx) || !data[idx]) {
+                    alert("Selección inválida.");
+                    return;
+                }
+                registroACargar = data[idx];
+            }
+
+            cargarDatosEnFormulario(registroACargar);
+
+        } catch (err) {
+            console.error("Error al buscar:", err);
+            alert("Ocurrió un error al realizar la búsqueda.");
+        }
+    }
+
