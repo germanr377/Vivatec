@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", function() {
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
         }
         .vivatec-nav-item {
             position: relative;
@@ -86,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function() {
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             z-index: 10;
         }
-        .vivatec-tooltip.show {
+        .vivatec-nav-item:hover .vivatec-tooltip {
             opacity: 1;
         }
     `;
@@ -124,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const customClass = item.extraClass || '';
         html += `
             <div class="vivatec-nav-item">
-                <a href="${item.href}" class="vivatec-nav-link ${esActivo} ${logoutClass} ${customClass}" data-type="${item.type}">
+                <a href="${item.href}" class="vivatec-nav-link ${esActivo} ${logoutClass} ${customClass}" data-type="${item.type}" title="${item.label}">
                     ${item.icon}
                 </a>
                 <div class="vivatec-tooltip">${item.label}</div>
@@ -135,42 +136,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
     contenedorMenu.innerHTML = html;
 
-    // Lógica inteligente: 1 clic (muestra descripción) y 2 clics rápidos (navega o ejecuta acción)
+    // Navegación directa en un clic
     const links = contenedorMenu.querySelectorAll('.vivatec-nav-link');
     links.forEach(link => {
-        let clickTimer = null;
-
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const tooltip = this.parentElement.querySelector('.vivatec-tooltip');
             const type = this.getAttribute('data-type');
-
-            if (clickTimer === null) {
-                clickTimer = setTimeout(() => {
-                    clickTimer = null;
-                    document.querySelectorAll('.vivatec-tooltip').forEach(t => {
-                        if (t !== tooltip) t.classList.remove('show');
-                    });
-                    tooltip.classList.toggle('show');
-                }, 300);
+            if (type === "logout") {
+                ejecutarCierreSesion();
             } else {
-                clearTimeout(clickTimer);
-                clickTimer = null;
-                
-                if (type === "logout") {
-                    ejecutarCierreSesion();
-                } else {
-                    window.location.href = this.href;
+                const destino = this.getAttribute('href');
+                if (destino && destino !== "#") {
+                    window.location.href = destino;
                 }
             }
         });
-    });
-
-    // Ocultar tooltips si se hace clic fuera del menú
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.vivatec-navbar')) {
-            document.querySelectorAll('.vivatec-tooltip').forEach(t => t.classList.remove('show'));
-        }
     });
 });
 
