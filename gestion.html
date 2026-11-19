@@ -722,5 +722,38 @@ document.getElementById("nuevoCliente").value = cliente;
         } else {
             resultado = await _supabase.from('extintores').insert([datosRegistro]);
         }
+if (resultado.error) {
+            console.error("Error al guardar:", resultado.error);
+            alert("Hubo un error al guardar el extintor en la base de datos.");
+        } else {
+            ocultarAvisoDuplicado();
+            await cargarListasGlobales();
+
+            const btn = document.getElementById("btnGuardar");
+            btn.innerHTML = "✅ ¡Operación Exitosa!";
+            btn.classList.add("success");
+
+            setTimeout(() => {
+                btn.innerHTML = "💾 Guardar / Actualizar";
+                btn.classList.remove("success", "existente-btn");
+
+                if (enModoRecarga) {
+                    let contenedor = document.getElementById("contenedorPrincipal");
+                    contenedor.classList.remove("modo-recarga");
+                    contenedor.classList.add("modo-existente");
+                    document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
+                    btn.textContent = "🔄 Actualizar Extintor";
+                    btn.classList.add("existente-btn");
+                   
+                    if (!idExistente) {
+                        buscarExtintorSilencioso();
+                    }
+                    enModoRecarga = false;
+                } else {
+                    limpiarFormulario();
+                }
+            }, 2000);
+        }
+    }
 
 
