@@ -12,7 +12,7 @@
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 800px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; transition: background 0.3s; }
         
@@ -31,8 +31,53 @@
         .modo-recarga { border-color: #fbc02d !important; background-color: #fff176 !important; }
         .modo-recarga .oblea-header { color: #7d6608; border-bottom-color: #fbc02d; }
 
-        /* Avisos flotantes */
+        /* Predictivo de clientes */
+        .sugerencias-lista {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #bbb;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 210px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: none;
+        }
+        .sugerencia-item {
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sugerencia-item:last-child { border-bottom: none; }
+        .sugerencia-item:hover, .sugerencia-item.activa {
+            background: #e8f4fd;
+            color: #1f618d;
+            font-weight: bold;
+        }
+        .sugerencia-sub {
+            font-size: 12px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        /* Avisos flotantes / inline */
         .aviso-nuevo { font-size: 11px; font-weight: bold; color: #e67e22; margin-top: 3px; display: none; }
+        .aviso-duplicado-inline {
+            display: none;
+            background: #eef6fc;
+            border-left: 4px solid #2980b9;
+            color: #1f4e78;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
 
         /* Botones de acción */
         .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 25px; }
@@ -72,12 +117,12 @@
         <!-- ID oculto para saber si estamos editando un registro existente -->
         <input type="hidden" id="registroId">
 
-        <!-- FILA 1: Cliente (Predictivo restringido a tabla clientes), N° Extintor, DPS -->
+        <!-- FILA 1: Cliente (Predictivo con Enter), N° Extintor, DPS -->
         <div class="form-row">
             <div class="form-group" style="flex: 1;">
                 <label>Cliente *:</label>
-                <input type="text" id="nuevoCliente" list="listaClientesOficiales" placeholder="Cargando clientes oficiales..." autocomplete="off" onblur="validarClienteOficial()" required>
-                <datalist id="listaClientesOficiales"></datalist>
+                <input type="text" id="nuevoCliente" placeholder="Cargando clientes oficiales..." autocomplete="off" required>
+                <div id="sugerenciasClientes" class="sugerencias-lista"></div>
             </div>
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>N° Extintor:</label>
@@ -90,6 +135,9 @@
                 <div id="lblNuevoDps" class="aviso-nuevo">✨ Nuevo DPS</div>
             </div>
         </div>
+
+        <!-- Aviso no bloqueante para duplicados de otro cliente -->
+        <div id="avisoDuplicadoCliente" class="aviso-duplicado-inline"></div>
 
         <!-- FILA 2: Tipo de Oblea, Marca, Tipo, Agente Extintor, Capacidad -->
         <div class="form-row">
@@ -161,9 +209,13 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let listaClientesOficiales = [];
+    let sugerenciasFiltradas = [];
+    let indiceSugerenciaActiva = 0;
+
     let listaExtintoresExistentes = [];
     let listaDpsExistentes = [];
     let enModoRecarga = false;
+    let ultimaConsultaDuplicado = "";
 
     window.addEventListener("load", async function() {
         // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
@@ -173,6 +225,7 @@
             return;
         }
 
+        configurarPredictivoClientes();
         configurarBusquedaPorEnter();
         await cargarClientesEnPredictivo();
         await cargarListasGlobales();
@@ -192,7 +245,7 @@
         });
     }
 
-    // LLENAR EL DATALIST PREDICTIVO EXCLUSIVAMENTE CON LA TABLA CLIENTES
+    // LLENAR EL LISTADO PREDICTIVO EXCLUSIVAMENTE CON LA TABLA CLIENTES
     async function cargarClientesEnPredictivo() {
         const { data, error } = await _supabase
             .from('clientes')
@@ -200,8 +253,6 @@
             .order('nombre_cliente', { ascending: true });
 
         const inputCliente = document.getElementById("nuevoCliente");
-        const datalistClientes = document.getElementById("listaClientesOficiales");
-        datalistClientes.innerHTML = "";
         listaClientesOficiales = [];
 
         if (error) {
@@ -216,27 +267,135 @@
         if (data) {
             data.forEach(c => {
                 if (!c.nombre_cliente) return;
-                const nombreOficial = c.nombre_cliente.trim();
-                listaClientesOficiales.push(nombreOficial);
-
-                let opt = document.createElement("option");
-                opt.value = nombreOficial;
-                if (c.razon_social) {
-                    opt.label = `${nombreOficial} (${c.razon_social})`;
-                }
-                datalistClientes.appendChild(opt);
+                listaClientesOficiales.push({
+                    nombre: c.nombre_cliente.trim(),
+                    razon: c.razon_social ? c.razon_social.trim() : ""
+                });
             });
         }
+    }
+
+    function configurarPredictivoClientes() {
+        const input = document.getElementById("nuevoCliente");
+        const listaDiv = document.getElementById("sugerenciasClientes");
+
+        input.addEventListener("input", () => {
+            ultimaConsultaDuplicado = "";
+            mostrarSugerenciasClientes(input.value);
+        });
+
+        input.addEventListener("focus", () => {
+            if (input.value.trim() !== "") {
+                mostrarSugerenciasClientes(input.value);
+            }
+        });
+
+        input.addEventListener("keydown", (e) => {
+            const visible = listaDiv.style.display === "block";
+
+            if (e.key === "ArrowDown" && visible && sugerenciasFiltradas.length > 0) {
+                e.preventDefault();
+                indiceSugerenciaActiva = (indiceSugerenciaActiva + 1) % sugerenciasFiltradas.length;
+                actualizarResaltadoSugerencia();
+            } else if (e.key === "ArrowUp" && visible && sugerenciasFiltradas.length > 0) {
+                e.preventDefault();
+                indiceSugerenciaActiva = (indiceSugerenciaActiva - 1 + sugerenciasFiltradas.length) % sugerenciasFiltradas.length;
+                actualizarResaltadoSugerencia();
+            } else if (e.key === "Enter") {
+                if (visible && sugerenciasFiltradas.length > 0) {
+                    e.preventDefault();
+                    const elegido = sugerenciasFiltradas[indiceSugerenciaActiva] || sugerenciasFiltradas[0];
+                    seleccionarClientePredictivo(elegido.nombre);
+                }
+            } else if (e.key === "Escape") {
+                cerrarSugerenciasClientes();
+            }
+        });
+
+        input.addEventListener("blur", () => {
+            setTimeout(() => {
+                cerrarSugerenciasClientes();
+                validarClienteOficialSinBucle();
+            }, 150);
+        });
+    }
+
+    function mostrarSugerenciasClientes(texto) {
+        const listaDiv = document.getElementById("sugerenciasClientes");
+        const filtro = (texto || "").trim().toLowerCase();
+
+        if (!filtro) {
+            cerrarSugerenciasClientes();
+            return;
+        }
+
+        // Prioriza los que empiezan con lo escrito y luego los que lo contienen
+        const empiezanCon = listaClientesOficiales.filter(c =>
+            c.nombre.toLowerCase().startsWith(filtro)
+        );
+        const contienen = listaClientesOficiales.filter(c =>
+            !c.nombre.toLowerCase().startsWith(filtro) &&
+            (c.nombre.toLowerCase().includes(filtro) || c.razon.toLowerCase().includes(filtro))
+        );
+
+        sugerenciasFiltradas = [...empiezanCon, ...contienen].slice(0, 15);
+        indiceSugerenciaActiva = 0;
+
+        if (sugerenciasFiltradas.length === 0) {
+            cerrarSugerenciasClientes();
+            return;
+        }
+
+        listaDiv.innerHTML = "";
+        sugerenciasFiltradas.forEach((c, idx) => {
+            const item = document.createElement("div");
+            item.className = "sugerencia-item" + (idx === 0 ? " activa" : "");
+            item.innerHTML = `${c.nombre}` + (c.razon ? ` <span class="sugerencia-sub">(${c.razon})</span>` : "");
+            item.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                seleccionarClientePredictivo(c.nombre);
+            });
+            listaDiv.appendChild(item);
+        });
+
+        listaDiv.style.display = "block";
+    }
+
+    function actualizarResaltadoSugerencia() {
+        const items = document.querySelectorAll("#sugerenciasClientes .sugerencia-item");
+        items.forEach((el, idx) => {
+            el.classList.toggle("activa", idx === indiceSugerenciaActiva);
+            if (idx === indiceSugerenciaActiva) {
+                el.scrollIntoView({ block: "nearest" });
+            }
+        });
+    }
+
+    function seleccionarClientePredictivo(nombreCliente) {
+        const input = document.getElementById("nuevoCliente");
+        input.value = nombreCliente;
+        cerrarSugerenciasClientes();
+        ultimaConsultaDuplicado = "";
+        verificarDuplicado();
+        document.getElementById("nuevoExtintor").focus();
+    }
+
+    function cerrarSugerenciasClientes() {
+        const listaDiv = document.getElementById("sugerenciasClientes");
+        listaDiv.style.display = "none";
+        sugerenciasFiltradas = [];
+        indiceSugerenciaActiva = 0;
     }
 
     // Valida que el cliente escrito exista en la lista oficial y devuelve su nombre exacto (o null si no existe)
     function obtenerClienteOficialValido(texto) {
         let limpio = (texto || "").trim().toLowerCase();
         if (!limpio) return null;
-        return listaClientesOficiales.find(c => c.toLowerCase() === limpio) || null;
+        const encontrado = listaClientesOficiales.find(c => c.nombre.toLowerCase() === limpio);
+        return encontrado ? encontrado.nombre : null;
     }
 
-    function validarClienteOficial() {
+    function validarClienteOficialSinBucle() {
         const inputCliente = document.getElementById("nuevoCliente");
         const valorActual = inputCliente.value.trim();
         if (!valorActual) return true;
@@ -245,11 +404,8 @@
         if (clienteExacto) {
             inputCliente.value = clienteExacto;
             return true;
-        } else {
-            alert("⚠️ El cliente ingresado no figura en el listado oficial. Por favor, seleccionalo de las sugerencias.");
-            inputCliente.value = "";
-            return false;
         }
+        return false;
     }
 
     async function cargarListasGlobales() {
@@ -346,12 +502,14 @@
     }
 
     function verificarExtintorNuevo() {
+        ultimaConsultaDuplicado = "";
         let val = document.getElementById("nuevoExtintor").value.trim();
         let aviso = document.getElementById("lblNuevoExtintor");
         aviso.style.display = (val && !listaExtintoresExistentes.includes(val)) ? "block" : "none";
     }
 
     function verificarDpsNuevo() {
+        ultimaConsultaDuplicado = "";
         let val = document.getElementById("nuevoDps").value.trim();
         let aviso = document.getElementById("lblNuevoDps");
         aviso.style.display = (val && !listaDpsExistentes.includes(val)) ? "block" : "none";
@@ -361,7 +519,7 @@
         let valor = input.value.trim().toUpperCase();
         let permitidos = ["A","AB", "ABC", "BC", "K"];
         if (valor && !permitidos.includes(valor)) {
-            alert("⚠️ Tipo inválido. Los tipos permitidos son: A, ABC, BC o K.");
+            alert("⚠️ Tipo inválido. Los tipos permitidos son: A, AB, ABC, BC o K.");
             input.value = "";
             document.getElementById("nuevoAgente").value = "";
             input.focus();
@@ -475,6 +633,7 @@
     }
 
     function cargarDatosEnFormulario(ex) {
+        ocultarAvisoDuplicado();
         document.getElementById("registroId").value = ex.id;
         document.getElementById("nuevoCliente").value = ex.cliente || "";
         document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
@@ -490,6 +649,8 @@
         document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
         document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
 
+        ultimaConsultaDuplicado = `${ex.cliente || ""}|${ex.extintor_numero || ""}|${ex.numero_dps || ""}`;
+
         let contenedor = document.getElementById("contenedorPrincipal");
         contenedor.classList.remove("modo-recarga");
         contenedor.classList.add("modo-existente");
@@ -503,12 +664,31 @@
         verificarDpsNuevo();
     }
 
+    function mostrarAvisoDuplicado(texto) {
+        const aviso = document.getElementById("avisoDuplicadoCliente");
+        aviso.textContent = texto;
+        aviso.style.display = "block";
+    }
+
+    function ocultarAvisoDuplicado() {
+        const aviso = document.getElementById("avisoDuplicadoCliente");
+        aviso.textContent = "";
+        aviso.style.display = "none";
+    }
+
     async function verificarDuplicado() {
         let clienteActual = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let dpsNum = document.getElementById("nuevoDps").value.trim();
 
-        if (!extintorNum && !dpsNum) return;
+        if (!extintorNum && !dpsNum) {
+            ocultarAvisoDuplicado();
+            return;
+        }
+
+        const claveActual = `${clienteActual}|${extintorNum}|${dpsNum}`;
+        if (claveActual === ultimaConsultaDuplicado) return;
+        ultimaConsultaDuplicado = claveActual;
 
         try {
             let query = _supabase.from('extintores').select('*');
@@ -523,12 +703,17 @@
                 let matchMismoCliente = data.find(item => item.cliente && item.cliente === clienteActual);
 
                 if (matchMismoCliente) {
+                    ocultarAvisoDuplicado();
                     cargarDatosEnFormulario(matchMismoCliente);
                 } else if (clienteActual) {
                     let otroCliente = data[0].cliente || "Otro cliente";
-                    alert(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroCliente}". Podés guardarlo igual ya que es de otro cliente.`);
                     document.getElementById("registroId").value = "";
+                    mostrarAvisoDuplicado(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroCliente}". Podés guardarlo igual ya que es de otro cliente.`);
+                } else {
+                    ocultarAvisoDuplicado();
                 }
+            } else {
+                ocultarAvisoDuplicado();
             }
         } catch (err) {
             console.error("Error al verificar duplicado:", err);
@@ -579,6 +764,7 @@
             console.error("Error al guardar:", resultado.error);
             alert("Hubo un error al guardar el extintor en la base de datos.");
         } else {
+            ocultarAvisoDuplicado();
             await cargarListasGlobales();
 
             const btn = document.getElementById("btnGuardar");
@@ -669,6 +855,10 @@
         document.getElementById("nuevoPuesto").value = "";
         document.getElementById("nuevoUbicacion").value = "";
         
+        ultimaConsultaDuplicado = "";
+        ocultarAvisoDuplicado();
+        cerrarSugerenciasClientes();
+
         enModoRecarga = false;
         let contenedor = document.getElementById("contenedorPrincipal");
         contenedor.classList.remove("modo-existente");
