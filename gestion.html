@@ -814,6 +814,28 @@ async function buscarExtintorSilencioso() {
         document.getElementById("nuevoVencCarga").value = "";
         document.getElementById("nuevoPuesto").value = "";
         document.getElementById("nuevoUbicacion").value = "";
+
+ultimaConsultaDuplicado = "";
+        ocultarAvisoDuplicado();
+        cerrarSugerenciasClientes();
+
+        enModoRecarga = false;
+        let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-existente");
+        contenedor.classList.remove("modo-recarga");
+        document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
+       
+        let btn = document.getElementById("btnGuardar");
+        btn.textContent = "💾 Guardar / Actualizar";
+        btn.classList.remove("existente-btn");
+       
+        verificarExtintorNuevo();
+        verificarDpsNuevo();
+    }
+</script>
+
+</body>
+</html> 
        
 
 
