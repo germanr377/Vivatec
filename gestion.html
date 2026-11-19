@@ -658,3 +658,40 @@ function ocultarAvisoDuplicado() {
             if (extintorNum && dpsNum) query = query.or(`extintor_numero.eq.${extintorNum},numero_dps.eq.${dpsNum}`);
             else if (extintorNum) query = query.eq('extintor_numero', extintorNum);
             else query = query.eq('numero_dps', dpsNum);
+
+const { data, error } = await query;
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                let matchMismoCliente = data.find(item => item.cliente && item.cliente === clienteActual);
+
+                if (matchMismoCliente) {
+                    ocultarAvisoDuplicado();
+                    cargarDatosEnFormulario(matchMismoCliente);
+                } else if (clienteActual) {
+                    let otroCliente = data[0].cliente || "Otro cliente";
+                    document.getElementById("registroId").value = "";
+                    mostrarAvisoDuplicado(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroCliente}". Podés guardarlo igual ya que es de otro cliente.`);
+                } else {
+                    ocultarAvisoDuplicado();
+                }
+            } else {
+                ocultarAvisoDuplicado();
+            }
+        } catch (err) {
+            console.error("Error al verificar duplicado:", err);
+        }
+    }
+
+    async function guardarOActualizar() {
+        let clienteIngresado = document.getElementById("nuevoCliente").value.trim();
+        let cliente = obtenerClienteOficialValido(clienteIngresado);
+        let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
+        let idExistente = document.getElementById("registroId").value;
+
+        if (!cliente || !extintorNumero) {
+            alert("⚠️ Por favor, elegí un Cliente válido de la lista oficial y completá el N° de Extintor.");
+            document.getElementById("nuevoCliente").focus();
+            return;
+        }
+
