@@ -546,3 +546,28 @@ function verificarExtintorNuevo() {
         else if (tipo === "A") agenteInput.value = "AFFF";
         else if (tipo === "K") agenteInput.value = "K";
     }
+
+async function buscarExtintor() {
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let dpsNum = document.getElementById("nuevoDps").value.trim();
+        let clienteFiltro = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
+
+        if (!extintorNum && !dpsNum) {
+            alert("Por favor, ingresá al menos un N° de Extintor o N° de DPS para buscar.");
+            return;
+        }
+
+        try {
+            let query = _supabase.from('extintores').select('*');
+            if (extintorNum) query = query.eq('extintor_numero', extintorNum);
+            if (dpsNum) query = query.eq('numero_dps', dpsNum);
+            if (clienteFiltro) query = query.eq('cliente', clienteFiltro);
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                alert("No se encontró ningún equipo con los datos indicados.");
+                return;
+            }
+
