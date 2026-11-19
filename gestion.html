@@ -382,3 +382,33 @@ function validarClienteOficialSinBucle() {
             listaDpsExistentes = data.map(item => String(item.numero_dps).trim()).filter(Boolean);
         }
     }
+
+ // Convierte un texto MM/AA o fecha AAAA-MM-DD a objeto Date del último día del mes
+    function obtenerUltimoDiaDeFecha(valor) {
+        if (!valor) return null;
+        let limpio = String(valor).trim();
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(limpio)) {
+            let [anioStr, mesStr] = limpio.split("-");
+            let anio = parseInt(anioStr, 10);
+            let mes = parseInt(mesStr, 10);
+            return new Date(anio, mes, 0);
+        }
+
+        let match = limpio.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
+        if (match) {
+            let mes = parseInt(match[1], 10);
+            let anio = 2000 + parseInt(match[2], 10);
+            return new Date(anio, mes, 0);
+        }
+
+        return null;
+    }
+
+    // Formatea un Date al último día de su mes en formato MM/AA
+    function formatearMesAnioDesdeDate(fecha) {
+        let ultimoDiaMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
+        let mesStr = String(ultimoDiaMes.getMonth() + 1).padStart(2, '0');
+        let anioCortoStr = String(ultimoDiaMes.getFullYear()).slice(-2);
+        return `${mesStr}/${anioCortoStr}`;
+    }
