@@ -237,3 +237,41 @@ window.addEventListener("load", async function() {
             });
         }
     }
+
+function configurarPredictivoClientes() {
+        const input = document.getElementById("nuevoCliente");
+        const listaDiv = document.getElementById("sugerenciasClientes");
+
+        input.addEventListener("input", () => {
+            ultimaConsultaDuplicado = "";
+            mostrarSugerenciasClientes(input.value);
+        });
+
+        input.addEventListener("focus", () => {
+            if (input.value.trim() !== "") {
+                mostrarSugerenciasClientes(input.value);
+            }
+        });
+
+        input.addEventListener("keydown", (e) => {
+            const visible = listaDiv.style.display === "block";
+
+            if (e.key === "ArrowDown" && visible && sugerenciasFiltradas.length > 0) {
+                e.preventDefault();
+                indiceSugerenciaActiva = (indiceSugerenciaActiva + 1) % sugerenciasFiltradas.length;
+                actualizarResaltadoSugerencia();
+            } else if (e.key === "ArrowUp" && visible && sugerenciasFiltradas.length > 0) {
+                e.preventDefault();
+                indiceSugerenciaActiva = (indiceSugerenciaActiva - 1 + sugerenciasFiltradas.length) % sugerenciasFiltradas.length;
+                actualizarResaltadoSugerencia();
+            } else if (e.key === "Enter") {
+                if (visible && sugerenciasFiltradas.length > 0) {
+                    e.preventDefault();
+                    const elegido = sugerenciasFiltradas[indiceSugerenciaActiva] || sugerenciasFiltradas[0];
+                    seleccionarClientePredictivo(elegido.nombre);
+                }
+            } else if (e.key === "Escape") {
+                cerrarSugerenciasClientes();
+            }
+        });
+
