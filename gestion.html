@@ -72,13 +72,12 @@
         <!-- ID oculto para saber si estamos editando un registro existente -->
         <input type="hidden" id="registroId">
 
-        <!-- FILA 1: Cliente (Select estricto), N° Extintor, DPS -->
+        <!-- FILA 1: Cliente (Predictivo restringido a tabla clientes), N° Extintor, DPS -->
         <div class="form-row">
             <div class="form-group" style="flex: 1;">
                 <label>Cliente *:</label>
-                <select id="nuevoCliente" required>
-                    <option value="">Cargando clientes oficiales...</option>
-                </select>
+                <input type="text" id="nuevoCliente" list="listaClientesOficiales" placeholder="Cargando clientes oficiales..." autocomplete="off" onblur="validarClienteOficial()" required>
+                <datalist id="listaClientesOficiales"></datalist>
             </div>
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>N° Extintor:</label>
@@ -161,6 +160,7 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let listaClientesOficiales = [];
     let listaExtintoresExistentes = [];
     let listaDpsExistentes = [];
     let enModoRecarga = false;
@@ -174,7 +174,7 @@
         }
 
         configurarBusquedaPorEnter();
-        await cargarClientesEnSelect();
+        await cargarClientesEnPredictivo();
         await cargarListasGlobales();
     });
 
@@ -192,29 +192,63 @@
         });
     }
 
-    // LLENAR EL SELECT EXCLUSIVAMENTE CON LA TABLA CLIENTES
-    async function cargarClientesEnSelect() {
+    // LLENAR EL DATALIST PREDICTIVO EXCLUSIVAMENTE CON LA TABLA CLIENTES
+    async function cargarClientesEnPredictivo() {
         const { data, error } = await _supabase
             .from('clientes')
             .select('nombre_cliente, razon_social')
             .order('nombre_cliente', { ascending: true });
 
-        const selectCliente = document.getElementById("nuevoCliente");
-        selectCliente.innerHTML = '<option value="">Seleccione un cliente oficial...</option>';
+        const inputCliente = document.getElementById("nuevoCliente");
+        const datalistClientes = document.getElementById("listaClientesOficiales");
+        datalistClientes.innerHTML = "";
+        listaClientesOficiales = [];
 
         if (error) {
             console.error("Error al cargar clientes:", error);
+            inputCliente.placeholder = "Error al cargar clientes";
             alert("⚠️ Error al obtener el directorio de clientes.");
             return;
         }
 
+        inputCliente.placeholder = "Escribí o elegí un cliente oficial...";
+
         if (data) {
             data.forEach(c => {
+                if (!c.nombre_cliente) return;
+                const nombreOficial = c.nombre_cliente.trim();
+                listaClientesOficiales.push(nombreOficial);
+
                 let opt = document.createElement("option");
-                opt.value = c.nombre_cliente;
-                opt.textContent = c.nombre_cliente + (c.razon_social ? ` (${c.razon_social})` : '');
-                selectCliente.appendChild(opt);
+                opt.value = nombreOficial;
+                if (c.razon_social) {
+                    opt.label = `${nombreOficial} (${c.razon_social})`;
+                }
+                datalistClientes.appendChild(opt);
             });
+        }
+    }
+
+    // Valida que el cliente escrito exista en la lista oficial y devuelve su nombre exacto (o null si no existe)
+    function obtenerClienteOficialValido(texto) {
+        let limpio = (texto || "").trim().toLowerCase();
+        if (!limpio) return null;
+        return listaClientesOficiales.find(c => c.toLowerCase() === limpio) || null;
+    }
+
+    function validarClienteOficial() {
+        const inputCliente = document.getElementById("nuevoCliente");
+        const valorActual = inputCliente.value.trim();
+        if (!valorActual) return true;
+
+        const clienteExacto = obtenerClienteOficialValido(valorActual);
+        if (clienteExacto) {
+            inputCliente.value = clienteExacto;
+            return true;
+        } else {
+            alert("⚠️ El cliente ingresado no figura en el listado oficial. Por favor, seleccionalo de las sugerencias.");
+            inputCliente.value = "";
+            return false;
         }
     }
 
@@ -395,7 +429,7 @@
     async function buscarExtintor() {
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let dpsNum = document.getElementById("nuevoDps").value.trim();
-        let clienteFiltro = document.getElementById("nuevoCliente").value;
+        let clienteFiltro = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
 
         if (!extintorNum && !dpsNum) {
             alert("Por favor, ingresá al menos un N° de Extintor o N° de DPS para buscar.");
@@ -470,7 +504,7 @@
     }
 
     async function verificarDuplicado() {
-        let clienteActual = document.getElementById("nuevoCliente").value;
+        let clienteActual = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let dpsNum = document.getElementById("nuevoDps").value.trim();
 
@@ -502,14 +536,18 @@
     }
 
     async function guardarOActualizar() {
-        let cliente = document.getElementById("nuevoCliente").value;
+        let clienteIngresado = document.getElementById("nuevoCliente").value.trim();
+        let cliente = obtenerClienteOficialValido(clienteIngresado);
         let extintorNumero = document.getElementById("nuevoExtintor").value.trim();
         let idExistente = document.getElementById("registroId").value;
 
         if (!cliente || !extintorNumero) {
-            alert("⚠️ Por favor, seleccioná un Cliente obligatorio y completá el N° de Extintor.");
+            alert("⚠️ Por favor, elegí un Cliente válido de la lista oficial y completá el N° de Extintor.");
+            document.getElementById("nuevoCliente").focus();
             return;
         }
+
+        document.getElementById("nuevoCliente").value = cliente;
 
         let valAnoFab = document.getElementById("nuevoAFabricacion").value;
         let valPuesto = document.getElementById("nuevoPuesto").value;
