@@ -614,3 +614,21 @@ function cargarDatosEnFormulario(ex) {
 
         ultimaConsultaDuplicado = `${ex.cliente || ""}|${ex.extintor_numero || ""}|${ex.numero_dps || ""}`;
 
+let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-recarga");
+        contenedor.classList.add("modo-existente");
+        document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
+       
+        let btn = document.getElementById("btnGuardar");
+        btn.textContent = "🔄 Actualizar Extintor";
+        btn.classList.add("existente-btn");
+
+        verificarExtintorNuevo();
+        verificarDpsNuevo();
+    }
+
+    function mostrarAvisoDuplicado(texto) {
+        const aviso = document.getElementById("avisoDuplicadoCliente");
+        aviso.textContent = texto;
+        aviso.style.display = "block";
+    }
