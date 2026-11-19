@@ -695,3 +695,32 @@ const { data, error } = await query;
             return;
         }
 
+document.getElementById("nuevoCliente").value = cliente;
+
+        let valAnoFab = document.getElementById("nuevoAFabricacion").value;
+        let valPuesto = document.getElementById("nuevoPuesto").value;
+
+        const datosRegistro = {
+            cliente: cliente,
+            oblea: document.getElementById("nuevoOblea").value,
+            extintor_numero: extintorNumero,
+            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase(),
+            agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase(),
+            capacidad: document.getElementById("nuevoCapacidad").value.trim(),
+            ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
+            marca: document.getElementById("nuevoMarca").value.trim().toUpperCase(),
+            vto_prueb_hidr: formatearFechaSQL(document.getElementById("nuevoVencPH").value),
+            vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
+            numero_dps: document.getElementById("nuevoDps").value.trim(),
+            identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
+            ubicacion: document.getElementById("nuevoUbicacion").value.trim()
+        };
+
+        let resultado;
+        if (idExistente) {
+            resultado = await _supabase.from('extintores').update(datosRegistro).eq('id', idExistente);
+        } else {
+            resultado = await _supabase.from('extintores').insert([datosRegistro]);
+        }
+
+
