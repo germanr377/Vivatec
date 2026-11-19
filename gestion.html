@@ -632,3 +632,29 @@ let contenedor = document.getElementById("contenedorPrincipal");
         aviso.textContent = texto;
         aviso.style.display = "block";
     }
+
+function ocultarAvisoDuplicado() {
+        const aviso = document.getElementById("avisoDuplicadoCliente");
+        aviso.textContent = "";
+        aviso.style.display = "none";
+    }
+
+    async function verificarDuplicado() {
+        let clienteActual = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let dpsNum = document.getElementById("nuevoDps").value.trim();
+
+        if (!extintorNum && !dpsNum) {
+            ocultarAvisoDuplicado();
+            return;
+        }
+
+        const claveActual = `${clienteActual}|${extintorNum}|${dpsNum}`;
+        if (claveActual === ultimaConsultaDuplicado) return;
+        ultimaConsultaDuplicado = claveActual;
+
+        try {
+            let query = _supabase.from('extintores').select('*');
+            if (extintorNum && dpsNum) query = query.or(`extintor_numero.eq.${extintorNum},numero_dps.eq.${dpsNum}`);
+            else if (extintorNum) query = query.eq('extintor_numero', extintorNum);
+            else query = query.eq('numero_dps', dpsNum);
