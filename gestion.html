@@ -275,3 +275,41 @@ function configurarPredictivoClientes() {
             }
         });
 
+
+input.addEventListener("blur", () => {
+            setTimeout(() => {
+                cerrarSugerenciasClientes();
+                validarClienteOficialSinBucle();
+            }, 150);
+        });
+    }
+
+    function mostrarSugerenciasClientes(texto) {
+        const listaDiv = document.getElementById("sugerenciasClientes");
+        const filtro = (texto || "").trim().toLowerCase();
+
+        if (!filtro) {
+            cerrarSugerenciasClientes();
+            return;
+        }
+
+        // Prioriza los que empiezan con lo escrito y luego los que lo contienen
+        const empiezanCon = listaClientesOficiales.filter(c =>
+            c.nombre.toLowerCase().startsWith(filtro)
+        );
+        const contienen = listaClientesOficiales.filter(c =>
+            !c.nombre.toLowerCase().startsWith(filtro) &&
+            (c.nombre.toLowerCase().includes(filtro) || c.razon.toLowerCase().includes(filtro))
+        );
+
+        sugerenciasFiltradas = [...empiezanCon, ...contienen].slice(0, 15);
+        indiceSugerenciaActiva = 0;
+
+        if (sugerenciasFiltradas.length === 0) {
+            cerrarSugerenciasClientes();
+            return;
+        }
+
+        listaDiv.innerHTML = "";
+        sugerenciasFiltradas.forEach((c, idx) => {
+            const item = document.createElement("div");
