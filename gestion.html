@@ -464,4 +464,27 @@ let nuevoDps = prompt("Ingrese el nuevo N° de DPS para esta recarga:");
 
         window.location.href = `imprimir_oblea.html?id=${id}`;
     }
+function verificarExtintorNuevo() {
+        ultimaConsultaDuplicado = "";
+        let val = document.getElementById("nuevoExtintor").value.trim();
+        let aviso = document.getElementById("lblNuevoExtintor");
+        aviso.style.display = (val && !listaExtintoresExistentes.includes(val)) ? "block" : "none";
+    }
 
+    function verificarDpsNuevo() {
+        ultimaConsultaDuplicado = "";
+        let val = document.getElementById("nuevoDps").value.trim();
+        let aviso = document.getElementById("lblNuevoDps");
+        aviso.style.display = (val && !listaDpsExistentes.includes(val)) ? "block" : "none";
+    }
+
+    function validarTipo(input) {
+        let valor = input.value.trim().toUpperCase();
+        let permitidos = ["A","AB", "ABC", "BC", "K"];
+        if (valor && !permitidos.includes(valor)) {
+            alert("⚠️ Tipo inválido. Los tipos permitidos son: A, AB, ABC, BC o K.");
+            input.value = "";
+            document.getElementById("nuevoAgente").value = "";
+            input.focus();
+        }
+    }
