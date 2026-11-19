@@ -432,3 +432,36 @@ function validarClienteOficialSinBucle() {
             document.getElementById("nuevoVencPH").value = formatearMesAnioDesdeDate(fechaNuevoPh);
         }
 
+let nuevoDps = prompt("Ingrese el nuevo N° de DPS para esta recarga:");
+        if (nuevoDps !== null && nuevoDps.trim() !== "") {
+            document.getElementById("nuevoDps").value = nuevoDps.trim();
+            verificarDpsNuevo();
+        }
+
+        let contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-existente");
+        contenedor.classList.add("modo-recarga");
+        document.getElementById("tituloForm").textContent = "⚡ MODO RECARGA ACTIVADO";
+       
+        enModoRecarga = true;
+    }
+
+    // REDIRECCIÓN AL MÓDULO DE IMPRESIÓN VALIDANDO TIPO OBLEA
+    function imprimirOblea() {
+        let id = document.getElementById("registroId").value;
+        let tipoOblea = document.getElementById("nuevoOblea").value.trim();
+
+        if (!id) {
+            alert("⚠️ Primero debés buscar, cargar o guardar un extintor para poder imprimir su oblea.");
+            return;
+        }
+
+        if (!tipoOblea) {
+            alert("⚠️ Es obligatorio contar con un 'Tipo Oblea' seleccionado para realizar la impresión.");
+            document.getElementById("nuevoOblea").focus();
+            return;
+        }
+
+        window.location.href = `imprimir_oblea.html?id=${id}`;
+    }
+
