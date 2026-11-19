@@ -755,5 +755,30 @@ if (resultado.error) {
             }, 2000);
         }
     }
+async function buscarExtintorSilencioso() {
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let clienteFiltro = document.getElementById("nuevoCliente").value;
+        try {
+            let { data } = await _supabase.from('extintores').select('id').eq('extintor_numero', extintorNum).eq('cliente', clienteFiltro).limit(1);
+            if (data && data.length > 0) {
+                document.getElementById("registroId").value = data[0].id;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function eliminarExtintor() {
+        let idExistente = document.getElementById("registroId").value;
+        let extintorNum = document.getElementById("nuevoExtintor").value.trim();
+        let cliente = document.getElementById("nuevoCliente").value;
+
+        if (!idExistente) {
+            alert("⚠️ Primero debés buscar y cargar un extintor en pantalla para poder eliminarlo.");
+            return;
+        }
+
+        let confirmar = confirm(`¿Estás 100% seguro de que querés ELIMINAR el extintor N° ${extintorNum} del cliente "${cliente}" de la base de datos?\n\nEsta acción no se puede deshacer.`);
+
 
 
