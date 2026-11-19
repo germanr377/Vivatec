@@ -15,4 +15,16 @@
         .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; transition: background 0.3s; }
+
+      /* DISEÑO COMPACTO POR FILAS */
+        .form-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .form-row .form-group { margin-bottom: 0; flex: 1; }
+       
+        .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #f9fff9; transition: all 0.3s; }
+        .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 8px; margin-bottom: 15px; }
+
+        /* Estilos dinámicos del contenedor */
+        .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
+        .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
+
        
