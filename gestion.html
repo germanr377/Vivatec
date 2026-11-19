@@ -359,3 +359,26 @@ item.className = "sugerencia-item" + (idx === 0 ? " activa" : "");
         const encontrado = listaClientesOficiales.find(c => c.nombre.toLowerCase() === limpio);
         return encontrado ? encontrado.nombre : null;
     }
+function validarClienteOficialSinBucle() {
+        const inputCliente = document.getElementById("nuevoCliente");
+        const valorActual = inputCliente.value.trim();
+        if (!valorActual) return true;
+
+        const clienteExacto = obtenerClienteOficialValido(valorActual);
+        if (clienteExacto) {
+            inputCliente.value = clienteExacto;
+            return true;
+        }
+        return false;
+    }
+
+    async function cargarListasGlobales() {
+        const { data, error } = await _supabase
+            .from('extintores')
+            .select('extintor_numero, numero_dps');
+
+        if (!error && data) {
+            listaExtintoresExistentes = data.map(item => String(item.extintor_numero).trim()).filter(Boolean);
+            listaDpsExistentes = data.map(item => String(item.numero_dps).trim()).filter(Boolean);
+        }
+    }
