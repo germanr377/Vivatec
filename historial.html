@@ -130,7 +130,6 @@
             background-color: #e74c3c;
             color: #fff;
         }
-        /* Lista predictiva de clientes */
         .sugerencias-lista {
             position: absolute;
             top: 100%;
@@ -217,7 +216,6 @@
         <h1>Historial de Revisiones</h1>
 
         <div class="filtros-grid">
-            <!-- Cliente + botón "+" vertical + predictivo (vacío = todos) -->
             <div class="campo-grupo col-cliente">
                 <label for="clientePrincipal">Clientes</label>
                 <div class="fila-con-mas">
@@ -228,7 +226,6 @@
                 <div id="clientesExtras" class="extras-vertical"></div>
             </div>
 
-            <!-- Fechas compactas dd/mm/aaaa -->
             <div class="campo-grupo col-compacta">
                 <label for="fechaDesde">Desde (dd/mm/aaaa)</label>
                 <input type="text" id="fechaDesde" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
@@ -239,7 +236,6 @@
                 <input type="text" id="fechaHasta" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
             </div>
 
-            <!-- N° Extintor compacto + botón "+" -->
             <div class="campo-grupo col-compacta">
                 <label for="extintorPrincipal">N° Extintor</label>
                 <div class="fila-con-mas">
@@ -249,7 +245,6 @@
                 <div id="extintoresExtras" class="extras-vertical"></div>
             </div>
 
-            <!-- N° DPS compacto + botón "+" -->
             <div class="campo-grupo col-compacta">
                 <label for="dpsPrincipal">N° DPS</label>
                 <div class="fila-con-mas">
@@ -292,7 +287,29 @@
         let todosLosRegistros = [];
         let listaClientesUnicos = [];
 
-        // Formatea dígitos de corrido a dd/mm/aaaa insertando "/" automáticamente
+        function obtenerValorFechaCruda(reg) {
+            return reg.fecha_revision || reg.fecha || reg.fecha_movimiento || reg.fecha_registro || null;
+        }
+
+        function convertirFechaAObjeto(valorFecha) {
+            if (!valorFecha) return null;
+            if (valorFecha instanceof Date) {
+                return isNaN(valorFecha.getTime()) ? null : valorFecha;
+            }
+            const str = String(valorFecha).trim();
+            // Soporta dd/mm/aaaa si viene así en texto
+            const matchDDMM = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str);
+            if (matchDDMM) {
+                const d = parseInt(matchDDMM[1], 10);
+                const m = parseInt(matchDDMM[2], 10) - 1;
+                const a = parseInt(matchDDMM[3], 10);
+                const dt = new Date(a, m, d);
+                return isNaN(dt.getTime()) ? null : dt;
+            }
+            const dt = new Date(str);
+            return isNaN(dt.getTime()) ? null : dt;
+        }
+
         function aplicarMascaraFecha(input) {
             input.addEventListener("input", function() {
                 let soloDigitos = this.value.replace(/\D/g, "").slice(0, 8);
@@ -336,8 +353,8 @@
 
         function formatearFechaLista(valorFecha) {
             if (!valorFecha) return "";
-            const fecha = new Date(valorFecha);
-            if (isNaN(fecha.getTime())) return String(valorFecha);
+            const fecha = convertirFechaAObjeto(valorFecha);
+            if (!fecha) return String(valorFecha);
 
             const dia = String(fecha.getDate()).padStart(2, "0");
             const mes = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -345,7 +362,6 @@
             return `${dia}/${mes}/${anio}`;
         }
 
-        // Configura predictivo para Clientes (Enter selecciona el primer cliente sugerido)
         function configurarPredictivoCliente(input, contenedorLista) {
             let sugerenciasActuales = [];
 
@@ -464,15 +480,26 @@
 
             const { data, error } = await _supabase
                 .from("historial_revisiones")
-                .select("*")
-                .order("created_at", { ascending: false });
+                .select("*");
 
             if (error) {
                 estado.textContent = "Error al cargar historial: " + error.message;
                 return;
             }
 
-            todosLosRegistros = data || [];
+            const registros = data || [];
+
+            // Ordenar de más reciente a más antigua por fecha (y si empatan, por id descendente)
+            registros.sort((a, b) => {
+                const fa = convertirFechaAObjeto(obtenerValorFechaCruda(a));
+                const fb = convertirFechaAObjeto(obtenerValorFechaCruda(b));
+                const ta = fa ? fa.getTime() : 0;
+                const tb = fb ? fb.getTime() : 0;
+                if (tb !== ta) return tb - ta;
+                return (Number(b.id) || 0) - (Number(a.id) || 0);
+            });
+
+            todosLosRegistros = registros;
 
             const setCli = new Set();
             todosLosRegistros.forEach(reg => {
@@ -505,13 +532,11 @@
             }
 
             const filtrados = todosLosRegistros.filter(reg => {
-                const rawFecha = reg.fecha_revision || reg.fecha || reg.created_at;
-                const fechaReg = rawFecha ? new Date(rawFecha) : null;
+                const fechaReg = convertirFechaAObjeto(obtenerValorFechaCruda(reg));
                 const clienteReg = String(reg.cliente || reg.nombre_cliente || reg.razon_social || "").toLowerCase();
                 const extReg = String(reg.numero_extintor || reg.nro_extintor || reg.extintor || "").toLowerCase();
                 const dpsReg = String(reg.numero_dps || reg.dps || "").toLowerCase();
 
-                // Si no se pone ningún cliente, toma todos
                 if (clientesFiltro.length > 0) {
                     const coincideCliente = clientesFiltro.some(c => clienteReg.includes(c));
                     if (!coincideCliente) return false;
@@ -547,8 +572,7 @@
             }
 
             registros.forEach(reg => {
-                const rawFecha = reg.fecha_revision || reg.fecha || reg.created_at;
-                const fechaFormateada = formatearFechaLista(rawFecha);
+                const fechaFormateada = formatearFechaLista(obtenerValorFechaCruda(reg));
                 const cliente = reg.cliente || reg.nombre_cliente || reg.razon_social || "-";
                 const extintor = reg.numero_extintor || reg.nro_extintor || reg.extintor || "-";
                 const dps = reg.numero_dps || reg.dps || "-";
