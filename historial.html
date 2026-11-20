@@ -210,6 +210,10 @@
         .fila-inicial {
             background-color: #f8f9fa;
         }
+        .fila-eliminada td {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+        }
         .celda-cambio {
             background-color: #d4edda !important;
             color: #155724 !important;
@@ -222,6 +226,18 @@
             border-radius: 3px;
             background-color: #d4edda;
             color: #155724;
+            font-weight: bold;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+        }
+        .badge-eliminado {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: #e2a8ae;
+            color: #611219;
             font-weight: bold;
             font-size: 10px;
             letter-spacing: 0.3px;
@@ -313,7 +329,7 @@
         const SUPABASE_ANON_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let bloquesHistorial = [];
+        let seriesPorExtintor = [];
         let listaClientesUnicos = [];
 
         const CAMPOS_COMPARABLES = [
@@ -554,6 +570,11 @@
             return String(valor).trim();
         }
 
+        function esRegistroEliminado(reg) {
+            const accion = String(reg.accion || reg.estado_movimiento || reg.tipo_movimiento || "").trim().toUpperCase();
+            return accion === "ELIMINADO" || accion === "BAJA";
+        }
+
         function valorNormalizadoCampo(reg, campo) {
             if (campo === "cliente") {
                 return textoLimpio(reg.cliente || reg.nombre_cliente || reg.razon_social);
@@ -588,11 +609,7 @@
             return "reg:" + String(reg.id || Math.random());
         }
 
-        // Agrupa por extintor en orden cronológico ascendente:
-        // - Primer movimiento: 1 fila inicial con etiqueta NUEVO
-        // - Movimientos posteriores con cambios respecto al anterior: 1 fila por cambio con las celdas modificadas en verde y negrita
-        //   (sin duplicar filas intermedias si hay múltiples cambios consecutivos)
-        function construirBloquesCronologicos(registros) {
+        function construirSeriesCronologicas(registros) {
             const grupos = new Map();
 
             registros.forEach((reg, idx) => {
@@ -607,7 +624,7 @@
                 });
             });
 
-            const bloques = [];
+            const series = [];
 
             grupos.forEach(listaItems => {
                 listaItems.sort((a, b) => {
@@ -617,16 +634,19 @@
                     return a.idxOriginal - b.idxOriginal;
                 });
 
-                const filasDelExtintor = [];
+                const eventos = [];
 
                 listaItems.forEach((item, pos) => {
                     const regActual = item.reg;
+                    const eliminado = esRegistroEliminado(regActual);
 
                     if (pos === 0) {
-                        filasDelExtintor.push({
+                        eventos.push({
                             registro: regActual,
-                            esInicial: true,
-                            esNuevo: true,
+                            esInicial: !eliminado,
+                            esNuevo: !eliminado,
+                            esEliminado: eliminado,
+                            esCambio: false,
                             camposCambiados: new Set(),
                             fechaObj: item.fechaObj,
                             idxOriginal: item.idxOriginal
@@ -643,11 +663,13 @@
                             }
                         });
 
-                        if (cambiados.size > 0) {
-                            filasDelExtintor.push({
+                        if (eliminado || cambiados.size > 0) {
+                            eventos.push({
                                 registro: regActual,
                                 esInicial: false,
                                 esNuevo: false,
+                                esEliminado: eliminado,
+                                esCambio: !eliminado && cambiados.size > 0,
                                 camposCambiados: cambiados,
                                 fechaObj: item.fechaObj,
                                 idxOriginal: item.idxOriginal
@@ -656,27 +678,94 @@
                     }
                 });
 
-                if (filasDelExtintor.length > 0) {
-                    const ultimoItem = filasDelExtintor[filasDelExtintor.length - 1];
-                    const regReferencia = ultimoItem.registro;
-
-                    bloques.push({
-                        filas: filasDelExtintor,
-                        registroFiltro: regReferencia,
-                        fechaUltimaObj: ultimoItem.fechaObj,
-                        idxUltimaOriginal: ultimoItem.idxOriginal
+                if (eventos.length > 0) {
+                    const ultimoEv = eventos[eventos.length - 1];
+                    series.push({
+                        eventos,
+                        registroReferencia: ultimoEv.registro,
+                        fechaUltimaObj: ultimoEv.fechaObj,
+                        idxUltimaOriginal: ultimoEv.idxOriginal
                     });
                 }
             });
 
-            bloques.sort((a, b) => {
+            series.sort((a, b) => {
                 const ta = a.fechaUltimaObj ? a.fechaUltimaObj.getTime() : 0;
                 const tb = b.fechaUltimaObj ? b.fechaUltimaObj.getTime() : 0;
                 if (tb !== ta) return tb - ta;
                 return b.idxUltimaOriginal - a.idxUltimaOriginal;
             });
 
-            return bloques;
+            return series;
+        }
+
+        function dentroDeRangoFecha(fechaObj, fechaDesde, fechaHasta) {
+            if (!fechaDesde && !fechaHasta) return true;
+            if (!fechaObj) return false;
+            const t = fechaObj.getTime();
+            if (fechaDesde && t < fechaDesde.getTime()) return false;
+            if (fechaHasta && t > fechaHasta.getTime()) return false;
+            return true;
+        }
+
+        function obtenerFilasParaSerie(serie, fechaDesde, fechaHasta) {
+            const tieneRangoFecha = Boolean(fechaDesde || fechaHasta);
+
+            if (!tieneRangoFecha) {
+                return serie.eventos.map(ev => ({
+                    registro: ev.registro,
+                    esInicial: ev.esInicial,
+                    esNuevo: ev.esNuevo,
+                    esEliminado: ev.esEliminado,
+                    esReferenciaPrevia: false,
+                    camposCambiados: ev.camposCambiados
+                }));
+            }
+
+            const indicesEnRango = [];
+            serie.eventos.forEach((ev, idx) => {
+                if (dentroDeRangoFecha(ev.fechaObj, fechaDesde, fechaHasta)) {
+                    indicesEnRango.push(idx);
+                }
+            });
+
+            if (indicesEnRango.length === 0) return [];
+
+            const indicesRelevantes = indicesEnRango.filter(idx => {
+                const ev = serie.eventos[idx];
+                return ev.esCambio || ev.esEliminado;
+            });
+
+            if (indicesRelevantes.length === 0) return [];
+
+            const primerIdxRelevante = indicesRelevantes[0];
+            const filasResultantes = [];
+
+            if (primerIdxRelevante > 0) {
+                const evPrevio = serie.eventos[primerIdxRelevante - 1];
+                filasResultantes.push({
+                    registro: evPrevio.registro,
+                    esInicial: false,
+                    esNuevo: false,
+                    esEliminado: false,
+                    esReferenciaPrevia: true,
+                    camposCambiados: new Set()
+                });
+            }
+
+            indicesRelevantes.forEach(idx => {
+                const ev = serie.eventos[idx];
+                filasResultantes.push({
+                    registro: ev.registro,
+                    esInicial: false,
+                    esNuevo: false,
+                    esEliminado: ev.esEliminado,
+                    esReferenciaPrevia: false,
+                    camposCambiados: ev.camposCambiados
+                });
+            });
+
+            return filasResultantes;
         }
 
         async function cargarClientesDesdeTabla() {
@@ -721,7 +810,7 @@
                 return;
             }
 
-            bloquesHistorial = construirBloquesCronologicos(data || []);
+            seriesPorExtintor = construirSeriesCronologicas(data || []);
             estado.textContent = "Completá los filtros deseados (o dejalos vacíos para ver todos) y presioná Buscar.";
         }
 
@@ -754,54 +843,54 @@
                 return;
             }
 
-            const filtrados = bloquesHistorial.filter(bloque => {
-                const reg = bloque.registroFiltro;
-                const fechaReg = bloque.fechaUltimaObj;
+            const bloquesFiltrados = [];
+
+            seriesPorExtintor.forEach(serie => {
+                const reg = serie.registroReferencia;
                 const clienteReg = valorNormalizadoCampo(reg, "cliente").toLowerCase();
                 const extReg = valorNormalizadoCampo(reg, "extintor_numero").toLowerCase();
                 const dpsReg = valorNormalizadoCampo(reg, "numero_dps").toLowerCase();
 
                 if (clientesFiltro.length > 0) {
                     const coincideCliente = clientesFiltro.some(c => clienteReg.includes(c));
-                    if (!coincideCliente) return false;
-                }
-
-                if (fechaDesde) {
-                    if (!fechaReg || fechaReg.getTime() < fechaDesde.getTime()) return false;
-                }
-
-                if (fechaHasta) {
-                    if (!fechaReg || fechaReg.getTime() > fechaHasta.getTime()) return false;
+                    if (!coincideCliente) return;
                 }
 
                 if (extintoresFiltro.length > 0) {
                     const coincideExt = extintoresFiltro.some(e => extReg.includes(e));
-                    if (!coincideExt) return false;
+                    if (!coincideExt) return;
                 }
 
                 if (dpsFiltro.length > 0) {
                     const coincideDps = dpsFiltro.some(d => dpsReg.includes(d));
-                    if (!coincideDps) return false;
+                    if (!coincideDps) return;
                 }
 
-                return true;
+                const filas = obtenerFilasParaSerie(serie, fechaDesde, fechaHasta);
+                if (filas.length > 0) {
+                    bloquesFiltrados.push({ filas });
+                }
             });
 
-            renderizarTabla(filtrados);
-            const totalFilas = filtrados.reduce((acc, b) => acc + b.filas.length, 0);
-            estado.textContent = `Mostrando ${totalFilas} filas en ${filtrados.length} equipos.`;
+            renderizarTabla(bloquesFiltrados);
+            const totalFilas = bloquesFiltrados.reduce((acc, b) => acc + b.filas.length, 0);
+            estado.textContent = `Mostrando ${totalFilas} filas en ${bloquesFiltrados.length} equipos.`;
         }
 
         function armarCeldasFila(filaInfo) {
             const reg = filaInfo.registro;
             const camposResaltados = filaInfo.camposCambiados || new Set();
             const fechaTexto = formatearFechaHoraDDMMAAAA(obtenerValorFechaCruda(reg));
-            const badgeNuevo = filaInfo.esNuevo
-                ? `<span class="badge-nuevo">NUEVO</span>`
-                : "";
+
+            let badge = "";
+            if (filaInfo.esEliminado) {
+                badge = `<span class="badge-eliminado">ELIMINADO</span>`;
+            } else if (filaInfo.esNuevo) {
+                badge = `<span class="badge-nuevo">NUEVO</span>`;
+            }
 
             const columnas = [
-                { key: "fecha", html: `${fechaTexto}${badgeNuevo}`, resaltable: false },
+                { key: "fecha", html: `${fechaTexto}${badge}`, resaltable: false },
                 { key: "cliente", html: valorNormalizadoCampo(reg, "cliente"), resaltable: true },
                 { key: "extintor_numero", html: valorNormalizadoCampo(reg, "extintor_numero"), resaltable: true },
                 { key: "numero_dps", html: valorNormalizadoCampo(reg, "numero_dps"), resaltable: true },
@@ -818,7 +907,7 @@
             ];
 
             return columnas.map(col => {
-                const debePintar = col.resaltable && camposResaltados.has(col.key);
+                const debePintar = !filaInfo.esEliminado && col.resaltable && camposResaltados.has(col.key);
                 const clase = debePintar ? ` class="celda-cambio"` : "";
                 return `<td${clase}>${col.html}</td>`;
             }).join("");
@@ -836,7 +925,9 @@
             bloques.forEach(bloque => {
                 bloque.filas.forEach(filaInfo => {
                     const tr = document.createElement("tr");
-                    if (filaInfo.esInicial) {
+                    if (filaInfo.esEliminado) {
+                        tr.className = "fila-eliminada";
+                    } else if (filaInfo.esInicial || filaInfo.esReferenciaPrevia) {
                         tr.className = "fila-inicial";
                     }
                     tr.innerHTML = armarCeldasFila(filaInfo);
