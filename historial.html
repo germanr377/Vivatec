@@ -30,7 +30,6 @@
             border-bottom: 2px solid #ecf0f1;
             padding-bottom: 10px;
         }
-        /* Grilla de 12 columnas para hacer los filtros compactos (mitad) y Clientes bien ancho */
         .filtros-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
@@ -39,12 +38,12 @@
             margin-bottom: 16px;
         }
         .col-compacta {
-            grid-column: span 2; /* Campos compactos (mitad de ancho) */
+            grid-column: span 2;
         }
         .col-cliente {
-            grid-column: span 6; /* Campo Clientes bien amplio */
+            grid-column: span 4;
         }
-        @media (max-width: 900px) {
+        @media (max-width: 950px) {
             .col-compacta {
                 grid-column: span 6;
             }
@@ -52,10 +51,8 @@
                 grid-column: span 12;
             }
         }
-        @media (max-width: 520px) {
-            .col-compacta {
-                grid-column: span 6;
-            }
+        @media (max-width: 560px) {
+            .col-compacta,
             .col-cliente {
                 grid-column: span 12;
             }
@@ -133,7 +130,7 @@
             background-color: #e74c3c;
             color: #fff;
         }
-        /* Lista predictiva de proveedores */
+        /* Lista predictiva de clientes */
         .sugerencias-lista {
             position: absolute;
             top: 100%;
@@ -211,10 +208,6 @@
         tr:nth-child(even) {
             background-color: #f9fbfd;
         }
-        .resaltado-cambio {
-            background-color: #fff3cd;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -224,13 +217,18 @@
         <h1>Historial de Revisiones</h1>
 
         <div class="filtros-grid">
-            <!-- Campo Clientes agrandado -->
+            <!-- Cliente + botón "+" vertical + predictivo -->
             <div class="campo-grupo col-cliente">
-                <label for="filtroCliente">Cliente</label>
-                <input type="text" id="filtroCliente" autocomplete="off">
+                <label for="clientePrincipal">Clientes</label>
+                <div class="fila-con-mas">
+                    <input type="text" id="clientePrincipal" class="input-cliente" autocomplete="off">
+                    <button type="button" id="btnMasCliente" class="btn-mas" title="Agregar otro cliente">+</button>
+                    <div class="sugerencias-lista"></div>
+                </div>
+                <div id="clientesExtras" class="extras-vertical"></div>
             </div>
 
-            <!-- Fechas compactas (mitad) -->
+            <!-- Fechas compactas dd/mm/aaaa -->
             <div class="campo-grupo col-compacta">
                 <label for="fechaDesde">Desde (dd/mm/aaaa)</label>
                 <input type="text" id="fechaDesde" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
@@ -260,17 +258,6 @@
                 </div>
                 <div id="dpsExtras" class="extras-vertical"></div>
             </div>
-
-            <!-- Proveedores compacto + botón "+" + predictivo -->
-            <div class="campo-grupo col-compacta">
-                <label for="proveedorPrincipal">Proveedores</label>
-                <div class="fila-con-mas">
-                    <input type="text" id="proveedorPrincipal" class="input-proveedor" autocomplete="off">
-                    <button type="button" id="btnMasProveedor" class="btn-mas" title="Agregar otro proveedor">+</button>
-                    <div class="sugerencias-lista"></div>
-                </div>
-                <div id="proveedoresExtras" class="extras-vertical"></div>
-            </div>
         </div>
 
         <div class="acciones-filtro">
@@ -288,7 +275,6 @@
                         <th>Cliente</th>
                         <th>N° Extintor</th>
                         <th>N° DPS</th>
-                        <th>Proveedor</th>
                         <th>Detalle / Cambios</th>
                     </tr>
                 </thead>
@@ -306,7 +292,7 @@
             : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let todosLosRegistros = [];
-        let listaProveedoresUnicos = [];
+        let listaClientesUnicos = [];
 
         // Formatea dígitos de corrido a dd/mm/aaaa insertando "/" automáticamente
         function aplicarMascaraFecha(input) {
@@ -361,8 +347,8 @@
             return `${dia}/${mes}/${anio}`;
         }
 
-        // Configura predictivo para cualquier input de proveedor (Enter selecciona el primero)
-        function configurarPredictivoProveedor(input, contenedorLista) {
+        // Configura predictivo para cualquier input de cliente (Enter selecciona el primero)
+        function configurarPredictivoCliente(input, contenedorLista) {
             let sugerenciasActuales = [];
 
             function mostrarSugerencias() {
@@ -375,8 +361,8 @@
                     return;
                 }
 
-                sugerenciasActuales = listaProveedoresUnicos.filter(p =>
-                    p.toLowerCase().includes(texto)
+                sugerenciasActuales = listaClientesUnicos.filter(c =>
+                    c.toLowerCase().includes(texto)
                 );
 
                 if (sugerenciasActuales.length === 0) {
@@ -384,13 +370,13 @@
                     return;
                 }
 
-                sugerenciasActuales.forEach(prov => {
+                sugerenciasActuales.forEach(cli => {
                     const item = document.createElement("div");
                     item.className = "sugerencia-item";
-                    item.textContent = prov;
+                    item.textContent = cli;
                     item.addEventListener("mousedown", function(e) {
                         e.preventDefault();
-                        input.value = prov;
+                        input.value = cli;
                         contenedorLista.style.display = "none";
                         aplicarFiltros();
                     });
@@ -427,7 +413,6 @@
             });
         }
 
-        // Agrega cuadradito vertical genérico para Extintor, DPS o Proveedor
         function agregarCuadritoExtra(contenedorId, claseInput, conPredictivo = false) {
             const contenedor = document.getElementById(contenedorId);
             const fila = document.createElement("div");
@@ -455,7 +440,7 @@
                 const listaDiv = document.createElement("div");
                 listaDiv.className = "sugerencias-lista";
                 fila.appendChild(listaDiv);
-                configurarPredictivoProveedor(input, listaDiv);
+                configurarPredictivoCliente(input, listaDiv);
             } else {
                 input.addEventListener("input", aplicarFiltros);
             }
@@ -491,24 +476,22 @@
 
             todosLosRegistros = data || [];
 
-            // Armar lista única de proveedores ordenada alfabéticamente para el predictivo
-            const setProv = new Set();
+            const setCli = new Set();
             todosLosRegistros.forEach(reg => {
-                const p = (reg.proveedor || reg.prestador || "").trim();
-                if (p) setProv.add(p);
+                const c = (reg.cliente || reg.nombre_cliente || reg.razon_social || "").trim();
+                if (c) setCli.add(c);
             });
-            listaProveedoresUnicos = Array.from(setProv).sort((a, b) => a.localeCompare(b));
+            listaClientesUnicos = Array.from(setCli).sort((a, b) => a.localeCompare(b));
 
             aplicarFiltros();
         }
 
         function aplicarFiltros() {
-            const clienteFiltro = document.getElementById("filtroCliente").value.trim().toLowerCase();
+            const clientesFiltro = obtenerValoresMultiples(".input-cliente");
             const desdeTexto = document.getElementById("fechaDesde").value.trim();
             const hastaTexto = document.getElementById("fechaHasta").value.trim();
             const extintoresFiltro = obtenerValoresMultiples(".input-extintor");
             const dpsFiltro = obtenerValoresMultiples(".input-dps");
-            const proveedoresFiltro = obtenerValoresMultiples(".input-proveedor");
             const estado = document.getElementById("estadoConsulta");
 
             const fechaDesde = desdeTexto ? parsearFechaDDMMAAAA(desdeTexto, false) : null;
@@ -529,9 +512,12 @@
                 const clienteReg = String(reg.cliente || reg.nombre_cliente || reg.razon_social || "").toLowerCase();
                 const extReg = String(reg.numero_extintor || reg.nro_extintor || reg.extintor || "").toLowerCase();
                 const dpsReg = String(reg.numero_dps || reg.dps || "").toLowerCase();
-                const provReg = String(reg.proveedor || reg.prestador || "").toLowerCase();
 
-                if (clienteFiltro && !clienteReg.includes(clienteFiltro)) return false;
+                if (clientesFiltro.length > 0) {
+                    const coincideCliente = clientesFiltro.some(c => clienteReg.includes(c));
+                    if (!coincideCliente) return false;
+                }
+
                 if (fechaDesde && (!fechaReg || fechaReg < fechaDesde)) return false;
                 if (fechaHasta && (!fechaReg || fechaReg > fechaHasta)) return false;
 
@@ -543,11 +529,6 @@
                 if (dpsFiltro.length > 0) {
                     const coincideDps = dpsFiltro.some(d => dpsReg.includes(d));
                     if (!coincideDps) return false;
-                }
-
-                if (proveedoresFiltro.length > 0) {
-                    const coincideProv = proveedoresFiltro.some(p => provReg.includes(p));
-                    if (!coincideProv) return false;
                 }
 
                 return true;
@@ -562,7 +543,7 @@
             tbody.innerHTML = "";
 
             if (registros.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6">No hay movimientos que coincidan con los filtros.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5">No hay movimientos que coincidan con los filtros.</td></tr>`;
                 return;
             }
 
@@ -572,7 +553,6 @@
                 const cliente = reg.cliente || reg.nombre_cliente || reg.razon_social || "-";
                 const extintor = reg.numero_extintor || reg.nro_extintor || reg.extintor || "-";
                 const dps = reg.numero_dps || reg.dps || "-";
-                const proveedor = reg.proveedor || reg.prestador || "-";
                 const detalle = reg.detalle || reg.observaciones || reg.cambios || JSON.stringify(reg);
 
                 const tr = document.createElement("tr");
@@ -581,7 +561,6 @@
                     <td>${cliente}</td>
                     <td>${extintor}</td>
                     <td>${dps}</td>
-                    <td>${proveedor}</td>
                     <td>${detalle}</td>
                 `;
                 tbody.appendChild(tr);
@@ -591,40 +570,35 @@
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelectorAll(".input-fecha-ddmmaaaa").forEach(aplicarMascaraFecha);
 
-            // Predictivo en el campo principal de proveedor
-            const provPrincipal = document.getElementById("proveedorPrincipal");
-            const listaPrincipal = provPrincipal.parentElement.querySelector(".sugerencias-lista");
-            configurarPredictivoProveedor(provPrincipal, listaPrincipal);
+            const cliPrincipal = document.getElementById("clientePrincipal");
+            const listaPrincipal = cliPrincipal.parentElement.querySelector(".sugerencias-lista");
+            configurarPredictivoCliente(cliPrincipal, listaPrincipal);
 
-            // Botones "+" para agregar cuadraditos verticales
+            document.getElementById("btnMasCliente").addEventListener("click", function() {
+                agregarCuadritoExtra("clientesExtras", "input-cliente", true);
+            });
             document.getElementById("btnMasExtintor").addEventListener("click", function() {
                 agregarCuadritoExtra("extintoresExtras", "input-extintor", false);
             });
             document.getElementById("btnMasDps").addEventListener("click", function() {
                 agregarCuadritoExtra("dpsExtras", "input-dps", false);
             });
-            document.getElementById("btnMasProveedor").addEventListener("click", function() {
-                agregarCuadritoExtra("proveedoresExtras", "input-proveedor", true);
-            });
 
-            // Eventos de filtrado en vivo y botones
             document.getElementById("btnFiltrar").addEventListener("click", aplicarFiltros);
-            document.getElementById("filtroCliente").addEventListener("input", aplicarFiltros);
             document.getElementById("fechaDesde").addEventListener("input", aplicarFiltros);
             document.getElementById("fechaHasta").addEventListener("input", aplicarFiltros);
             document.getElementById("extintorPrincipal").addEventListener("input", aplicarFiltros);
             document.getElementById("dpsPrincipal").addEventListener("input", aplicarFiltros);
 
             document.getElementById("btnLimpiar").addEventListener("click", function() {
-                document.getElementById("filtroCliente").value = "";
+                document.getElementById("clientePrincipal").value = "";
                 document.getElementById("fechaDesde").value = "";
                 document.getElementById("fechaHasta").value = "";
                 document.getElementById("extintorPrincipal").value = "";
                 document.getElementById("dpsPrincipal").value = "";
-                document.getElementById("proveedorPrincipal").value = "";
+                document.getElementById("clientesExtras").innerHTML = "";
                 document.getElementById("extintoresExtras").innerHTML = "";
                 document.getElementById("dpsExtras").innerHTML = "";
-                document.getElementById("proveedoresExtras").innerHTML = "";
                 aplicarFiltros();
             });
 
