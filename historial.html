@@ -17,7 +17,7 @@
             padding: 15px;
         }
         .container {
-            max-width: 1150px;
+            max-width: 1400px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -192,17 +192,17 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
         }
         th, td {
             border: 1px solid #dce1e7;
-            padding: 8px 10px;
+            padding: 7px 9px;
             text-align: left;
+            white-space: nowrap;
         }
         th {
             background-color: #2c3e50;
             color: #fff;
-            white-space: nowrap;
         }
         tr:nth-child(even) {
             background-color: #f9fbfd;
@@ -270,7 +270,14 @@
                         <th>Cliente</th>
                         <th>N° Extintor</th>
                         <th>N° DPS</th>
-                        <th>Detalle / Cambios</th>
+                        <th>Oblea</th>
+                        <th>Marca</th>
+                        <th>Tipo</th>
+                        <th>Agente Extintor</th>
+                        <th>Capacidad</th>
+                        <th>Año Fab.</th>
+                        <th>Vto. Prueba Hidr.</th>
+                        <th>Vto. Carga</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpoHistorial"></tbody>
@@ -297,7 +304,17 @@
                 return isNaN(valorFecha.getTime()) ? null : valorFecha;
             }
             const str = String(valorFecha).trim();
-            // Soporta dd/mm/aaaa si viene así en texto
+
+            // Evita desfase de zona horaria cuando viene fecha pura aaaa-mm-dd
+            const matchISO = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+            if (matchISO) {
+                const a = parseInt(matchISO[1], 10);
+                const m = parseInt(matchISO[2], 10) - 1;
+                const d = parseInt(matchISO[3], 10);
+                const dt = new Date(a, m, d);
+                return isNaN(dt.getTime()) ? null : dt;
+            }
+
             const matchDDMM = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str);
             if (matchDDMM) {
                 const d = parseInt(matchDDMM[1], 10);
@@ -306,8 +323,22 @@
                 const dt = new Date(a, m, d);
                 return isNaN(dt.getTime()) ? null : dt;
             }
+
             const dt = new Date(str);
             return isNaN(dt.getTime()) ? null : dt;
+        }
+
+        function formatearFechaDDMMAAAA(valorFecha) {
+            if (valorFecha === null || valorFecha === undefined || String(valorFecha).trim() === "") {
+                return "-";
+            }
+            const fecha = convertirFechaAObjeto(valorFecha);
+            if (!fecha) return String(valorFecha);
+
+            const dia = String(fecha.getDate()).padStart(2, "0");
+            const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+            const anio = fecha.getFullYear();
+            return `${dia}/${mes}/${anio}`;
         }
 
         function aplicarMascaraFecha(input) {
@@ -349,17 +380,6 @@
                 return null;
             }
             return fecha;
-        }
-
-        function formatearFechaLista(valorFecha) {
-            if (!valorFecha) return "";
-            const fecha = convertirFechaAObjeto(valorFecha);
-            if (!fecha) return String(valorFecha);
-
-            const dia = String(fecha.getDate()).padStart(2, "0");
-            const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-            const anio = fecha.getFullYear();
-            return `${dia}/${mes}/${anio}`;
         }
 
         function configurarPredictivoCliente(input, contenedorLista) {
@@ -489,14 +509,13 @@
 
             const registros = data || [];
 
-            // Ordenar de más reciente a más antigua por fecha (y si empatan, por id descendente)
             registros.sort((a, b) => {
                 const fa = convertirFechaAObjeto(obtenerValorFechaCruda(a));
                 const fb = convertirFechaAObjeto(obtenerValorFechaCruda(b));
                 const ta = fa ? fa.getTime() : 0;
                 const tb = fb ? fb.getTime() : 0;
                 if (tb !== ta) return tb - ta;
-                return (Number(b.id) || 0) - (Number(a.id) || 0);
+                return String(b.id || "").localeCompare(String(a.id || ""));
             });
 
             todosLosRegistros = registros;
@@ -534,7 +553,7 @@
             const filtrados = todosLosRegistros.filter(reg => {
                 const fechaReg = convertirFechaAObjeto(obtenerValorFechaCruda(reg));
                 const clienteReg = String(reg.cliente || reg.nombre_cliente || reg.razon_social || "").toLowerCase();
-                const extReg = String(reg.numero_extintor || reg.nro_extintor || reg.extintor || "").toLowerCase();
+                const extReg = String(reg.extintor_numero || reg.numero_extintor || reg.nro_extintor || reg.extintor || "").toLowerCase();
                 const dpsReg = String(reg.numero_dps || reg.dps || "").toLowerCase();
 
                 if (clientesFiltro.length > 0) {
@@ -562,21 +581,35 @@
             estado.textContent = `Mostrando ${filtrados.length} de ${todosLosRegistros.length} movimientos.`;
         }
 
+        function textoLimpio(valor) {
+            if (valor === null || valor === undefined || String(valor).trim() === "") {
+                return "-";
+            }
+            return String(valor);
+        }
+
         function renderizarTabla(registros) {
             const tbody = document.getElementById("cuerpoHistorial");
             tbody.innerHTML = "";
 
             if (registros.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5">No hay movimientos que coincidan con los filtros.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12">No hay movimientos que coincidan con los filtros.</td></tr>`;
                 return;
             }
 
             registros.forEach(reg => {
-                const fechaFormateada = formatearFechaLista(obtenerValorFechaCruda(reg));
-                const cliente = reg.cliente || reg.nombre_cliente || reg.razon_social || "-";
-                const extintor = reg.numero_extintor || reg.nro_extintor || reg.extintor || "-";
-                const dps = reg.numero_dps || reg.dps || "-";
-                const detalle = reg.detalle || reg.observaciones || reg.cambios || JSON.stringify(reg);
+                const fechaFormateada = formatearFechaDDMMAAAA(obtenerValorFechaCruda(reg));
+                const cliente = textoLimpio(reg.cliente || reg.nombre_cliente || reg.razon_social);
+                const extintor = textoLimpio(reg.extintor_numero || reg.numero_extintor || reg.nro_extintor || reg.extintor);
+                const dps = textoLimpio(reg.numero_dps || reg.dps);
+                const oblea = textoLimpio(reg.oblea);
+                const marca = textoLimpio(reg.marca);
+                const tipo = textoLimpio(reg.tipo);
+                const agente = textoLimpio(reg.agente_extintor);
+                const capacidad = textoLimpio(reg.capacidad);
+                const anoFab = textoLimpio(reg.ano_fab);
+                const vtoPh = formatearFechaDDMMAAAA(reg.vto_prueb_hidr);
+                const vtoCarga = formatearFechaDDMMAAAA(reg.vto_carga);
 
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
@@ -584,7 +617,14 @@
                     <td>${cliente}</td>
                     <td>${extintor}</td>
                     <td>${dps}</td>
-                    <td>${detalle}</td>
+                    <td>${oblea}</td>
+                    <td>${marca}</td>
+                    <td>${tipo}</td>
+                    <td>${agente}</td>
+                    <td>${capacidad}</td>
+                    <td>${anoFab}</td>
+                    <td>${vtoPh}</td>
+                    <td>${vtoCarga}</td>
                 `;
                 tbody.appendChild(tr);
             });
