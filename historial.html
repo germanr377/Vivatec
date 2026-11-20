@@ -3,617 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivatec - Historial de Revisiones y Auditoría</title>
-    <!-- Supabase JS Client -->
+    <title>Historial - VIVATEC</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="menu.js"></script>
-
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1380px;
-            margin: auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f6f9;
             color: #2c3e50;
-            margin-top: 0;
-            margin-bottom: 20px;
+            margin: 0;
+            padding: 15px;
         }
-
-        .filtros-panel {
-            background: #f8fafc;
-            border: 1px solid #dce3ec;
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
             border-radius: 6px;
-            padding: 18px;
-            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
+        h1 {
+            margin-top: 0;
+            font-size: 22px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 14px;
-            margin-bottom: 14px;
-            align-items: flex-end;
+            align-items: start;
+            margin-bottom: 16px;
         }
-
-        .form-group {
-            flex: 1;
-            min-width: 170px;
+        .campo-grupo {
+            display: flex;
+            flex-direction: column;
         }
-
         label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: #475569;
             font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #34495e;
         }
-
-        input[type="date"],
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 9px 10px;
+        input[type="text"] {
+            height: 36px;
+            padding: 6px 10px;
             border: 1px solid #cbd5e1;
             border-radius: 4px;
             font-size: 14px;
-            box-sizing: border-box;
-            background: #fff;
+            width: 100%;
         }
-
-        select[multiple] {
-            min-height: 92px;
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2980b9;
         }
-
-        .ayuda-multi {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 4px;
+        .proveedor-fila-principal {
+            display: flex;
+            gap: 6px;
+            align-items: center;
         }
-
-        .campos-box {
-            border-top: 1px dashed #cbd5e1;
-            padding-top: 12px;
+        .btn-mas-proveedor {
+            height: 36px;
+            min-width: 36px;
+            border: 1px solid #2980b9;
+            background-color: #2980b9;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .btn-mas-proveedor:hover {
+            background-color: #1f6391;
+        }
+        .proveedores-extras-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
             margin-top: 6px;
         }
-
-        .campos-header {
+        .extra-proveedor-item {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
+            gap: 6px;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
         }
-
-        .campos-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 16px;
-        }
-
-        .campo-check {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 13px;
-            font-weight: normal;
-            color: #334155;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .campo-check input[type="checkbox"] {
-            cursor: pointer;
-        }
-
-        .btn-mini {
-            background: #e2e8f0;
-            color: #1e293b;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
+        .btn-quitar-proveedor {
+            height: 34px;
+            min-width: 34px;
+            border: 1px solid #e74c3c;
+            background-color: #fff;
+            color: #e74c3c;
             font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-mini:hover {
-            background: #cbd5e1;
-        }
-
-        .acciones-filtros {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 14px;
-        }
-
-        .btn {
-            padding: 10px 18px;
-            border: none;
             border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
             cursor: pointer;
+        }
+        .btn-quitar-proveedor:hover {
+            background-color: #e74c3c;
             color: #fff;
         }
-
-        .btn-buscar {
-            background: #2980b9;
-        }
-
-        .btn-buscar:hover {
-            background: #1f618d;
-        }
-
-        .btn-limpiar {
-            background: #7f8c8d;
-        }
-
-        .btn-limpiar:hover {
-            background: #626567;
-        }
-
-        .resumen-barra {
+        .acciones-filtro {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
             gap: 10px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            color: #475569;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
         }
-
-        .leyenda-cambio {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .btn {
+            height: 36px;
+            padding: 0 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
             font-weight: bold;
-            color: #7d6608;
+            font-size: 14px;
         }
-
-        .muestra-amarillo {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            background: #fff176;
-            border: 1px solid #f1c40f;
-            border-radius: 3px;
+        .btn-buscar {
+            background-color: #2980b9;
+            color: #fff;
         }
-
+        .btn-limpiar {
+            background-color: #95a5a6;
+            color: #fff;
+        }
+        .estado-info {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 10px;
+        }
         .tabla-wrapper {
             overflow-x: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
         }
-
         th, td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #dce1e7;
             padding: 8px 10px;
             text-align: left;
+        }
+        th {
+            background-color: #2c3e50;
+            color: #fff;
             white-space: nowrap;
         }
-
-        th {
-            background: #2c3e50;
-            color: #fff;
-            position: sticky;
-            top: 0;
-            z-index: 1;
+        tr:nth-child(even) {
+            background-color: #f9fbfd;
         }
-
-        tbody tr:nth-child(even) {
-            background: #fafbfc;
-        }
-
-        .badge-estado {
-            display: inline-block;
-            padding: 2px 7px;
-            border-radius: 10px;
-            font-size: 11px;
+        .resaltado-cambio {
+            background-color: #fff3cd;
             font-weight: bold;
-        }
-
-        .badge-inicial {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        .badge-modificado {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .celda-modificada {
-            background-color: #fff176 !important;
-            color: #1e293b !important;
-            font-weight: bold;
-        }
-
-        .sin-resultados {
-            text-align: center;
-            padding: 28px;
-            color: #64748b;
-            font-size: 14px;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div id="menu-compartido"></div>
 
-<div class="container">
-    <h2>Vivatec - Historial de Revisiones y Auditoría</h2>
+        <h1>Historial de Revisiones</h1>
 
-    <div class="filtros-panel">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="filtroFechaDesde">Fecha revisión desde:</label>
-                <input type="date" id="filtroFechaDesde">
+        <div class="filtros-grid">
+            <div class="campo-grupo">
+                <label for="fechaDesde">Fecha desde (dd/mm/aaaa)</label>
+                <input type="text" id="fechaDesde" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
             </div>
 
-            <div class="form-group">
-                <label for="filtroFechaHasta">Fecha revisión hasta:</label>
-                <input type="date" id="filtroFechaHasta">
+            <div class="campo-grupo">
+                <label for="fechaHasta">Fecha hasta (dd/mm/aaaa)</label>
+                <input type="text" id="fechaHasta" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
             </div>
 
-            <div class="form-group">
-                <label for="filtroExtintor">N° de Extintor:</label>
-                <input type="text" id="filtroExtintor" placeholder="Ej. 1045">
+            <div class="campo-grupo">
+                <label for="numeroDps">Número DPS</label>
+                <input type="text" id="numeroDps" autocomplete="off">
             </div>
 
-            <div class="form-group" style="flex: 1.5; min-width: 240px;">
-                <label for="filtroClientes">Cliente / Proveedor (uno o varios):</label>
-                <select id="filtroClientes" multiple></select>
-                <div class="ayuda-multi">Mantené Ctrl (o Cmd) para seleccionar varios. Sin selección muestra todos.</div>
-            </div>
-        </div>
-
-        <div class="campos-box">
-            <div class="campos-header">
-                <label style="margin: 0;">Campos a auditar y comparar entre revisiones:</label>
-                <div>
-                    <button type="button" class="btn-mini" onclick="seleccionarTodosCampos(true)">Marcar todos</button>
-                    <button type="button" class="btn-mini" onclick="seleccionarTodosCampos(false)">Solo críticos</button>
+            <div class="campo-grupo">
+                <label for="proveedorPrincipal">Proveedores (vacío = todos)</label>
+                <div class="proveedor-fila-principal">
+                    <input type="text" id="proveedorPrincipal" class="input-proveedor" autocomplete="off">
+                    <button type="button" id="btnAgregarProveedor" class="btn-mas-proveedor" title="Agregar otro proveedor">+</button>
                 </div>
+                <div id="proveedoresExtras" class="proveedores-extras-vertical"></div>
             </div>
-            <div id="contenedorCamposCheckboxes" class="campos-grid"></div>
         </div>
 
-        <div class="acciones-filtros">
-            <button type="button" class="btn btn-buscar" onclick="buscarHistorial()">🔎 Buscar Historial</button>
-            <button type="button" class="btn btn-limpiar" onclick="limpiarFiltros()">🧹 Limpiar Filtros</button>
+        <div class="acciones-filtro">
+            <button type="button" id="btnFiltrar" class="btn btn-buscar">Buscar</button>
+            <button type="button" id="btnLimpiar" class="btn btn-limpiar">Limpiar filtros</button>
+        </div>
+
+        <div id="estadoConsulta" class="estado-info">Cargando movimientos...</div>
+
+        <div class="tabla-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>DPS</th>
+                        <th>Proveedor</th>
+                        <th>Detalle / Cambios</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoHistorial"></tbody>
+            </table>
         </div>
     </div>
 
-    <div class="resumen-barra">
-        <div id="contadorRegistros">Cargando historial...</div>
-        <div class="leyenda-cambio">
-            <span class="muestra-amarillo"></span>
-            <span>Celda modificada respecto a la revisión anterior</span>
-        </div>
-    </div>
+    <script src="menu.js"></script>
+    <script>
+        // Configurá aquí tu cliente de Supabase si no lo cargás desde otro archivo común
+        const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+        const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
+        const supabaseClient = (typeof _supabase !== "undefined")
+            ? _supabase
+            : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <div class="tabla-wrapper">
-        <table>
-            <thead>
-                <tr id="encabezadoTabla"></tr>
-            </thead>
-            <tbody id="cuerpoTabla">
-                <tr>
-                    <td colspan="16" class="sin-resultados">Buscando registros...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+        let todosLosRegistros = [];
 
-<script>
-    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Formatea dígitos de corrido a dd/mm/aaaa insertando "/" automáticamente
+        function aplicarMascaraFecha(input) {
+            input.addEventListener("input", function() {
+                let soloDigitos = this.value.replace(/\D/g, "").slice(0, 8);
+                let formateada = "";
 
-    const CAMPOS_AUDITORIA = [
-        { key: "cliente", label: "Cliente", critico: false },
-        { key: "extintor_numero", label: "N° Extintor", critico: false },
-        { key: "numero_dps", label: "N° DPS", critico: true },
-        { key: "oblea", label: "Oblea", critico: false },
-        { key: "marca", label: "Marca", critico: false },
-        { key: "tipo", label: "Tipo", critico: false },
-        { key: "agente_extintor", label: "Agente", critico: false },
-        { key: "capacidad", label: "Capacidad", critico: false },
-        { key: "ano_fab", label: "Año Fab.", critico: false },
-        { key: "vto_prueb_hidr", label: "Vto. P.H.", critico: true },
-        { key: "vto_carga", label: "Vto. Carga", critico: true },
-        { key: "identificacion_puesto", label: "Puesto", critico: false },
-        { key: "ubicacion", label: "Ubicación", critico: true }
-    ];
-
-    window.addEventListener("load", async function () {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) {
-            window.location.href = "login.html";
-            return;
-        }
-
-        renderizarCheckboxesCampos();
-        await cargarClientesFiltro();
-        await buscarHistorial();
-    });
-
-    function renderizarCheckboxesCampos() {
-        const cont = document.getElementById("contenedorCamposCheckboxes");
-        cont.innerHTML = "";
-
-        CAMPOS_AUDITORIA.forEach(campo => {
-            const lbl = document.createElement("label");
-            lbl.className = "campo-check";
-
-            const chk = document.createElement("input");
-            chk.type = "checkbox";
-            chk.className = "chk-campo-auditoria";
-            chk.value = campo.key;
-            chk.checked = true;
-            chk.addEventListener("change", () => buscarHistorial());
-
-            lbl.appendChild(chk);
-            lbl.appendChild(document.createTextNode(campo.label));
-            cont.appendChild(lbl);
-        });
-    }
-
-    function seleccionarTodosCampos(marcarTodos) {
-        const checks = document.querySelectorAll(".chk-campo-auditoria");
-        checks.forEach(chk => {
-            if (marcarTodos) {
-                chk.checked = true;
-            } else {
-                const def = CAMPOS_AUDITORIA.find(c => c.key === chk.value);
-                chk.checked = def ? Boolean(def.critico) : true;
-            }
-        });
-        buscarHistorial();
-    }
-
-    function obtenerCamposSeleccionados() {
-        const marcados = Array.from(document.querySelectorAll(".chk-campo-auditoria:checked"))
-            .map(el => el.value);
-        return CAMPOS_AUDITORIA.filter(c => marcados.includes(c.key));
-    }
-
-    async function cargarClientesFiltro() {
-        const select = document.getElementById("filtroClientes");
-        const { data, error } = await _supabase
-            .from("clientes")
-            .select("nombre_cliente, razon_social")
-            .order("nombre_cliente", { ascending: true });
-
-        if (error) {
-            console.error("Error al cargar clientes:", error);
-            return;
-        }
-
-        select.innerHTML = "";
-        (data || []).forEach(c => {
-            if (!c.nombre_cliente) return;
-            const nombre = c.nombre_cliente.trim();
-            const opt = document.createElement("option");
-            opt.value = nombre;
-            opt.textContent = c.razon_social ? `${nombre} (${c.razon_social.trim()})` : nombre;
-            select.appendChild(opt);
-        });
-    }
-
-    function normalizarValor(val) {
-        if (val === null || val === undefined || val === "") return "";
-        return String(val).trim();
-    }
-
-    function formatearFechaCorta(fechaSQL) {
-        if (!fechaSQL) return "-";
-        const limpia = String(fechaSQL).slice(0, 10);
-        const partes = limpia.split("-");
-        if (partes.length === 3) {
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
-        return limpia;
-    }
-
-    function formatearMesAnio(fechaSQL) {
-        if (!fechaSQL) return "-";
-        const limpia = String(fechaSQL).slice(0, 10);
-        const partes = limpia.split("-");
-        if (partes.length === 3) {
-            return `${partes[1]}/${partes[0].slice(-2)}`;
-        }
-        return limpia;
-    }
-
-    function formatearValorCelda(campoKey, valor) {
-        if (valor === null || valor === undefined || valor === "") return "-";
-        if (campoKey === "vto_prueb_hidr" || campoKey === "vto_carga") {
-            return formatearMesAnio(valor);
-        }
-        return String(valor);
-    }
-
-    async function buscarHistorial() {
-        const fechaDesde = document.getElementById("filtroFechaDesde").value;
-        const fechaHasta = document.getElementById("filtroFechaHasta").value;
-        const extintorNum = document.getElementById("filtroExtintor").value.trim();
-        const clientesSel = Array.from(document.getElementById("filtroClientes").selectedOptions)
-            .map(opt => opt.value);
-
-        let camposVisibles = obtenerCamposSeleccionados();
-        if (camposVisibles.length === 0) {
-            camposVisibles = CAMPOS_AUDITORIA;
-        }
-
-        renderizarEncabezado(camposVisibles);
-
-        try {
-            let query = _supabase
-                .from("historial_revisiones")
-                .select("*")
-                .order("fecha_revision", { ascending: true });
-
-            if (fechaDesde) {
-                query = query.gte("fecha_revision", fechaDesde);
-            }
-            if (fechaHasta) {
-                query = query.lte("fecha_revision", fechaHasta);
-            }
-            if (extintorNum) {
-                query = query.ilike("extintor_numero", `%${extintorNum}%`);
-            }
-            if (clientesSel.length > 0) {
-                query = query.in("cliente", clientesSel);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            const filas = data || [];
-            // Orden determinístico: primero por equipo (extintor_id / extintor_numero), luego por fecha y orden de carga
-            filas.sort((a, b) => {
-                const eqA = String(a.extintor_id ?? a.extintor_numero ?? "");
-                const eqB = String(b.extintor_id ?? b.extintor_numero ?? "");
-                if (eqA !== eqB) return eqA.localeCompare(eqB, undefined, { numeric: true });
-                const fA = String(a.fecha_revision || "");
-                const fB = String(b.fecha_revision || "");
-                if (fA !== fB) return fA.localeCompare(fB);
-                return String(a.id || "").localeCompare(String(b.id || ""));
-            });
-
-            renderizarFilas(filas, camposVisibles);
-        } catch (err) {
-            console.error("Error al consultar historial_revisiones:", err);
-            document.getElementById("contadorRegistros").textContent = "Error al cargar el historial.";
-            document.getElementById("cuerpoTabla").innerHTML = `
-                <tr>
-                    <td colspan="${camposVisibles.length + 3}" class="sin-resultados">
-                        ⚠️ No se pudo obtener el historial de revisiones.
-                    </td>
-                </tr>
-            `;
-        }
-    }
-
-    function renderizarEncabezado(camposVisibles) {
-        const tr = document.getElementById("encabezadoTabla");
-        tr.innerHTML = "";
-
-        const fijasIzq = ["Fecha Rev.", "ID Ext.", "Estado"];
-        fijasIzq.forEach(titulo => {
-            const th = document.createElement("th");
-            th.textContent = titulo;
-            tr.appendChild(th);
-        });
-
-        camposVisibles.forEach(c => {
-            const th = document.createElement("th");
-            th.textContent = c.label;
-            tr.appendChild(th);
-        });
-    }
-
-    function renderizarFilas(filas, camposVisibles) {
-        const tbody = document.getElementById("cuerpoTabla");
-        const contador = document.getElementById("contadorRegistros");
-        tbody.innerHTML = "";
-
-        if (!filas.length) {
-            contador.textContent = "0 registros encontrados";
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="${camposVisibles.length + 3}" class="sin-resultados">
-                        No hay registros en el historial para los filtros seleccionados.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        const ultimaFilaPorEquipo = new Map();
-        let totalCambiosResaltados = 0;
-
-        filas.forEach(fila => {
-            const claveEquipo = fila.extintor_id ?? `${fila.cliente || ""}|${fila.extintor_numero || ""}`;
-            const filaAnterior = ultimaFilaPorEquipo.get(claveEquipo) || null;
-            const esInicial = !filaAnterior;
-
-            const tr = document.createElement("tr");
-
-            const tdFecha = document.createElement("td");
-            tdFecha.textContent = formatearFechaCorta(fila.fecha_revision);
-            tr.appendChild(tdFecha);
-
-            const tdIdExt = document.createElement("td");
-            tdIdExt.textContent = fila.extintor_id ?? "-";
-            tr.appendChild(tdIdExt);
-
-            const tdEstado = document.createElement("td");
-            const badge = document.createElement("span");
-            badge.className = `badge-estado ${esInicial ? "badge-inicial" : "badge-modificado"}`;
-            badge.textContent = esInicial ? "Inicial" : "Modificación";
-            tdEstado.appendChild(badge);
-            tr.appendChild(tdEstado);
-
-            camposVisibles.forEach(campo => {
-                const td = document.createElement("td");
-                const valActual = fila[campo.key];
-                td.textContent = formatearValorCelda(campo.key, valActual);
-
-                if (!esInicial) {
-                    const valAnterior = filaAnterior[campo.key];
-                    if (normalizarValor(valActual) !== normalizarValor(valAnterior)) {
-                        td.classList.add("celda-modificada");
-                        td.title = `Anterior: ${formatearValorCelda(campo.key, valAnterior)}`;
-                        totalCambiosResaltados++;
-                    }
+                if (soloDigitos.length > 0) {
+                    formateada = soloDigitos.slice(0, 2);
+                }
+                if (soloDigitos.length >= 3) {
+                    formateada += "/" + soloDigitos.slice(2, 4);
+                }
+                if (soloDigitos.length >= 5) {
+                    formateada += "/" + soloDigitos.slice(4, 8);
                 }
 
-                tr.appendChild(td);
+                this.value = formateada;
+            });
+        }
+
+        // Convierte fecha dd/mm/aaaa a objeto Date (inicio o fin de día) para comparar
+        function parsearFechaDDMMAAAA(texto, finDeDia = false) {
+            const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto.trim());
+            if (!match) return null;
+
+            const dia = parseInt(match[1], 10);
+            const mes = parseInt(match[2], 10) - 1;
+            const anio = parseInt(match[3], 10);
+
+            const fecha = finDeDia
+                ? new Date(anio, mes, dia, 23, 59, 59, 999)
+                : new Date(anio, mes, dia, 0, 0, 0, 0);
+
+            // Validar que la fecha exista realmente (ej. evitar 31/02/2026)
+            if (
+                fecha.getFullYear() !== anio ||
+                fecha.getMonth() !== mes ||
+                fecha.getDate() !== dia
+            ) {
+                return null;
+            }
+            return fecha;
+        }
+
+        // Formatea cualquier fecha de la BD a dd/mm/aaaa
+        function formatearFechaLista(valorFecha) {
+            if (!valorFecha) return "";
+            const fecha = new Date(valorFecha);
+            if (isNaN(fecha.getTime())) return String(valorFecha);
+
+            const dia = String(fecha.getDate()).padStart(2, "0");
+            const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+            const anio = fecha.getFullYear();
+            return `${dia}/${mes}/${anio}`;
+        }
+
+        // Agrega un nuevo cuadradito vertical para otro proveedor
+        function agregarCuadritoProveedor(valorInicial = "") {
+            const contenedor = document.getElementById("proveedoresExtras");
+            const fila = document.createElement("div");
+            fila.className = "extra-proveedor-item";
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "input-proveedor";
+            input.value = valorInicial;
+            input.autocomplete = "off";
+
+            const btnQuitar = document.createElement("button");
+            btnQuitar.type = "button";
+            btnQuitar.className = "btn-quitar-proveedor";
+            btnQuitar.textContent = "×";
+            btnQuitar.title = "Quitar este proveedor";
+            btnQuitar.addEventListener("click", function() {
+                fila.remove();
+                aplicarFiltros();
             });
 
-            tbody.appendChild(tr);
-            ultimaFilaPorEquipo.set(claveEquipo, fila);
+            input.addEventListener("input", aplicarFiltros);
+
+            fila.appendChild(input);
+            fila.appendChild(btnQuitar);
+            contenedor.appendChild(fila);
+            input.focus();
+        }
+
+        function obtenerProveedoresSeleccionados() {
+            const inputs = document.querySelectorAll(".input-proveedor");
+            const lista = [];
+            inputs.forEach(inp => {
+                const limpio = inp.value.trim().toLowerCase();
+                if (limpio !== "") {
+                    lista.push(limpio);
+                }
+            });
+            return lista;
+        }
+
+        async function cargarHistorial() {
+            const estado = document.getElementById("estadoConsulta");
+            estado.textContent = "Cargando historial desde Supabase...";
+
+            const { data, error } = await supabaseClient
+                .from("historial_revisiones")
+                .select("*")
+                .order("created_at", { ascending: false });
+
+            if (error) {
+                estado.textContent = "Error al cargar historial: " + error.message;
+                return;
+            }
+
+            todosLosRegistros = data || [];
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
+            const desdeTexto = document.getElementById("fechaDesde").value.trim();
+            const hastaTexto = document.getElementById("fechaHasta").value.trim();
+            const dpsFiltro = document.getElementById("numeroDps").value.trim().toLowerCase();
+            const proveedoresFiltro = obtenerProveedoresSeleccionados();
+            const estado = document.getElementById("estadoConsulta");
+
+            const fechaDesde = desdeTexto ? parsearFechaDDMMAAAA(desdeTexto, false) : null;
+            const fechaHasta = hastaTexto ? parsearFechaDDMMAAAA(hastaTexto, true) : null;
+
+            if (desdeTexto.length === 10 && !fechaDesde) {
+                estado.textContent = "La fecha 'desde' no es válida (usá dd/mm/aaaa).";
+                return;
+            }
+            if (hastaTexto.length === 10 && !fechaHasta) {
+                estado.textContent = "La fecha 'hasta' no es válida (usá dd/mm/aaaa).";
+                return;
+            }
+
+            const filtrados = todosLosRegistros.filter(reg => {
+                // Ajustá los nombres de campo según tu tabla historial_revisiones
+                const rawFecha = reg.fecha_revision || reg.fecha || reg.created_at;
+                const fechaReg = rawFecha ? new Date(rawFecha) : null;
+                const dpsReg = String(reg.numero_dps || reg.dps || "").toLowerCase();
+                const provReg = String(reg.proveedor || reg.prestador || "").toLowerCase();
+
+                if (fechaDesde && (!fechaReg || fechaReg < fechaDesde)) return false;
+                if (fechaHasta && (!fechaReg || fechaReg > fechaHasta)) return false;
+                if (dpsFiltro && !dpsReg.includes(dpsFiltro)) return false;
+
+                // Si no se ingresó ningún proveedor, toma todos
+                if (proveedoresFiltro.length > 0) {
+                    const coincideAlguno = proveedoresFiltro.some(p => provReg.includes(p));
+                    if (!coincideAlguno) return false;
+                }
+
+                return true;
+            });
+
+            renderizarTabla(filtrados);
+            estado.textContent = `Mostrando ${filtrados.length} de ${todosLosRegistros.length} movimientos.`;
+        }
+
+        function renderizarTabla(registros) {
+            const tbody = document.getElementById("cuerpoHistorial");
+            tbody.innerHTML = "";
+
+            if (registros.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4">No hay movimientos que coincidan con los filtros.</td></tr>`;
+                return;
+            }
+
+            registros.forEach(reg => {
+                const rawFecha = reg.fecha_revision || reg.fecha || reg.created_at;
+                const fechaFormateada = formatearFechaLista(rawFecha);
+                const dps = reg.numero_dps || reg.dps || "-";
+                const proveedor = reg.proveedor || reg.prestador || "-";
+                const detalle = reg.detalle || reg.observaciones || reg.cambios || JSON.stringify(reg);
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${fechaFormateada}</td>
+                    <td>${dps}</td>
+                    <td>${proveedor}</td>
+                    <td>${detalle}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".input-fecha-ddmmaaaa").forEach(aplicarMascaraFecha);
+
+            document.getElementById("btnAgregarProveedor").addEventListener("click", function() {
+                agregarCuadritoProveedor("");
+            });
+
+            document.getElementById("btnFiltrar").addEventListener("click", aplicarFiltros);
+            document.getElementById("fechaDesde").addEventListener("input", aplicarFiltros);
+            document.getElementById("fechaHasta").addEventListener("input", aplicarFiltros);
+            document.getElementById("numeroDps").addEventListener("input", aplicarFiltros);
+            document.getElementById("proveedorPrincipal").addEventListener("input", aplicarFiltros);
+
+            document.getElementById("btnLimpiar").addEventListener("click", function() {
+                document.getElementById("fechaDesde").value = "";
+                document.getElementById("fechaHasta").value = "";
+                document.getElementById("numeroDps").value = "";
+                document.getElementById("proveedorPrincipal").value = "";
+                document.getElementById("proveedoresExtras").innerHTML = "";
+                aplicarFiltros();
+            });
+
+            cargarHistorial();
         });
-
-        contador.textContent = `${filas.length} registro(s) en historial · ${totalCambiosResaltados} celda(s) modificada(s) resaltada(s)`;
-    }
-
-    function limpiarFiltros() {
-        document.getElementById("filtroFechaDesde").value = "";
-        document.getElementById("filtroFechaHasta").value = "";
-        document.getElementById("filtroExtintor").value = "";
-        const selectClientes = document.getElementById("filtroClientes");
-        Array.from(selectClientes.options).forEach(opt => {
-            opt.selected = false;
-        });
-        seleccionarTodosCampos(true);
-    }
-</script>
-
+    </script>
 </body>
-              </html>
-  
+</html>
