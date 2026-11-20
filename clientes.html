@@ -20,6 +20,8 @@
         .btn-volver:hover { background: #626567; }
         .btn-buscar { background: #27ae60; }
         .btn-buscar:hover { background: #219653; }
+        .btn-renombrar { background: #8e44ad; }
+        .btn-renombrar:hover { background: #732d91; }
         .btn-eliminar { background: #c0392b; padding: 5px 10px; font-size: 11px; }
         .btn-eliminar:hover { background: #962d22; }
         .btn-editar { background: #f39c12; padding: 5px 10px; font-size: 11px; color: white; }
@@ -34,10 +36,11 @@
         .form-group textarea { resize: vertical; height: 40px; }
         .form-acciones { margin-top: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
-        /* Badge de estado (Nuevo / Existente) */
+        /* Badge de estado (Nuevo / Existente / Renombrar) */
         .badge-estado { font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: normal; }
         .badge-nuevo { background: #e8f8f5; color: #16a085; border: 1px solid #a3e4d7; }
         .badge-existente { background: #ebf5fb; color: #2980b9; border: 1px solid #aed6f1; }
+        .badge-renombrar { background: #f5eef8; color: #8e44ad; border: 1px solid #d7bde2; }
 
         /* Tabla de Clientes */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
@@ -101,6 +104,7 @@
         </div>
         <div class="form-acciones">
             <button class="btn btn-buscar" onclick="filtrarClientesPorCampos()">🔍 Buscar</button>
+            <button class="btn btn-renombrar" id="btnRenombrar" onclick="activarModoRenombrar()">🏷️ Renombrar</button>
             <button class="btn" id="btnGuardar" onclick="guardarCliente()">💾 Guardar Cliente</button>
             <button class="btn btn-volver" id="btnLimpiar" onclick="limpiarFormularioYFiltros()">🧹 Limpiar / Ver Todos</button>
             <button class="btn btn-volver" id="btnCancelar" onclick="limpiarFormularioYFiltros()" style="display:none;">❌ Cancelar</button>
@@ -142,6 +146,7 @@
     let clientesFiltrados = [];
     let columnaOrdenActual = 'nombre_cliente';
     let ordenAscendente = true;
+    let modoRenombrar = false;
 
     // 🔒 SEGURIDAD: Validar sesión activa al cargar la página
     window.addEventListener("load", async function() {
@@ -185,8 +190,50 @@
         });
     }
 
+    // Activar modo exclusivo para renombrar el cliente actual sin crear duplicados
+    function activarModoRenombrar() {
+        const idActual = document.getElementById("clienteId").value;
+        const nombreInput = document.getElementById("nombre_cliente");
+        const val = nombreInput.value.trim().toLowerCase();
+
+        let clienteObjetivo = null;
+
+        if (idActual) {
+            clienteObjetivo = clientesCache.find(c => c.id == idActual);
+        } else if (val) {
+            clienteObjetivo = clientesCache.find(c => c.nombre_cliente && c.nombre_cliente.toLowerCase() === val);
+        }
+
+        if (!clienteObjetivo) {
+            alert("⚠️ Primero seleccioná un cliente existente (con el botón ✏️ de la tabla o escribiendo su nombre actual) para poder renombrarlo.");
+            return;
+        }
+
+        modoRenombrar = true;
+        document.getElementById("clienteId").value = clienteObjetivo.id;
+        document.getElementById("razon_social").value = clienteObjetivo.razon_social || '';
+        document.getElementById("cuit").value = clienteObjetivo.cuit || '';
+        document.getElementById("nombre_contacto").value = clienteObjetivo.nombre_contacto || '';
+        document.getElementById("direccion").value = clienteObjetivo.direccion || '';
+        document.getElementById("telefono").value = clienteObjetivo.telefono || '';
+        document.getElementById("observaciones").value = clienteObjetivo.observaciones || '';
+
+        document.getElementById("lblEstadoCliente").innerHTML = `<span class="badge-estado badge-renombrar">🏷️ Solo Renombrando</span>`;
+        document.getElementById("formTitulo").textContent = "🏷️ Renombrar Cliente (Sin Duplicar)";
+        document.getElementById("btnGuardar").textContent = "💾 Guardar Nuevo Nombre";
+        document.getElementById("btnCancelar").style.display = "inline-block";
+
+        nombreInput.focus();
+        nombreInput.select();
+    }
+
     // Predictivo: detecta si el nombre escrito coincide con uno existente o es nuevo
     function verificarPredictivo() {
+        // Si estamos renombrando un cliente fijado, no pisar clienteId ni cambiar a "Nuevo"
+        if (modoRenombrar && document.getElementById("clienteId").value) {
+            return;
+        }
+
         const val = document.getElementById("nombre_cliente").value.trim().toLowerCase();
         const lbl = document.getElementById("lblEstadoCliente");
 
@@ -313,17 +360,35 @@
     async function guardarCliente() {
         const id = document.getElementById("clienteId").value;
         const nombre_cliente = document.getElementById("nombre_cliente").value.trim();
+
+        if (!nombre_cliente) {
+            alert("⚠️ El nombre comercial del cliente es obligatorio.");
+            return;
+        }
+
+        // Si está activo el modo renombrar sobre un ID existente, actualizamos solo nombre_cliente
+        if (modoRenombrar && id) {
+            const { error } = await _supabase
+                .from('clientes')
+                .update({ nombre_cliente })
+                .eq('id', id);
+
+            if (error) {
+                alert("⚠️ Error al renombrar el cliente: " + error.message);
+                return;
+            }
+            alert("✅ Nombre del cliente actualizado sin duplicar.");
+            limpiarFormularioYFiltros();
+            await cargarClientes();
+            return;
+        }
+
         const razon_social = document.getElementById("razon_social").value.trim();
         const cuit = document.getElementById("cuit").value.trim();
         const nombre_contacto = document.getElementById("nombre_contacto").value.trim();
         const direccion = document.getElementById("direccion").value.trim();
         const telefono = document.getElementById("telefono").value.trim();
         const observaciones = document.getElementById("observaciones").value.trim();
-
-        if (!nombre_cliente) {
-            alert("⚠️ El nombre comercial del cliente es obligatorio.");
-            return;
-        }
 
         const datosCliente = {
             nombre_cliente,
@@ -367,6 +432,7 @@
         const c = clientesCache.find(item => item.id == id);
         if (!c) return;
 
+        modoRenombrar = false;
         document.getElementById("clienteId").value = c.id;
         document.getElementById("nombre_cliente").value = c.nombre_cliente || '';
         document.getElementById("razon_social").value = c.razon_social || '';
@@ -385,6 +451,7 @@
 
     // Limpiar formulario y restablecer la tabla completa
     function limpiarFormularioYFiltros() {
+        modoRenombrar = false;
         document.getElementById("clienteId").value = "";
         document.getElementById("nombre_cliente").value = "";
         document.getElementById("razon_social").value = "";
