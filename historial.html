@@ -217,7 +217,7 @@
         <h1>Historial de Revisiones</h1>
 
         <div class="filtros-grid">
-            <!-- Cliente + botón "+" vertical + predictivo -->
+            <!-- Cliente + botón "+" vertical + predictivo (vacío = todos) -->
             <div class="campo-grupo col-cliente">
                 <label for="clientePrincipal">Clientes</label>
                 <div class="fila-con-mas">
@@ -347,7 +347,7 @@
             return `${dia}/${mes}/${anio}`;
         }
 
-        // Configura predictivo para cualquier input de cliente (Enter selecciona el primero)
+        // Configura predictivo para Clientes (Enter selecciona el primer cliente sugerido)
         function configurarPredictivoCliente(input, contenedorLista) {
             let sugerenciasActuales = [];
 
@@ -513,6 +513,7 @@
                 const extReg = String(reg.numero_extintor || reg.nro_extintor || reg.extintor || "").toLowerCase();
                 const dpsReg = String(reg.numero_dps || reg.dps || "").toLowerCase();
 
+                // Si no se pone ningún cliente, toma todos
                 if (clientesFiltro.length > 0) {
                     const coincideCliente = clientesFiltro.some(c => clienteReg.includes(c));
                     if (!coincideCliente) return false;
