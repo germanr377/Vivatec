@@ -305,7 +305,6 @@
             }
             const str = String(valorFecha).trim();
 
-            // Evita desfase de zona horaria cuando viene fecha pura aaaa-mm-dd
             const matchISO = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
             if (matchISO) {
                 const a = parseInt(matchISO[1], 10);
@@ -494,13 +493,42 @@
             return valores;
         }
 
+        async function cargarClientesDesdeTabla() {
+            const { data, error } = await _supabase
+                .from("clientes")
+                .select("*")
+                .limit(5000);
+
+            if (error || !Array.isArray(data)) {
+                listaClientesUnicos = [];
+                return;
+            }
+
+            const setCli = new Set();
+            data.forEach(cli => {
+                const nombre = (
+                    cli.cliente ||
+                    cli.nombre ||
+                    cli.nombre_cliente ||
+                    cli.razon_social ||
+                    ""
+                ).trim();
+                if (nombre) setCli.add(nombre);
+            });
+
+            listaClientesUnicos = Array.from(setCli).sort((a, b) => a.localeCompare(b));
+        }
+
         async function cargarHistorial() {
             const estado = document.getElementById("estadoConsulta");
             estado.textContent = "Cargando historial desde Supabase...";
 
+            await cargarClientesDesdeTabla();
+
             const { data, error } = await _supabase
                 .from("historial_revisiones")
-                .select("*");
+                .select("*")
+                .limit(5000);
 
             if (error) {
                 estado.textContent = "Error al cargar historial: " + error.message;
@@ -519,14 +547,6 @@
             });
 
             todosLosRegistros = registros;
-
-            const setCli = new Set();
-            todosLosRegistros.forEach(reg => {
-                const c = (reg.cliente || reg.nombre_cliente || reg.razon_social || "").trim();
-                if (c) setCli.add(c);
-            });
-            listaClientesUnicos = Array.from(setCli).sort((a, b) => a.localeCompare(b));
-
             aplicarFiltros();
         }
 
