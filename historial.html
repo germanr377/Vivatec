@@ -411,6 +411,7 @@
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let seriesPorExtintor = [];
+        let extintoresActivosSinHistorial = [];
         let listaClientesUnicos = [];
         let huboBusquedaActiva = false;
 
@@ -679,22 +680,36 @@
             return textoLimpio(reg[campo]);
         }
 
-        function claveAgrupacionExtintor(reg) {
-            if (reg.extintor_id !== undefined && reg.extintor_id !== null && String(reg.extintor_id).trim() !== "") {
-                return "id:" + String(reg.extintor_id).trim();
-            }
+        function claveNaturalExtintor(reg) {
             const ext = valorNormalizadoCampo(reg, "extintor_numero");
             const cli = valorNormalizadoCampo(reg, "cliente").toLowerCase();
             if (ext !== "-") {
                 return "ext:" + cli + "|" + ext.toLowerCase();
             }
+            return null;
+        }
+
+        function claveAgrupacionExtintor(reg) {
+            if (reg.extintor_id !== undefined && reg.extintor_id !== null && String(reg.extintor_id).trim() !== "") {
+                return "id:" + String(reg.extintor_id).trim();
+            }
+            const claveNat = claveNaturalExtintor(reg);
+            if (claveNat) return claveNat;
             return "reg:" + String(reg.id || Math.random());
         }
 
-        function construirSeriesCronologicas(registros) {
+        function construirSeriesCronologicas(registrosHistorial, registrosExtintores) {
             const grupos = new Map();
+            const idsConHistorial = new Set();
+            const clavesNaturalesConHistorial = new Set();
 
-            registros.forEach((reg, idx) => {
+            registrosHistorial.forEach((reg, idx) => {
+                if (reg.extintor_id !== undefined && reg.extintor_id !== null && String(reg.extintor_id).trim() !== "") {
+                    idsConHistorial.add(String(reg.extintor_id).trim());
+                }
+                const cNat = claveNaturalExtintor(reg);
+                if (cNat) clavesNaturalesConHistorial.add(cNat);
+
                 const clave = claveAgrupacionExtintor(reg);
                 if (!grupos.has(clave)) {
                     grupos.set(clave, []);
@@ -781,6 +796,31 @@
                 return b.idxUltimaOriginal - a.idxUltimaOriginal;
             });
 
+            // Extintores cargados en la tabla maestra que nunca tuvieron registros en historial_revisiones
+            const sinHist = [];
+            (registrosExtintores || []).forEach(ex => {
+                const idStr = ex.id !== undefined && ex.id !== null ? String(ex.id).trim() : "";
+                const cNat = claveNaturalExtintor(ex);
+
+                if (idStr && idsConHistorial.has(idStr)) return;
+                if (cNat && clavesNaturalesConHistorial.has(cNat)) return;
+
+                sinHist.push(ex);
+            });
+
+            sinHist.sort((a, b) => {
+                const cliA = valorNormalizadoCampo(a, "cliente");
+                const cliB = valorNormalizadoCampo(b, "cliente");
+                const cmpCli = cliA.localeCompare(cliB);
+                if (cmpCli !== 0) return cmpCli;
+                return valorNormalizadoCampo(a, "extintor_numero").localeCompare(
+                    valorNormalizadoCampo(b, "extintor_numero"),
+                    undefined,
+                    { numeric: true }
+                );
+            });
+
+            extintoresActivosSinHistorial = sinHist;
             return series;
         }
 
@@ -840,7 +880,6 @@
                 };
             }
 
-            // Con filtro de rango de fechas
             const indicesEnRango = [];
             serie.eventos.forEach((ev, idx) => {
                 if (dentroDeRangoFecha(ev.fechaObj, fechaDesde, fechaHasta)) {
@@ -856,7 +895,6 @@
             if (indicesRelevantes.length === 0) {
                 if (!incluirSinCambios) return null;
 
-                // Mostrar el último estado vigente hasta el fin del rango (o el inicial si no hubo cambios)
                 let ultimoEvHastaRango = null;
                 serie.eventos.forEach(ev => {
                     if (!fechaHasta || (ev.fechaObj && ev.fechaObj.getTime() <= fechaHasta.getTime())) {
@@ -957,17 +995,17 @@
 
             await cargarClientesDesdeTabla();
 
-            const { data, error } = await _supabase
-                .from("historial_revisiones")
-                .select("*")
-                .limit(5000);
+            const [resHist, resExt] = await Promise.all([
+                _supabase.from("historial_revisiones").select("*").limit(5000),
+                _supabase.from("extintores").select("*").limit(10000)
+            ]);
 
-            if (error) {
-                estado.textContent = "Error al cargar historial: " + error.message;
+            if (resHist.error) {
+                estado.textContent = "Error al cargar historial: " + resHist.error.message;
                 return;
             }
 
-            seriesPorExtintor = construirSeriesCronologicas(data || []);
+            seriesPorExtintor = construirSeriesCronologicas(resHist.data || [], resExt.data || []);
             estado.textContent = "Completá los filtros deseados (o dejalos vacíos para ver todos) y presioná Buscar.";
         }
 
@@ -987,6 +1025,23 @@
             document.getElementById("statCambioPh").textContent = cantCambioPh;
             document.getElementById("statSinCambios").textContent = cantSinCambios;
             panel.style.display = "flex";
+        }
+
+        function cumpleFiltrosTexto(reg, clientesFiltro, extintoresFiltro, dpsFiltro) {
+            const clienteReg = valorNormalizadoCampo(reg, "cliente").toLowerCase();
+            const extReg = valorNormalizadoCampo(reg, "extintor_numero").toLowerCase();
+            const dpsReg = valorNormalizadoCampo(reg, "numero_dps").toLowerCase();
+
+            if (clientesFiltro.length > 0 && !clientesFiltro.some(c => clienteReg.includes(c))) {
+                return false;
+            }
+            if (extintoresFiltro.length > 0 && !extintoresFiltro.some(e => extReg.includes(e))) {
+                return false;
+            }
+            if (dpsFiltro.length > 0 && !dpsFiltro.some(d => dpsReg.includes(d))) {
+                return false;
+            }
+            return true;
         }
 
         function aplicarFiltros() {
@@ -1023,24 +1078,8 @@
             const bloquesFiltrados = [];
 
             seriesPorExtintor.forEach(serie => {
-                const reg = serie.registroReferencia;
-                const clienteReg = valorNormalizadoCampo(reg, "cliente").toLowerCase();
-                const extReg = valorNormalizadoCampo(reg, "extintor_numero").toLowerCase();
-                const dpsReg = valorNormalizadoCampo(reg, "numero_dps").toLowerCase();
-
-                if (clientesFiltro.length > 0) {
-                    const coincideCliente = clientesFiltro.some(c => clienteReg.includes(c));
-                    if (!coincideCliente) return;
-                }
-
-                if (extintoresFiltro.length > 0) {
-                    const coincideExt = extintoresFiltro.some(e => extReg.includes(e));
-                    if (!coincideExt) return;
-                }
-
-                if (dpsFiltro.length > 0) {
-                    const coincideDps = dpsFiltro.some(d => dpsReg.includes(d));
-                    if (!coincideDps) return;
+                if (!cumpleFiltrosTexto(serie.registroReferencia, clientesFiltro, extintoresFiltro, dpsFiltro)) {
+                    return;
                 }
 
                 const bloque = obtenerBloqueParaSerie(serie, fechaDesde, fechaHasta, incluirSinCambios);
@@ -1048,6 +1087,30 @@
                     bloquesFiltrados.push(bloque);
                 }
             });
+
+            // Si está tildado "Incluir extintores sin cambios", sumar también los de la tabla extintores sin movimientos en historial
+            if (incluirSinCambios) {
+                extintoresActivosSinHistorial.forEach(ex => {
+                    if (!cumpleFiltrosTexto(ex, clientesFiltro, extintoresFiltro, dpsFiltro)) {
+                        return;
+                    }
+
+                    bloquesFiltrados.push({
+                        esSinCambios: true,
+                        cambioDps: false,
+                        cambioPh: false,
+                        filas: [{
+                            registro: ex,
+                            esInicial: true,
+                            esNuevo: false,
+                            esEliminado: false,
+                            esSinCambios: true,
+                            esReferenciaPrevia: false,
+                            camposCambiados: new Set()
+                        }]
+                    });
+                });
+            }
 
             actualizarEstadisticas(bloquesFiltrados);
             renderizarTabla(bloquesFiltrados);
