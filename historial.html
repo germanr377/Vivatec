@@ -17,7 +17,7 @@
             padding: 15px;
         }
         .container {
-            max-width: 1450px;
+            max-width: 1550px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -207,9 +207,8 @@
         tr:nth-child(even) {
             background-color: #f9fbfd;
         }
-        .fila-anterior {
+        .fila-inicial {
             background-color: #f8f9fa;
-            color: #5a6772;
         }
         .celda-cambio {
             background-color: #d4edda !important;
@@ -299,6 +298,8 @@
                         <th>Año Fab.</th>
                         <th>Vto. Prueba Hidr.</th>
                         <th>Vto. Carga</th>
+                        <th>Puesto</th>
+                        <th>Ubicación</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpoHistorial"></tbody>
@@ -326,7 +327,9 @@
             "capacidad",
             "ano_fab",
             "vto_prueb_hidr",
-            "vto_carga"
+            "vto_carga",
+            "identificacion_puesto",
+            "ubicacion"
         ];
 
         function obtenerValorFechaCruda(reg) {
@@ -561,6 +564,12 @@
             if (campo === "numero_dps") {
                 return textoLimpio(reg.numero_dps || reg.dps);
             }
+            if (campo === "identificacion_puesto") {
+                return textoLimpio(reg.identificacion_puesto ?? reg.puesto);
+            }
+            if (campo === "ubicacion") {
+                return textoLimpio(reg.ubicacion);
+            }
             if (campo === "vto_prueb_hidr" || campo === "vto_carga") {
                 return formatearFechaDDMMAAAA(reg[campo]);
             }
@@ -579,6 +588,10 @@
             return "reg:" + String(reg.id || Math.random());
         }
 
+        // Agrupa por extintor en orden cronológico ascendente:
+        // - Primer movimiento: 1 fila inicial con etiqueta NUEVO
+        // - Movimientos posteriores con cambios respecto al anterior: 1 fila por cambio con las celdas modificadas en verde y negrita
+        //   (sin duplicar filas intermedias si hay múltiples cambios consecutivos)
         function construirBloquesCronologicos(registros) {
             const grupos = new Map();
 
@@ -604,15 +617,16 @@
                     return a.idxOriginal - b.idxOriginal;
                 });
 
+                const filasDelExtintor = [];
+
                 listaItems.forEach((item, pos) => {
                     const regActual = item.reg;
 
                     if (pos === 0) {
-                        bloques.push({
+                        filasDelExtintor.push({
+                            registro: regActual,
+                            esInicial: true,
                             esNuevo: true,
-                            huboCambio: false,
-                            registroAnterior: null,
-                            registroActual: regActual,
                             camposCambiados: new Set(),
                             fechaObj: item.fechaObj,
                             idxOriginal: item.idxOriginal
@@ -629,24 +643,37 @@
                             }
                         });
 
-                        bloques.push({
-                            esNuevo: false,
-                            huboCambio: cambiados.size > 0,
-                            registroAnterior: cambiados.size > 0 ? regAnterior : null,
-                            registroActual: regActual,
-                            camposCambiados: cambiados,
-                            fechaObj: item.fechaObj,
-                            idxOriginal: item.idxOriginal
-                        });
+                        if (cambiados.size > 0) {
+                            filasDelExtintor.push({
+                                registro: regActual,
+                                esInicial: false,
+                                esNuevo: false,
+                                camposCambiados: cambiados,
+                                fechaObj: item.fechaObj,
+                                idxOriginal: item.idxOriginal
+                            });
+                        }
                     }
                 });
+
+                if (filasDelExtintor.length > 0) {
+                    const ultimoItem = filasDelExtintor[filasDelExtintor.length - 1];
+                    const regReferencia = ultimoItem.registro;
+
+                    bloques.push({
+                        filas: filasDelExtintor,
+                        registroFiltro: regReferencia,
+                        fechaUltimaObj: ultimoItem.fechaObj,
+                        idxUltimaOriginal: ultimoItem.idxOriginal
+                    });
+                }
             });
 
             bloques.sort((a, b) => {
-                const ta = a.fechaObj ? a.fechaObj.getTime() : 0;
-                const tb = b.fechaObj ? b.fechaObj.getTime() : 0;
+                const ta = a.fechaUltimaObj ? a.fechaUltimaObj.getTime() : 0;
+                const tb = b.fechaUltimaObj ? b.fechaUltimaObj.getTime() : 0;
                 if (tb !== ta) return tb - ta;
-                return a.idxOriginal - b.idxOriginal;
+                return b.idxUltimaOriginal - a.idxUltimaOriginal;
             });
 
             return bloques;
@@ -728,8 +755,8 @@
             }
 
             const filtrados = bloquesHistorial.filter(bloque => {
-                const reg = bloque.registroActual;
-                const fechaReg = bloque.fechaObj;
+                const reg = bloque.registroFiltro;
+                const fechaReg = bloque.fechaUltimaObj;
                 const clienteReg = valorNormalizadoCampo(reg, "cliente").toLowerCase();
                 const extReg = valorNormalizadoCampo(reg, "extintor_numero").toLowerCase();
                 const dpsReg = valorNormalizadoCampo(reg, "numero_dps").toLowerCase();
@@ -761,12 +788,15 @@
             });
 
             renderizarTabla(filtrados);
-            estado.textContent = `Mostrando ${filtrados.length} de ${bloquesHistorial.length} movimientos.`;
+            const totalFilas = filtrados.reduce((acc, b) => acc + b.filas.length, 0);
+            estado.textContent = `Mostrando ${totalFilas} filas en ${filtrados.length} equipos.`;
         }
 
-        function armarCeldasFila(reg, esNuevo, camposResaltados = new Set(), esFilaAnterior = false) {
+        function armarCeldasFila(filaInfo) {
+            const reg = filaInfo.registro;
+            const camposResaltados = filaInfo.camposCambiados || new Set();
             const fechaTexto = formatearFechaHoraDDMMAAAA(obtenerValorFechaCruda(reg));
-            const badgeNuevo = (!esFilaAnterior && esNuevo)
+            const badgeNuevo = filaInfo.esNuevo
                 ? `<span class="badge-nuevo">NUEVO</span>`
                 : "";
 
@@ -782,11 +812,13 @@
                 { key: "capacidad", html: valorNormalizadoCampo(reg, "capacidad"), resaltable: true },
                 { key: "ano_fab", html: valorNormalizadoCampo(reg, "ano_fab"), resaltable: true },
                 { key: "vto_prueb_hidr", html: valorNormalizadoCampo(reg, "vto_prueb_hidr"), resaltable: true },
-                { key: "vto_carga", html: valorNormalizadoCampo(reg, "vto_carga"), resaltable: true }
+                { key: "vto_carga", html: valorNormalizadoCampo(reg, "vto_carga"), resaltable: true },
+                { key: "identificacion_puesto", html: valorNormalizadoCampo(reg, "identificacion_puesto"), resaltable: true },
+                { key: "ubicacion", html: valorNormalizadoCampo(reg, "ubicacion"), resaltable: true }
             ];
 
             return columnas.map(col => {
-                const debePintar = !esFilaAnterior && col.resaltable && camposResaltados.has(col.key);
+                const debePintar = col.resaltable && camposResaltados.has(col.key);
                 const clase = debePintar ? ` class="celda-cambio"` : "";
                 return `<td${clase}>${col.html}</td>`;
             }).join("");
@@ -797,31 +829,19 @@
             tbody.innerHTML = "";
 
             if (bloques.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12">No hay movimientos que coincidan con los filtros.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="14">No hay movimientos que coincidan con los filtros.</td></tr>`;
                 return;
             }
 
             bloques.forEach(bloque => {
-                if (bloque.huboCambio && bloque.registroAnterior) {
-                    const trAnterior = document.createElement("tr");
-                    trAnterior.className = "fila-anterior";
-                    trAnterior.innerHTML = armarCeldasFila(
-                        bloque.registroAnterior,
-                        false,
-                        new Set(),
-                        true
-                    );
-                    tbody.appendChild(trAnterior);
-                }
-
-                const trActual = document.createElement("tr");
-                trActual.innerHTML = armarCeldasFila(
-                    bloque.registroActual,
-                    bloque.esNuevo,
-                    bloque.camposCambiados,
-                    false
-                );
-                tbody.appendChild(trActual);
+                bloque.filas.forEach(filaInfo => {
+                    const tr = document.createElement("tr");
+                    if (filaInfo.esInicial) {
+                        tr.className = "fila-inicial";
+                    }
+                    tr.innerHTML = armarCeldasFila(filaInfo);
+                    tbody.appendChild(tr);
+                });
             });
         }
 
