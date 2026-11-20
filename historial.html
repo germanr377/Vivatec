@@ -17,7 +17,7 @@
             padding: 15px;
         }
         .container {
-            max-width: 1400px;
+            max-width: 1450px;
             margin: 0 auto;
             background: #fff;
             padding: 20px;
@@ -207,6 +207,27 @@
         tr:nth-child(even) {
             background-color: #f9fbfd;
         }
+        .fila-anterior {
+            background-color: #f8f9fa;
+            color: #5a6772;
+        }
+        .celda-cambio {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            font-weight: bold;
+        }
+        .badge-nuevo {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: #d4edda;
+            color: #155724;
+            font-weight: bold;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -291,8 +312,22 @@
         const SUPABASE_ANON_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let todosLosRegistros = [];
+        let bloquesHistorial = [];
         let listaClientesUnicos = [];
+
+        const CAMPOS_COMPARABLES = [
+            "cliente",
+            "extintor_numero",
+            "numero_dps",
+            "oblea",
+            "marca",
+            "tipo",
+            "agente_extintor",
+            "capacidad",
+            "ano_fab",
+            "vto_prueb_hidr",
+            "vto_carga"
+        ];
 
         function obtenerValorFechaCruda(reg) {
             return reg.fecha_revision || reg.fecha || reg.fecha_movimiento || reg.fecha_registro || null;
@@ -305,7 +340,6 @@
             }
             const str = String(valorFecha).trim();
 
-            // Fecha pura YYYY-MM-DD
             const matchISO = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
             if (matchISO) {
                 const a = parseInt(matchISO[1], 10);
@@ -315,7 +349,6 @@
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            // Fecha DD/MM/YYYY
             const matchDDMM = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str);
             if (matchDDMM) {
                 const d = parseInt(matchDDMM[1], 10);
@@ -325,13 +358,11 @@
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            // Normaliza formato timestamptz de Postgres ("2026-11-19 22:15:00+00" -> ISO válido)
             const isoNormalizado = str.replace(" ", "T");
             const dt = new Date(isoNormalizado);
             return isNaN(dt.getTime()) ? null : dt;
         }
 
-        // Solo fecha (para vencimientos)
         function formatearFechaDDMMAAAA(valorFecha) {
             if (valorFecha === null || valorFecha === undefined || String(valorFecha).trim() === "") {
                 return "-";
@@ -345,7 +376,6 @@
             return `${dia}/${mes}/${anio}`;
         }
 
-        // Fecha y hora sin segundos: dd/mm/aaaa hh:mm
         function formatearFechaHoraDDMMAAAA(valorFecha) {
             if (valorFecha === null || valorFecha === undefined || String(valorFecha).trim() === "") {
                 return "-";
@@ -514,6 +544,119 @@
             return valores;
         }
 
+        function textoLimpio(valor) {
+            if (valor === null || valor === undefined || String(valor).trim() === "") {
+                return "-";
+            }
+            return String(valor).trim();
+        }
+
+        function valorNormalizadoCampo(reg, campo) {
+            if (campo === "cliente") {
+                return textoLimpio(reg.cliente || reg.nombre_cliente || reg.razon_social);
+            }
+            if (campo === "extintor_numero") {
+                return textoLimpio(reg.extintor_numero || reg.numero_extintor || reg.nro_extintor || reg.extintor);
+            }
+            if (campo === "numero_dps") {
+                return textoLimpio(reg.numero_dps || reg.dps);
+            }
+            if (campo === "vto_prueb_hidr" || campo === "vto_carga") {
+                return formatearFechaDDMMAAAA(reg[campo]);
+            }
+            return textoLimpio(reg[campo]);
+        }
+
+        function claveAgrupacionExtintor(reg) {
+            if (reg.extintor_id !== undefined && reg.extintor_id !== null && String(reg.extintor_id).trim() !== "") {
+                return "id:" + String(reg.extintor_id).trim();
+            }
+            const ext = valorNormalizadoCampo(reg, "extintor_numero");
+            const cli = valorNormalizadoCampo(reg, "cliente").toLowerCase();
+            if (ext !== "-") {
+                return "ext:" + cli + "|" + ext.toLowerCase();
+            }
+            return "reg:" + String(reg.id || Math.random());
+        }
+
+        // Construye bloques cronológicos por extintor:
+        // - Primer registro: esNuevo = true (una fila)
+        // - Registros posteriores con cambios respecto al anterior: registroAnterior + registroActual con camposCambiados
+        function construirBloquesCronologicos(registros) {
+            const grupos = new Map();
+
+            registros.forEach((reg, idx) => {
+                const clave = claveAgrupacionExtintor(reg);
+                if (!grupos.has(clave)) {
+                    grupos.set(clave, []);
+                }
+                grupos.get(clave).push({
+                    reg,
+                    idxOriginal: idx,
+                    fechaObj: convertirFechaAObjeto(obtenerValorFechaCruda(reg))
+                });
+            });
+
+            const bloques = [];
+
+            grupos.forEach(listaItems => {
+                // Orden cronológico ascendente (de más viejo a más nuevo)
+                listaItems.sort((a, b) => {
+                    const ta = a.fechaObj ? a.fechaObj.getTime() : 0;
+                    const tb = b.fechaObj ? b.fechaObj.getTime() : 0;
+                    if (ta !== tb) return ta - tb;
+                    return a.idxOriginal - b.idxOriginal;
+                });
+
+                listaItems.forEach((item, pos) => {
+                    const regActual = item.reg;
+
+                    if (pos === 0) {
+                        bloques.push({
+                            esNuevo: true,
+                            huboCambio: false,
+                            registroAnterior: null,
+                            registroActual: regActual,
+                            camposCambiados: new Set(),
+                            fechaObj: item.fechaObj,
+                            idxOriginal: item.idxOriginal
+                        });
+                    } else {
+                        const regAnterior = listaItems[pos - 1].reg;
+                        const cambiados = new Set();
+
+                        CAMPOS_COMPARABLES.forEach(campo => {
+                            const valAnt = valorNormalizadoCampo(regAnterior, campo);
+                            const valAct = valorNormalizadoCampo(regActual, campo);
+                            if (valAnt !== valAct) {
+                                cambiados.add(campo);
+                            }
+                        });
+
+                        bloques.push({
+                            esNuevo: false,
+                            huboCambio: cambiados.size > 0,
+                            registroAnterior: cambiados.size > 0 ? regAnterior : null,
+                            registroActual: regActual,
+                            camposCambiados: cambiados,
+                            fechaObj: item.fechaObj,
+                            idxOriginal: item.idxOriginal
+                        });
+                    }
+                });
+            });
+
+            // Ordenar los bloques en la vista de más reciente a más antigua
+            bloques.sort((a, b) => {
+                const ta = a.fechaObj ? a.fechaObj.getTime() : 0;
+                const tb = b.fechaObj ? b.fechaObj.getTime() : 0;
+                if (tb !== ta) return tb - ta;
+                return a.idxOriginal - b.idxOriginal;
+            });
+
+            return bloques;
+        }
+
         async function cargarClientesDesdeTabla() {
             const { data, error } = await _supabase
                 .from("clientes")
@@ -556,19 +699,7 @@
                 return;
             }
 
-            const registros = data || [];
-
-            registros.sort((a, b) => {
-                const fa = convertirFechaAObjeto(obtenerValorFechaCruda(a));
-                const fb = convertirFechaAObjeto(obtenerValorFechaCruda(b));
-                const ta = fa ? fa.getTime() : 0;
-                const tb = fb ? fb.getTime() : 0;
-                if (tb !== ta) return tb - ta;
-                return String(b.id || "").localeCompare(String(a.id || ""));
-            });
-
-            todosLosRegistros = registros;
-            // No renderizamos movimientos al entrar: la tabla queda vacía hasta presionar Buscar
+            bloquesHistorial = construirBloquesCronologicos(data || []);
             estado.textContent = "Completá los filtros deseados (o dejalos vacíos para ver todos) y presioná Buscar.";
         }
 
@@ -601,11 +732,12 @@
                 return;
             }
 
-            const filtrados = todosLosRegistros.filter(reg => {
-                const fechaReg = convertirFechaAObjeto(obtenerValorFechaCruda(reg));
-                const clienteReg = String(reg.cliente || reg.nombre_cliente || reg.razon_social || "").toLowerCase();
-                const extReg = String(reg.extintor_numero || reg.numero_extintor || reg.nro_extintor || reg.extintor || "").toLowerCase();
-                const dpsReg = String(reg.numero_dps || reg.dps || "").toLowerCase();
+            const filtrados = bloquesHistorial.filter(bloque => {
+                const reg = bloque.registroActual;
+                const fechaReg = bloque.fechaObj;
+                const clienteReg = valorNormalizadoCampo(reg, "cliente").toLowerCase();
+                const extReg = valorNormalizadoCampo(reg, "extintor_numero").toLowerCase();
+                const dpsReg = valorNormalizadoCampo(reg, "numero_dps").toLowerCase();
 
                 if (clientesFiltro.length > 0) {
                     const coincideCliente = clientesFiltro.some(c => clienteReg.includes(c));
@@ -634,55 +766,68 @@
             });
 
             renderizarTabla(filtrados);
-            estado.textContent = `Mostrando ${filtrados.length} de ${todosLosRegistros.length} movimientos.`;
+            estado.textContent = `Mostrando ${filtrados.length} de ${bloquesHistorial.length} movimientos.`;
         }
 
-        function textoLimpio(valor) {
-            if (valor === null || valor === undefined || String(valor).trim() === "") {
-                return "-";
-            }
-            return String(valor);
+        function armarCeldasFila(reg, esNuevo, camposResaltados = new Set(), esFilaAnterior = false) {
+            const fechaTexto = formatearFechaHoraDDMMAAAA(obtenerValorFechaCruda(reg));
+            const badgeNuevo = (!esFilaAnterior && esNuevo)
+                ? `<span class="badge-nuevo">NUEVO</span>`
+                : "";
+
+            const columnas = [
+                { key: "fecha", html: `${fechaTexto}${badgeNuevo}`, resaltable: false },
+                { key: "cliente", html: valorNormalizadoCampo(reg, "cliente"), resaltable: true },
+                { key: "extintor_numero", html: valorNormalizadoCampo(reg, "extintor_numero"), resaltable: true },
+                { key: "numero_dps", html: valorNormalizadoCampo(reg, "numero_dps"), resaltable: true },
+                { key: "oblea", html: valorNormalizadoCampo(reg, "oblea"), resaltable: true },
+                { key: "marca", html: valorNormalizadoCampo(reg, "marca"), resaltable: true },
+                { key: "tipo", html: valorNormalizadoCampo(reg, "tipo"), resaltable: true },
+                { key: "agente_extintor", html: valorNormalizadoCampo(reg, "agente_extintor"), resaltable: true },
+                { key: "capacidad", html: valorNormalizadoCampo(reg, "capacidad"), resaltable: true },
+                { key: "ano_fab", html: valorNormalizadoCampo(reg, "ano_fab"), resaltable: true },
+                { key: "vto_prueb_hidr", html: valorNormalizadoCampo(reg, "vto_prueb_hidr"), resaltable: true },
+                { key: "vto_carga", html: valorNormalizadoCampo(reg, "vto_carga"), resaltable: true }
+            ];
+
+            return columnas.map(col => {
+                const debePintar = !esFilaAnterior && col.resaltable && camposResaltados.has(col.key);
+                const clase = debePintar ? ` class="celda-cambio"` : "";
+                return `<td${clase}>${col.html}</td>`;
+            }).join("");
         }
 
-        function renderizarTabla(registros) {
+        function renderizarTabla(bloques) {
             const tbody = document.getElementById("cuerpoHistorial");
             tbody.innerHTML = "";
 
-            if (registros.length === 0) {
+            if (bloques.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="12">No hay movimientos que coincidan con los filtros.</td></tr>`;
                 return;
             }
 
-            registros.forEach(reg => {
-                const fechaHoraFormateada = formatearFechaHoraDDMMAAAA(obtenerValorFechaCruda(reg));
-                const cliente = textoLimpio(reg.cliente || reg.nombre_cliente || reg.razon_social);
-                const extintor = textoLimpio(reg.extintor_numero || reg.numero_extintor || reg.nro_extintor || reg.extintor);
-                const dps = textoLimpio(reg.numero_dps || reg.dps);
-                const oblea = textoLimpio(reg.oblea);
-                const marca = textoLimpio(reg.marca);
-                const tipo = textoLimpio(reg.tipo);
-                const agente = textoLimpio(reg.agente_extintor);
-                const capacidad = textoLimpio(reg.capacidad);
-                const anoFab = textoLimpio(reg.ano_fab);
-                const vtoPh = formatearFechaDDMMAAAA(reg.vto_prueb_hidr);
-                const vtoCarga = formatearFechaDDMMAAAA(reg.vto_carga);
+            bloques.forEach(bloque => {
+                // Si hubo cambios, primero fila anterior (referencia) y debajo fila actual con cambios en verde y negrita
+                if (bloque.huboCambio && bloque.registroAnterior) {
+                    const trAnterior = document.createElement("tr");
+                    trAnterior.className = "fila-anterior";
+                    trAnterior.innerHTML = armarCeldasFila(
+                        bloque.registroAnterior,
+                        false,
+                        new Set(),
+                        true
+                    );
+                    tbody.appendChild(trAnterior);
+                }
 
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${fechaHoraFormateada}</td>
-                    <td>${cliente}</td>
-                    <td>${extintor}</td>
-                    <td>${dps}</td>
-                    <td>${oblea}</td>
-                    <td>${marca}</td>
-                    <td>${tipo}</td>
-                    <td>${agente}</td>
-                    <td>${capacidad}</td>
-                    <td>${anoFab}</td>
-                    <td>${vtoPh}</td>
-                    <td>${vtoCarga}</td>
-                `;
-                tbody.appendChild(tr);
+                const trActual = document.createElement("tr");
+                trActual.innerHTML = armarCeldasFila(
+                    bloque.registroActual,
+                    bloque.esNuevo,
+                    bloque.camposCambiados,
+                    false
+                );
+                tbody.appendChild(trActual);
             });
         }
 
@@ -705,7 +850,6 @@
 
             document.getElementById("btnFiltrar").addEventListener("click", aplicarFiltros);
 
-            // Permitir buscar apretando Enter en fechas, extintor o DPS
             ["fechaDesde", "fechaHasta", "extintorPrincipal", "dpsPrincipal"].forEach(id => {
                 document.getElementById(id).addEventListener("keydown", function(e) {
                     if (e.key === "Enter") {
