@@ -160,9 +160,10 @@
         }
         .acciones-filtro {
             display: flex;
-            gap: 10px;
-            margin-bottom: 16px;
+            gap: 12px;
+            margin-bottom: 14px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .btn {
             height: 35px;
@@ -180,6 +181,51 @@
         .btn-limpiar {
             background-color: #95a5a6;
             color: #fff;
+        }
+        .opcion-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 35px;
+            padding: 0 12px;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            color: #34495e;
+            user-select: none;
+        }
+        .opcion-check input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            cursor: pointer;
+        }
+        .estadisticas-bar {
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .stat-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 5px;
+            border: 1px solid #d5dce4;
+            background-color: #f8fafc;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+        .stat-card strong {
+            font-size: 14px;
+            color: #1f4e78;
+        }
+        .stat-card.stat-gris strong {
+            color: #495057;
         }
         .estado-info {
             font-size: 13px;
@@ -210,6 +256,10 @@
         .fila-inicial {
             background-color: #f8f9fa;
         }
+        .fila-sin-cambios td {
+            background-color: #e9ecef !important;
+            color: #495057 !important;
+        }
         .fila-eliminada td {
             background-color: #f8d7da !important;
             color: #721c24 !important;
@@ -226,6 +276,18 @@
             border-radius: 3px;
             background-color: #d4edda;
             color: #155724;
+            font-weight: bold;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+        }
+        .badge-sin-cambios {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: #ced4da;
+            color: #343a40;
             font-weight: bold;
             font-size: 10px;
             letter-spacing: 0.3px;
@@ -294,6 +356,25 @@
         <div class="acciones-filtro">
             <button type="button" id="btnFiltrar" class="btn btn-buscar">Buscar</button>
             <button type="button" id="btnLimpiar" class="btn btn-limpiar">Limpiar filtros</button>
+            <label class="opcion-check" for="chkIncluirSinCambios">
+                <input type="checkbox" id="chkIncluirSinCambios">
+                Incluir extintores sin cambios
+            </label>
+        </div>
+
+        <div id="panelEstadisticas" class="estadisticas-bar">
+            <div class="stat-card">
+                <span>Extintores con cambios DPS:</span>
+                <strong id="statCambioDps">0</strong>
+            </div>
+            <div class="stat-card">
+                <span>Extintores cambio fecha PH:</span>
+                <strong id="statCambioPh">0</strong>
+            </div>
+            <div class="stat-card stat-gris">
+                <span>Extintores sin cambios:</span>
+                <strong id="statSinCambios">0</strong>
+            </div>
         </div>
 
         <div id="estadoConsulta" class="estado-info">Preparando consulta...</div>
@@ -331,6 +412,7 @@
 
         let seriesPorExtintor = [];
         let listaClientesUnicos = [];
+        let huboBusquedaActiva = false;
 
         const CAMPOS_COMPARABLES = [
             "cliente",
@@ -680,8 +762,11 @@
 
                 if (eventos.length > 0) {
                     const ultimoEv = eventos[eventos.length - 1];
+                    const tuvoCambiosOEliminacion = eventos.some(ev => ev.esCambio || ev.esEliminado);
+
                     series.push({
                         eventos,
+                        tuvoCambiosOEliminacion,
                         registroReferencia: ultimoEv.registro,
                         fechaUltimaObj: ultimoEv.fechaObj,
                         idxUltimaOriginal: ultimoEv.idxOriginal
@@ -708,20 +793,54 @@
             return true;
         }
 
-        function obtenerFilasParaSerie(serie, fechaDesde, fechaHasta) {
+        function obtenerBloqueParaSerie(serie, fechaDesde, fechaHasta, incluirSinCambios) {
             const tieneRangoFecha = Boolean(fechaDesde || fechaHasta);
 
             if (!tieneRangoFecha) {
-                return serie.eventos.map(ev => ({
-                    registro: ev.registro,
-                    esInicial: ev.esInicial,
-                    esNuevo: ev.esNuevo,
-                    esEliminado: ev.esEliminado,
-                    esReferenciaPrevia: false,
-                    camposCambiados: ev.camposCambiados
-                }));
+                if (!serie.tuvoCambiosOEliminacion) {
+                    if (!incluirSinCambios) return null;
+
+                    const evUnico = serie.eventos[0];
+                    return {
+                        esSinCambios: true,
+                        cambioDps: false,
+                        cambioPh: false,
+                        filas: [{
+                            registro: evUnico.registro,
+                            esInicial: true,
+                            esNuevo: evUnico.esNuevo,
+                            esEliminado: false,
+                            esSinCambios: true,
+                            esReferenciaPrevia: false,
+                            camposCambiados: new Set()
+                        }]
+                    };
+                }
+
+                let cambioDps = false;
+                let cambioPh = false;
+                serie.eventos.forEach(ev => {
+                    if (ev.esCambio && ev.camposCambiados.has("numero_dps")) cambioDps = true;
+                    if (ev.esCambio && ev.camposCambiados.has("vto_prueb_hidr")) cambioPh = true;
+                });
+
+                return {
+                    esSinCambios: false,
+                    cambioDps,
+                    cambioPh,
+                    filas: serie.eventos.map(ev => ({
+                        registro: ev.registro,
+                        esInicial: ev.esInicial,
+                        esNuevo: ev.esNuevo,
+                        esEliminado: ev.esEliminado,
+                        esSinCambios: false,
+                        esReferenciaPrevia: false,
+                        camposCambiados: ev.camposCambiados
+                    }))
+                };
             }
 
+            // Con filtro de rango de fechas
             const indicesEnRango = [];
             serie.eventos.forEach((ev, idx) => {
                 if (dentroDeRangoFecha(ev.fechaObj, fechaDesde, fechaHasta)) {
@@ -729,14 +848,39 @@
                 }
             });
 
-            if (indicesEnRango.length === 0) return [];
-
             const indicesRelevantes = indicesEnRango.filter(idx => {
                 const ev = serie.eventos[idx];
                 return ev.esCambio || ev.esEliminado;
             });
 
-            if (indicesRelevantes.length === 0) return [];
+            if (indicesRelevantes.length === 0) {
+                if (!incluirSinCambios) return null;
+
+                // Mostrar el último estado vigente hasta el fin del rango (o el inicial si no hubo cambios)
+                let ultimoEvHastaRango = null;
+                serie.eventos.forEach(ev => {
+                    if (!fechaHasta || (ev.fechaObj && ev.fechaObj.getTime() <= fechaHasta.getTime())) {
+                        ultimoEvHastaRango = ev;
+                    }
+                });
+
+                if (!ultimoEvHastaRango || ultimoEvHastaRango.esEliminado) return null;
+
+                return {
+                    esSinCambios: true,
+                    cambioDps: false,
+                    cambioPh: false,
+                    filas: [{
+                        registro: ultimoEvHastaRango.registro,
+                        esInicial: true,
+                        esNuevo: false,
+                        esEliminado: false,
+                        esSinCambios: true,
+                        esReferenciaPrevia: false,
+                        camposCambiados: new Set()
+                    }]
+                };
+            }
 
             const primerIdxRelevante = indicesRelevantes[0];
             const filasResultantes = [];
@@ -748,24 +892,37 @@
                     esInicial: false,
                     esNuevo: false,
                     esEliminado: false,
+                    esSinCambios: false,
                     esReferenciaPrevia: true,
                     camposCambiados: new Set()
                 });
             }
 
+            let cambioDps = false;
+            let cambioPh = false;
+
             indicesRelevantes.forEach(idx => {
                 const ev = serie.eventos[idx];
+                if (ev.esCambio && ev.camposCambiados.has("numero_dps")) cambioDps = true;
+                if (ev.esCambio && ev.camposCambiados.has("vto_prueb_hidr")) cambioPh = true;
+
                 filasResultantes.push({
                     registro: ev.registro,
                     esInicial: false,
                     esNuevo: false,
                     esEliminado: ev.esEliminado,
+                    esSinCambios: false,
                     esReferenciaPrevia: false,
                     camposCambiados: ev.camposCambiados
                 });
             });
 
-            return filasResultantes;
+            return {
+                esSinCambios: false,
+                cambioDps,
+                cambioPh,
+                filas: filasResultantes
+            };
         }
 
         async function cargarClientesDesdeTabla() {
@@ -814,12 +971,31 @@
             estado.textContent = "Completá los filtros deseados (o dejalos vacíos para ver todos) y presioná Buscar.";
         }
 
+        function actualizarEstadisticas(bloques) {
+            const panel = document.getElementById("panelEstadisticas");
+            let cantCambioDps = 0;
+            let cantCambioPh = 0;
+            let cantSinCambios = 0;
+
+            bloques.forEach(b => {
+                if (b.cambioDps) cantCambioDps++;
+                if (b.cambioPh) cantCambioPh++;
+                if (b.esSinCambios) cantSinCambios++;
+            });
+
+            document.getElementById("statCambioDps").textContent = cantCambioDps;
+            document.getElementById("statCambioPh").textContent = cantCambioPh;
+            document.getElementById("statSinCambios").textContent = cantSinCambios;
+            panel.style.display = "flex";
+        }
+
         function aplicarFiltros() {
             const clientesFiltro = obtenerValoresMultiples(".input-cliente");
             const desdeTexto = document.getElementById("fechaDesde").value.trim();
             const hastaTexto = document.getElementById("fechaHasta").value.trim();
             const extintoresFiltro = obtenerValoresMultiples(".input-extintor");
             const dpsFiltro = obtenerValoresMultiples(".input-dps");
+            const incluirSinCambios = document.getElementById("chkIncluirSinCambios").checked;
             const estado = document.getElementById("estadoConsulta");
 
             if (desdeTexto !== "" && desdeTexto.length < 10) {
@@ -843,6 +1019,7 @@
                 return;
             }
 
+            huboBusquedaActiva = true;
             const bloquesFiltrados = [];
 
             seriesPorExtintor.forEach(serie => {
@@ -866,12 +1043,13 @@
                     if (!coincideDps) return;
                 }
 
-                const filas = obtenerFilasParaSerie(serie, fechaDesde, fechaHasta);
-                if (filas.length > 0) {
-                    bloquesFiltrados.push({ filas });
+                const bloque = obtenerBloqueParaSerie(serie, fechaDesde, fechaHasta, incluirSinCambios);
+                if (bloque && bloque.filas.length > 0) {
+                    bloquesFiltrados.push(bloque);
                 }
             });
 
+            actualizarEstadisticas(bloquesFiltrados);
             renderizarTabla(bloquesFiltrados);
             const totalFilas = bloquesFiltrados.reduce((acc, b) => acc + b.filas.length, 0);
             estado.textContent = `Mostrando ${totalFilas} filas en ${bloquesFiltrados.length} equipos.`;
@@ -885,6 +1063,8 @@
             let badge = "";
             if (filaInfo.esEliminado) {
                 badge = `<span class="badge-eliminado">ELIMINADO</span>`;
+            } else if (filaInfo.esSinCambios) {
+                badge = `<span class="badge-sin-cambios">SIN CAMBIOS</span>`;
             } else if (filaInfo.esNuevo) {
                 badge = `<span class="badge-nuevo">NUEVO</span>`;
             }
@@ -907,7 +1087,7 @@
             ];
 
             return columnas.map(col => {
-                const debePintar = !filaInfo.esEliminado && col.resaltable && camposResaltados.has(col.key);
+                const debePintar = !filaInfo.esEliminado && !filaInfo.esSinCambios && col.resaltable && camposResaltados.has(col.key);
                 const clase = debePintar ? ` class="celda-cambio"` : "";
                 return `<td${clase}>${col.html}</td>`;
             }).join("");
@@ -927,6 +1107,8 @@
                     const tr = document.createElement("tr");
                     if (filaInfo.esEliminado) {
                         tr.className = "fila-eliminada";
+                    } else if (filaInfo.esSinCambios) {
+                        tr.className = "fila-sin-cambios";
                     } else if (filaInfo.esInicial || filaInfo.esReferenciaPrevia) {
                         tr.className = "fila-inicial";
                     }
@@ -955,6 +1137,12 @@
 
             document.getElementById("btnFiltrar").addEventListener("click", aplicarFiltros);
 
+            document.getElementById("chkIncluirSinCambios").addEventListener("change", function() {
+                if (huboBusquedaActiva) {
+                    aplicarFiltros();
+                }
+            });
+
             ["fechaDesde", "fechaHasta", "extintorPrincipal", "dpsPrincipal"].forEach(id => {
                 document.getElementById(id).addEventListener("keydown", function(e) {
                     if (e.key === "Enter") {
@@ -965,15 +1153,18 @@
             });
 
             document.getElementById("btnLimpiar").addEventListener("click", function() {
+                huboBusquedaActiva = false;
                 document.getElementById("clientePrincipal").value = "";
                 document.getElementById("fechaDesde").value = "";
                 document.getElementById("fechaHasta").value = "";
                 document.getElementById("extintorPrincipal").value = "";
                 document.getElementById("dpsPrincipal").value = "";
+                document.getElementById("chkIncluirSinCambios").checked = false;
                 document.getElementById("clientesExtras").innerHTML = "";
                 document.getElementById("extintoresExtras").innerHTML = "";
                 document.getElementById("dpsExtras").innerHTML = "";
                 document.getElementById("cuerpoHistorial").innerHTML = "";
+                document.getElementById("panelEstadisticas").style.display = "none";
                 document.getElementById("estadoConsulta").textContent = "Filtros limpios. Presioná Buscar para consultar.";
             });
 
