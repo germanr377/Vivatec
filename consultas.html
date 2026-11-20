@@ -154,6 +154,22 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const CAMPOS_HISTORIAL = [
+        "cliente",
+        "extintor_numero",
+        "numero_dps",
+        "oblea",
+        "marca",
+        "tipo",
+        "agente_extintor",
+        "capacidad",
+        "ano_fab",
+        "vto_prueb_hidr",
+        "vto_carga",
+        "identificacion_puesto",
+        "ubicacion"
+    ];
+
     let resultadosGlobales = [];
     let ordenActual = { columna: 'vto_carga', ascendente: true };
 
@@ -197,6 +213,33 @@
             }
         }
         return null;
+    }
+
+    async function registrarEliminacionEnHistorial(registroExtintor) {
+        const payloadHistorial = {
+            extintor_id: registroExtintor.id,
+            fecha_revision: new Date().toISOString(),
+            accion: "ELIMINADO"
+        };
+
+        CAMPOS_HISTORIAL.forEach(campo => {
+            payloadHistorial[campo] = registroExtintor[campo] ?? null;
+        });
+
+        let { error } = await _supabase
+            .from('historial_revisiones')
+            .insert([payloadHistorial]);
+
+        // Si la tabla historial_revisiones no tiene columna "accion", reintenta sin ese campo
+        if (error && /accion/i.test(error.message || "")) {
+            delete payloadHistorial.accion;
+            const retry = await _supabase
+                .from('historial_revisiones')
+                .insert([payloadHistorial]);
+            error = retry.error;
+        }
+
+        return { error };
     }
 
     window.addEventListener("load", async function() {
@@ -345,7 +388,7 @@
     }
 
     function toggleSeleccionarTodos(source) {
-        checkboxes = document.querySelectorAll('.check-registro');
+        const checkboxes = document.querySelectorAll('.check-registro');
         checkboxes.forEach(cb => cb.checked = source.checked);
         actualizarContadorSeleccionados();
     }
@@ -368,12 +411,23 @@
         let seleccionados = document.querySelectorAll('.check-registro:checked');
         if (seleccionados.length === 0) return;
 
-        let idsAEliminar = Array.from(seleccionados).map(cb => cb.value);
+        let idsAEliminar = Array.from(seleccionados).map(cb => String(cb.value));
 
         let confirmar = confirm(`⚠️ ¿Estás 100% seguro de que querés ELIMINAR los ${idsAEliminar.length} registros seleccionados de la base de datos?\n\nEsta acción no se puede deshacer.`);
         if (!confirmar) return;
 
         try {
+            const registrosAEliminar = resultadosGlobales.filter(r => idsAEliminar.includes(String(r.id)));
+            let fallosHistorial = 0;
+
+            for (const reg of registrosAEliminar) {
+                const resHist = await registrarEliminacionEnHistorial(reg);
+                if (resHist.error) {
+                    console.error("Error al registrar eliminación en historial_revisiones:", resHist.error);
+                    fallosHistorial++;
+                }
+            }
+
             const { error } = await _supabase
                 .from('extintores')
                 .delete()
@@ -381,7 +435,11 @@
 
             if (error) throw error;
 
-            alert("🗑️ Los registros seleccionados fueron eliminados correctamente.");
+            if (fallosHistorial > 0) {
+                alert(`🗑️ Los registros seleccionados fueron eliminados, aunque hubo ${fallosHistorial} aviso(s) al registrar en el historial.`);
+            } else {
+                alert("🗑️ Los registros seleccionados fueron eliminados y registrados en el historial correctamente.");
+            }
             realizarConsulta();
 
         } catch (err) {
