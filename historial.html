@@ -327,6 +327,7 @@
             return isNaN(dt.getTime()) ? null : dt;
         }
 
+        // Solo fecha (para vencimientos)
         function formatearFechaDDMMAAAA(valorFecha) {
             if (valorFecha === null || valorFecha === undefined || String(valorFecha).trim() === "") {
                 return "-";
@@ -338,6 +339,22 @@
             const mes = String(fecha.getMonth() + 1).padStart(2, "0");
             const anio = fecha.getFullYear();
             return `${dia}/${mes}/${anio}`;
+        }
+
+        // Fecha y hora sin segundos: dd/mm/aaaa hh:mm
+        function formatearFechaHoraDDMMAAAA(valorFecha) {
+            if (valorFecha === null || valorFecha === undefined || String(valorFecha).trim() === "") {
+                return "-";
+            }
+            const fecha = convertirFechaAObjeto(valorFecha);
+            if (!fecha) return String(valorFecha);
+
+            const dia = String(fecha.getDate()).padStart(2, "0");
+            const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+            const anio = fecha.getFullYear();
+            const horas = String(fecha.getHours()).padStart(2, "0");
+            const minutos = String(fecha.getMinutes()).padStart(2, "0");
+            return `${dia}/${mes}/${anio} ${horas}:${minutos}`;
         }
 
         function aplicarMascaraFecha(input) {
@@ -618,7 +635,7 @@
             }
 
             registros.forEach(reg => {
-                const fechaFormateada = formatearFechaDDMMAAAA(obtenerValorFechaCruda(reg));
+                const fechaHoraFormateada = formatearFechaHoraDDMMAAAA(obtenerValorFechaCruda(reg));
                 const cliente = textoLimpio(reg.cliente || reg.nombre_cliente || reg.razon_social);
                 const extintor = textoLimpio(reg.extintor_numero || reg.numero_extintor || reg.nro_extintor || reg.extintor);
                 const dps = textoLimpio(reg.numero_dps || reg.dps);
@@ -633,7 +650,7 @@
 
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td>${fechaFormateada}</td>
+                    <td>${fechaHoraFormateada}</td>
                     <td>${cliente}</td>
                     <td>${extintor}</td>
                     <td>${dps}</td>
