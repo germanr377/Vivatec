@@ -579,9 +579,6 @@
             return "reg:" + String(reg.id || Math.random());
         }
 
-        // Construye bloques cronológicos por extintor:
-        // - Primer registro: esNuevo = true (una fila)
-        // - Registros posteriores con cambios respecto al anterior: registroAnterior + registroActual con camposCambiados
         function construirBloquesCronologicos(registros) {
             const grupos = new Map();
 
@@ -600,7 +597,6 @@
             const bloques = [];
 
             grupos.forEach(listaItems => {
-                // Orden cronológico ascendente (de más viejo a más nuevo)
                 listaItems.sort((a, b) => {
                     const ta = a.fechaObj ? a.fechaObj.getTime() : 0;
                     const tb = b.fechaObj ? b.fechaObj.getTime() : 0;
@@ -646,7 +642,6 @@
                 });
             });
 
-            // Ordenar los bloques en la vista de más reciente a más antigua
             bloques.sort((a, b) => {
                 const ta = a.fechaObj ? a.fechaObj.getTime() : 0;
                 const tb = b.fechaObj ? b.fechaObj.getTime() : 0;
@@ -807,7 +802,6 @@
             }
 
             bloques.forEach(bloque => {
-                // Si hubo cambios, primero fila anterior (referencia) y debajo fila actual con cambios en verde y negrita
                 if (bloque.huboCambio && bloque.registroAnterior) {
                     const trAnterior = document.createElement("tr");
                     trAnterior.className = "fila-anterior";
