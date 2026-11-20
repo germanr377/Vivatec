@@ -260,7 +260,7 @@
             <button type="button" id="btnLimpiar" class="btn btn-limpiar">Limpiar filtros</button>
         </div>
 
-        <div id="estadoConsulta" class="estado-info">Cargando movimientos...</div>
+        <div id="estadoConsulta" class="estado-info">Preparando consulta...</div>
 
         <div class="tabla-wrapper">
             <table>
@@ -305,25 +305,29 @@
             }
             const str = String(valorFecha).trim();
 
+            // Fecha pura YYYY-MM-DD
             const matchISO = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
             if (matchISO) {
                 const a = parseInt(matchISO[1], 10);
                 const m = parseInt(matchISO[2], 10) - 1;
                 const d = parseInt(matchISO[3], 10);
-                const dt = new Date(a, m, d);
+                const dt = new Date(a, m, d, 0, 0, 0, 0);
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
+            // Fecha DD/MM/YYYY
             const matchDDMM = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str);
             if (matchDDMM) {
                 const d = parseInt(matchDDMM[1], 10);
                 const m = parseInt(matchDDMM[2], 10) - 1;
                 const a = parseInt(matchDDMM[3], 10);
-                const dt = new Date(a, m, d);
+                const dt = new Date(a, m, d, 0, 0, 0, 0);
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            const dt = new Date(str);
+            // Normaliza formato timestamptz de Postgres ("2026-11-19 22:15:00+00" -> ISO válido)
+            const isoNormalizado = str.replace(" ", "T");
+            const dt = new Date(isoNormalizado);
             return isNaN(dt.getTime()) ? null : dt;
         }
 
@@ -428,7 +432,6 @@
                         e.preventDefault();
                         input.value = cli;
                         contenedorLista.style.display = "none";
-                        aplicarFiltros();
                     });
                     contenedorLista.appendChild(item);
                 });
@@ -436,21 +439,18 @@
                 contenedorLista.style.display = "block";
             }
 
-            input.addEventListener("input", function() {
-                mostrarSugerencias();
-                aplicarFiltros();
-            });
-
+            input.addEventListener("input", mostrarSugerencias);
             input.addEventListener("focus", mostrarSugerencias);
 
             input.addEventListener("keydown", function(e) {
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    if (sugerenciasActuales.length > 0) {
+                    if (sugerenciasActuales.length > 0 && contenedorLista.style.display === "block") {
                         input.value = sugerenciasActuales[0];
+                        contenedorLista.style.display = "none";
+                    } else {
+                        aplicarFiltros();
                     }
-                    contenedorLista.style.display = "none";
-                    aplicarFiltros();
                 } else if (e.key === "Escape") {
                     contenedorLista.style.display = "none";
                 }
@@ -480,7 +480,6 @@
             btnQuitar.title = "Quitar";
             btnQuitar.addEventListener("click", function() {
                 fila.remove();
-                aplicarFiltros();
             });
 
             fila.appendChild(input);
@@ -492,7 +491,12 @@
                 fila.appendChild(listaDiv);
                 configurarPredictivoCliente(input, listaDiv);
             } else {
-                input.addEventListener("input", aplicarFiltros);
+                input.addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        aplicarFiltros();
+                    }
+                });
             }
 
             contenedor.appendChild(fila);
@@ -536,9 +540,9 @@
             listaClientesUnicos = Array.from(setCli).sort((a, b) => a.localeCompare(b));
         }
 
-        async function cargarHistorial() {
+        async function cargarDatosIniciales() {
             const estado = document.getElementById("estadoConsulta");
-            estado.textContent = "Cargando historial desde Supabase...";
+            estado.textContent = "Cargando datos...";
 
             await cargarClientesDesdeTabla();
 
@@ -564,7 +568,8 @@
             });
 
             todosLosRegistros = registros;
-            aplicarFiltros();
+            // No renderizamos movimientos al entrar: la tabla queda vacía hasta presionar Buscar
+            estado.textContent = "Completá los filtros deseados (o dejalos vacíos para ver todos) y presioná Buscar.";
         }
 
         function aplicarFiltros() {
@@ -575,14 +580,23 @@
             const dpsFiltro = obtenerValoresMultiples(".input-dps");
             const estado = document.getElementById("estadoConsulta");
 
+            if (desdeTexto !== "" && desdeTexto.length < 10) {
+                estado.textContent = "Completá la fecha 'Desde' en formato dd/mm/aaaa.";
+                return;
+            }
+            if (hastaTexto !== "" && hastaTexto.length < 10) {
+                estado.textContent = "Completá la fecha 'Hasta' en formato dd/mm/aaaa.";
+                return;
+            }
+
             const fechaDesde = desdeTexto ? parsearFechaDDMMAAAA(desdeTexto, false) : null;
             const fechaHasta = hastaTexto ? parsearFechaDDMMAAAA(hastaTexto, true) : null;
 
-            if (desdeTexto.length === 10 && !fechaDesde) {
+            if (desdeTexto !== "" && !fechaDesde) {
                 estado.textContent = "La fecha 'Desde' no es válida (usá dd/mm/aaaa).";
                 return;
             }
-            if (hastaTexto.length === 10 && !fechaHasta) {
+            if (hastaTexto !== "" && !fechaHasta) {
                 estado.textContent = "La fecha 'Hasta' no es válida (usá dd/mm/aaaa).";
                 return;
             }
@@ -598,8 +612,13 @@
                     if (!coincideCliente) return false;
                 }
 
-                if (fechaDesde && (!fechaReg || fechaReg < fechaDesde)) return false;
-                if (fechaHasta && (!fechaReg || fechaReg > fechaHasta)) return false;
+                if (fechaDesde) {
+                    if (!fechaReg || fechaReg.getTime() < fechaDesde.getTime()) return false;
+                }
+
+                if (fechaHasta) {
+                    if (!fechaReg || fechaReg.getTime() > fechaHasta.getTime()) return false;
+                }
 
                 if (extintoresFiltro.length > 0) {
                     const coincideExt = extintoresFiltro.some(e => extReg.includes(e));
@@ -685,10 +704,16 @@
             });
 
             document.getElementById("btnFiltrar").addEventListener("click", aplicarFiltros);
-            document.getElementById("fechaDesde").addEventListener("input", aplicarFiltros);
-            document.getElementById("fechaHasta").addEventListener("input", aplicarFiltros);
-            document.getElementById("extintorPrincipal").addEventListener("input", aplicarFiltros);
-            document.getElementById("dpsPrincipal").addEventListener("input", aplicarFiltros);
+
+            // Permitir buscar apretando Enter en fechas, extintor o DPS
+            ["fechaDesde", "fechaHasta", "extintorPrincipal", "dpsPrincipal"].forEach(id => {
+                document.getElementById(id).addEventListener("keydown", function(e) {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        aplicarFiltros();
+                    }
+                });
+            });
 
             document.getElementById("btnLimpiar").addEventListener("click", function() {
                 document.getElementById("clientePrincipal").value = "";
@@ -699,10 +724,11 @@
                 document.getElementById("clientesExtras").innerHTML = "";
                 document.getElementById("extintoresExtras").innerHTML = "";
                 document.getElementById("dpsExtras").innerHTML = "";
-                aplicarFiltros();
+                document.getElementById("cuerpoHistorial").innerHTML = "";
+                document.getElementById("estadoConsulta").textContent = "Filtros limpios. Presioná Buscar para consultar.";
             });
 
-            cargarHistorial();
+            cargarDatosIniciales();
         });
     </script>
 </body>
