@@ -70,9 +70,9 @@
         <div class="form-group">
             <label for="politicaDuplicados">Si un extintor ya existe para este cliente:</label>
             <select id="politicaDuplicados">
+                <option value="omitir" selected>Omitir duplicados (no repetir N° de extintor)</option>
                 <option value="preguntar">Preguntar por cada duplicado</option>
-                <option value="sobrescribir">Sobrescribir todos automáticamente</option>
-                <option value="omitir">Omitir todos automáticamente</option>
+                <option value="sobrescribir">Sobrescribir existentes</option>
             </select>
         </div>
     </div>
@@ -130,6 +130,22 @@
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
 
+    const CAMPOS_HISTORIAL = [
+        "cliente",
+        "extintor_numero",
+        "numero_dps",
+        "oblea",
+        "marca",
+        "tipo",
+        "agente_extintor",
+        "capacidad",
+        "ano_fab",
+        "vto_prueb_hidr",
+        "vto_carga",
+        "identificacion_puesto",
+        "ubicacion"
+    ];
+
     let _supabase = null;
     let listaClientesExistentes = [];
     let datosProcesados = [];
@@ -145,6 +161,36 @@
         const s = String(val).replace(/\r/g, "").trim();
         if (!s || /^#(N\/A|REF!|NAME\?|VALUE!|DIV\/0!|NUM!|NULL!)$/i.test(s)) return "";
         return s;
+    }
+
+    function normalizarValorComparacion(val) {
+        if (val === null || val === undefined || val === "") return null;
+        if (typeof val === "number") return Number.isNaN(val) ? null : val;
+        return String(val).trim();
+    }
+
+    function huboCambiosEnCampos(anterior, actual) {
+        if (!anterior) return true;
+        return CAMPOS_HISTORIAL.some(campo => {
+            return normalizarValorComparacion(anterior[campo]) !== normalizarValorComparacion(actual[campo]);
+        });
+    }
+
+    async function registrarEnHistorialRevisiones(extintorId, datosRegistro) {
+        if (!extintorId) return { error: new Error("Falta extintor_id para historial_revisiones") };
+
+        const payloadHistorial = {
+            extintor_id: extintorId,
+            fecha_revision: new Date().toISOString()
+        };
+
+        CAMPOS_HISTORIAL.forEach(campo => {
+            payloadHistorial[campo] = datosRegistro[campo] ?? null;
+        });
+
+        return await _supabase
+            .from("historial_revisiones")
+            .insert([payloadHistorial]);
     }
 
     window.addEventListener("load", async function() {
@@ -274,6 +320,8 @@
 
         const lineas = texto.split("\n");
         datosProcesados = [];
+        const vistosEnPegado = new Set();
+        const duplicadosEnPegado = [];
         const tbody = document.querySelector("#tablaPreview tbody");
         tbody.innerHTML = "";
 
@@ -282,6 +330,13 @@
             const extNum = limpiarCeldaExcel(columnas[0]);
 
             if (extNum) {
+                const claveExt = extNum.toLowerCase();
+                if (vistosEnPegado.has(claveExt)) {
+                    duplicadosEnPegado.push(extNum);
+                    return;
+                }
+                vistosEnPegado.add(claveExt);
+
                 const cap = limpiarCeldaExcel(columnas[2]);
                 const anioFabRaw = limpiarCeldaExcel(columnas[3]);
                 const vtoPhRaw = limpiarCeldaExcel(columnas[5]);
@@ -329,7 +384,14 @@
         document.getElementById("btnSubir").style.display = datosProcesados.length > 0 ? "inline-block" : "none";
 
         if (datosProcesados.length > 0) {
-            mostrarEstado(`Se procesaron ${datosProcesados.length} registros para "${cliente}". Revisá la vista previa antes de confirmar.`, "ok");
+            if (duplicadosEnPegado.length > 0) {
+                mostrarEstado(
+                    `Se procesaron ${datosProcesados.length} registros para "${cliente}". Se omitieron ${duplicadosEnPegado.length} N° de extintor repetidos dentro del pegado (${duplicadosEnPegado.join(", ")}).`,
+                    "warn"
+                );
+            } else {
+                mostrarEstado(`Se procesaron ${datosProcesados.length} registros para "${cliente}". Revisá la vista previa antes de confirmar.`, "ok");
+            }
         } else {
             mostrarEstado("No se pudieron reconocer filas válidas. Verificá que la primera columna tenga el N° de extintor.", "warn");
         }
@@ -371,6 +433,7 @@
         let actualizados = 0;
         let omitidos = 0;
         let errores = 0;
+        let erroresHistorial = 0;
         const total = datosProcesados.length;
 
         try {
@@ -383,7 +446,7 @@
 
                 const { data: existente, error: errBusqueda } = await _supabase
                     .from("extintores")
-                    .select("id")
+                    .select("*")
                     .eq("cliente", item.cliente)
                     .eq("extintor_numero", item.extintor_numero)
                     .limit(1);
@@ -395,7 +458,9 @@
                 }
 
                 if (existente && existente.length > 0) {
+                    const regAnterior = existente[0];
                     let decidirSobrescribir = false;
+
                     if (politica === "sobrescribir") {
                         decidirSobrescribir = true;
                     } else if (politica === "omitir") {
@@ -408,10 +473,19 @@
                         const { error: errUpdate } = await _supabase
                             .from("extintores")
                             .update(item)
-                            .eq("id", existente[0].id);
+                            .eq("id", regAnterior.id);
 
-                        if (!errUpdate) actualizados++;
-                        else {
+                        if (!errUpdate) {
+                            actualizados++;
+                            if (huboCambiosEnCampos(regAnterior, item)) {
+                                const registroCompleto = { ...regAnterior, ...item };
+                                const histRes = await registrarEnHistorialRevisiones(regAnterior.id, registroCompleto);
+                                if (histRes.error) {
+                                    console.error("Error al registrar actualización en historial_revisiones:", histRes.error);
+                                    erroresHistorial++;
+                                }
+                            }
+                        } else {
                             console.error("Error al actualizar:", errUpdate);
                             errores++;
                         }
@@ -419,12 +493,20 @@
                         omitidos++;
                     }
                 } else {
-                    const { error: errInsert } = await _supabase
+                    const { data: nuevoReg, error: errInsert } = await _supabase
                         .from("extintores")
-                        .insert([item]);
+                        .insert([item])
+                        .select()
+                        .single();
 
-                    if (!errInsert) insertados++;
-                    else {
+                    if (!errInsert && nuevoReg) {
+                        insertados++;
+                        const histRes = await registrarEnHistorialRevisiones(nuevoReg.id, nuevoReg);
+                        if (histRes.error) {
+                            console.error("Error al registrar alta en historial_revisiones:", histRes.error);
+                            erroresHistorial++;
+                        }
+                    } else {
                         console.error("Error al insertar:", errInsert);
                         errores++;
                     }
@@ -436,9 +518,10 @@
             btnSubir.disabled = false;
             btnProcesar.disabled = false;
 
+            const avisoHist = erroresHistorial ? ` | Avisos historial: ${erroresHistorial}` : "";
             mostrarEstado(
-                `Importación finalizada — Nuevos: ${insertados} | Actualizados: ${actualizados} | Omitidos: ${omitidos}${errores ? ` | Errores: ${errores}` : ""}`,
-                errores ? "warn" : "ok"
+                `Importación finalizada — Nuevos: ${insertados} | Actualizados: ${actualizados} | Omitidos: ${omitidos}${errores ? ` | Errores: ${errores}` : ""}${avisoHist}`,
+                errores || erroresHistorial ? "warn" : "ok"
             );
 
             document.getElementById("clienteGlobal").value = "";
