@@ -286,10 +286,8 @@
     <script src="menu.js"></script>
     <script>
         const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
-        const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
-        const supabaseClient = (typeof _supabase !== "undefined")
-            ? _supabase
-            : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_ANON_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let todosLosRegistros = [];
         let listaClientesUnicos = [];
@@ -464,7 +462,7 @@
             const estado = document.getElementById("estadoConsulta");
             estado.textContent = "Cargando historial desde Supabase...";
 
-            const { data, error } = await supabaseClient
+            const { data, error } = await _supabase
                 .from("historial_revisiones")
                 .select("*")
                 .order("created_at", { ascending: false });
