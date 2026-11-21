@@ -6,6 +6,11 @@
     <title>Vivatec - Imprimir Oblea (Uso Gral)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        @page {
+            size: 16.6cm 9.5cm;
+            margin: 0;
+        }
+
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
         
         /* Panel de control superior (solo visible en pantalla) */
@@ -42,7 +47,7 @@
         .linea-uno {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start; /* Alineado arriba para permitir el bloque debajo de Extintor N° */
+            align-items: flex-start;
             font-weight: bold;
             font-size: 12px;
             border-bottom: 1px solid #ccc;
@@ -89,7 +94,7 @@
         .vencimiento-grid {
             display: flex;
             justify-content: center;
-            gap: 0; /* Cuadritos pegados sin espacio entre sí */
+            gap: 0;
         }
 
         .venc-caja {
@@ -100,14 +105,20 @@
             min-width: 25px;
         }
 
-        /* Hace que compartan la línea del medio sin duplicar el borde */
         .venc-caja:first-child {
             border-right: none; 
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (Rota 90 grados y oculta guías) */
+        /* CONFIGURACIÓN DE IMPRESIÓN (16.6cm x 9.5cm, rota 90 grados y oculta guías) */
         @media print {
-            body { background: #fff; padding: 0; }
+            html, body {
+                width: 16.6cm;
+                height: 9.5cm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                overflow: hidden;
+            }
             .no-print { display: none !important; }
             .etiqueta-guia { display: none !important; } 
             
@@ -115,15 +126,14 @@
                 border: none; 
                 margin: 0; 
                 padding: 0; 
-                width: 100%; 
+                width: 9.5cm; 
                 box-shadow: none; 
                 background: transparent !important; 
-                /* Rota todo el contenido 90 grados al imprimir */
                 transform: rotate(90deg);
                 transform-origin: top left;
                 position: absolute;
                 top: 0;
-                left: 100%;
+                left: 9.5cm;
             }
             
             .linea-uno { border-bottom: none; }
@@ -137,7 +147,7 @@
 <body>
 
 <div class="control-panel no-print">
-    <h3>🖨️ Calibración Oblea - Uso Gral</h3>
+    <h3>🖨️ Calibración Oblea - Uso Gral (16,6 × 9,5 cm)</h3>
     <div style="margin-bottom: 12px;">
         <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
         <input type="range" id="sliderDistancia" min="0" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
@@ -207,13 +217,39 @@
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const STORAGE_DISTANCIA_KEY = "vivatec_oblea_distancia_a";
 
     function cambiarDistanciaA(valor) {
-        document.getElementById("valDistancia").textContent = valor;
-        document.getElementById("espacioA").style.marginTop = valor + "px";
+        const num = parseInt(valor, 10) || 0;
+        document.getElementById("valDistancia").textContent = num;
+        document.getElementById("espacioA").style.marginTop = num + "px";
+        try {
+            localStorage.setItem(STORAGE_DISTANCIA_KEY, String(num));
+        } catch (e) {}
+    }
+
+    function cargarDistanciaGuardada() {
+        try {
+            const guardada = localStorage.getItem(STORAGE_DISTANCIA_KEY);
+            if (guardada !== null) {
+                const slider = document.getElementById("sliderDistancia");
+                slider.value = guardada;
+                document.getElementById("valDistancia").textContent = guardada;
+                document.getElementById("espacioA").style.marginTop = guardada + "px";
+            }
+        } catch (e) {}
+    }
+
+    function formatearCapacidad(cap) {
+        if (!cap) return "-";
+        const limpio = String(cap).trim();
+        if (!limpio) return "-";
+        return /kg$/i.test(limpio) ? limpio : `${limpio} kg`;
     }
 
     window.addEventListener("load", async function() {
+        cargarDistanciaGuardada();
+
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
             window.location.href = "login.html";
@@ -245,14 +281,14 @@
             document.getElementById("lblExtintor").textContent = data.extintor_numero || "-";
             document.getElementById("lblAnoFab").textContent = data.ano_fab || "-";
             document.getElementById("lblVtoPh").textContent = formatearFechaWeb(data.vto_prueb_hidr);
-            document.getElementById("lblCapacidad").textContent = data.capacidad ? data.capacidad + " kg" : "-";
+            document.getElementById("lblCapacidad").textContent = formatearCapacidad(data.capacidad);
             document.getElementById("lblAgente").textContent = data.agente_extintor || "-";
 
             if (data.vto_carga) {
-                let partes = data.vto_carga.split("-");
+                let partes = String(data.vto_carga).split("-");
                 if (partes.length === 3) {
-                    document.getElementById("lblAnioVto").textContent = partes[0]; 
-                    document.getElementById("lblMesVto").textContent = partes[1];   
+                    document.getElementById("lblMesVto").textContent = partes[1];
+                    document.getElementById("lblAnioVto").textContent = partes[0].slice(-2);
                 }
             }
 
@@ -264,8 +300,8 @@
 
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
-        let partes = fechaSQL.split("-");
-        if (partes.length === 3) return `${partes[1]}/${partes[0]}`; 
+        let partes = String(fechaSQL).split("-");
+        if (partes.length === 3) return `${partes[1]}/${partes[0].slice(-2)}`;
         return fechaSQL;
     }
 </script>
