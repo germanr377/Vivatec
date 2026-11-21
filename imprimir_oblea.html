@@ -109,31 +109,33 @@
             border-right: none; 
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (9.5cm x 16.6cm, rota 90 grados y oculta guías) */
+        /* CONFIGURACIÓN DE IMPRESIÓN: bloque físico fijo de 16.6 cm de largo x 9.5 cm de ancho */
         @media print {
             html, body {
-                width: 9.5cm;
-                height: 16.6cm;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #fff !important;
-                overflow: hidden;
             }
             .no-print { display: none !important; }
             .etiqueta-guia { display: none !important; } 
             
             .oblea-container { 
-                border: none; 
-                margin: 0; 
-                padding: 0; 
-                width: 16.6cm; 
-                box-shadow: none; 
+                box-sizing: border-box !important;
+                border: none !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 16.6cm !important;
+                height: 9.5cm !important;
+                max-width: 16.6cm !important;
+                max-height: 9.5cm !important;
+                box-shadow: none !important; 
                 background: transparent !important; 
-                transform: rotate(90deg);
-                transform-origin: top left;
-                position: absolute;
-                top: 0;
-                left: 9.5cm;
+                transform: rotate(90deg) !important;
+                transform-origin: top left !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 9.5cm !important;
+                overflow: hidden !important;
             }
             
             .linea-uno { border-bottom: none; }
@@ -147,7 +149,7 @@
 <body>
 
 <div class="control-panel no-print">
-    <h3>🖨️ Calibración Oblea - Uso Gral (9,5 × 16,6 cm)</h3>
+    <h3>🖨️ Calibración Oblea - Uso Gral (16,6 × 9,5 cm)</h3>
     <div style="margin-bottom: 12px;">
         <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
         <input type="range" id="sliderDistancia" min="0" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
