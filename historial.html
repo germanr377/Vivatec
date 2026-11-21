@@ -777,11 +777,9 @@
 
                 if (eventos.length > 0) {
                     const ultimoEv = eventos[eventos.length - 1];
-                    const tuvoCambiosOEliminacion = eventos.some(ev => ev.esCambio || ev.esEliminado);
 
                     series.push({
                         eventos,
-                        tuvoCambiosOEliminacion,
                         registroReferencia: ultimoEv.registro,
                         fechaUltimaObj: ultimoEv.fechaObj,
                         idxUltimaOriginal: ultimoEv.idxOriginal
@@ -837,26 +835,6 @@
             const tieneRangoFecha = Boolean(fechaDesde || fechaHasta);
 
             if (!tieneRangoFecha) {
-                if (!serie.tuvoCambiosOEliminacion) {
-                    if (!incluirSinCambios) return null;
-
-                    const evUnico = serie.eventos[0];
-                    return {
-                        esSinCambios: true,
-                        cambioDps: false,
-                        cambioPh: false,
-                        filas: [{
-                            registro: evUnico.registro,
-                            esInicial: true,
-                            esNuevo: evUnico.esNuevo,
-                            esEliminado: false,
-                            esSinCambios: true,
-                            esReferenciaPrevia: false,
-                            camposCambiados: new Set()
-                        }]
-                    };
-                }
-
                 let cambioDps = false;
                 let cambioPh = false;
                 serie.eventos.forEach(ev => {
@@ -880,6 +858,7 @@
                 };
             }
 
+            // Con filtro de rango de fechas
             const indicesEnRango = [];
             serie.eventos.forEach((ev, idx) => {
                 if (dentroDeRangoFecha(ev.fechaObj, fechaDesde, fechaHasta)) {
@@ -887,12 +866,7 @@
                 }
             });
 
-            const indicesRelevantes = indicesEnRango.filter(idx => {
-                const ev = serie.eventos[idx];
-                return ev.esCambio || ev.esEliminado;
-            });
-
-            if (indicesRelevantes.length === 0) {
+            if (indicesEnRango.length === 0) {
                 if (!incluirSinCambios) return null;
 
                 let ultimoEvHastaRango = null;
@@ -920,11 +894,11 @@
                 };
             }
 
-            const primerIdxRelevante = indicesRelevantes[0];
+            const primerIdxEnRango = indicesEnRango[0];
             const filasResultantes = [];
 
-            if (primerIdxRelevante > 0) {
-                const evPrevio = serie.eventos[primerIdxRelevante - 1];
+            if (primerIdxEnRango > 0) {
+                const evPrevio = serie.eventos[primerIdxEnRango - 1];
                 filasResultantes.push({
                     registro: evPrevio.registro,
                     esInicial: false,
@@ -939,15 +913,15 @@
             let cambioDps = false;
             let cambioPh = false;
 
-            indicesRelevantes.forEach(idx => {
+            indicesEnRango.forEach(idx => {
                 const ev = serie.eventos[idx];
                 if (ev.esCambio && ev.camposCambiados.has("numero_dps")) cambioDps = true;
                 if (ev.esCambio && ev.camposCambiados.has("vto_prueb_hidr")) cambioPh = true;
 
                 filasResultantes.push({
                     registro: ev.registro,
-                    esInicial: false,
-                    esNuevo: false,
+                    esInicial: ev.esInicial,
+                    esNuevo: ev.esNuevo,
                     esEliminado: ev.esEliminado,
                     esSinCambios: false,
                     esReferenciaPrevia: false,
@@ -1088,7 +1062,6 @@
                 }
             });
 
-            // Si está tildado "Incluir extintores sin cambios", sumar también los de la tabla extintores sin movimientos en historial
             if (incluirSinCambios) {
                 extintoresActivosSinHistorial.forEach(ex => {
                     if (!cumpleFiltrosTexto(ex, clientesFiltro, extintoresFiltro, dpsFiltro)) {
