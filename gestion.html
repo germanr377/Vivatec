@@ -20,12 +20,16 @@
         .form-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
         .form-row .form-group { margin-bottom: 0; flex: 1; } 
         
-        .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #f9fff9; transition: all 0.3s; }
+        .oblea-preview { margin-top: 20px; border: 2px dashed #27ae60; padding: 20px; border-radius: 6px; background: #fff; transition: all 0.3s; }
         .oblea-header { font-size: 18px; font-weight: bold; text-align: center; color: #27ae60; border-bottom: 2px solid #27ae60; padding-bottom: 8px; margin-bottom: 15px; }
 
         /* Estilos dinámicos del contenedor */
-        .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
+        .modo-existente { border-color: #d35400 !important; background-color: #fff !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
+
+        /* MODO CAMBIOS SIN GRABAR (Fondo Naranja) */
+        .modo-sin-grabar { border-color: #e67e22 !important; background-color: #fdebd0 !important; }
+        .modo-sin-grabar .oblea-header { color: #a04000; border-bottom-color: #e67e22; }
 
         /* MODO RECARGA (Fondo Amarillo Intenso) */
         .modo-recarga { border-color: #fbc02d !important; background-color: #fff176 !important; }
@@ -225,6 +229,22 @@
         "ubicacion"
     ];
 
+    const IDS_CAMPOS = [
+        "nuevoCliente",
+        "nuevoExtintor",
+        "nuevoDps",
+        "nuevoOblea",
+        "nuevoMarca",
+        "nuevoTipo",
+        "nuevoAgente",
+        "nuevoCapacidad",
+        "nuevoAFabricacion",
+        "nuevoVencPH",
+        "nuevoVencCarga",
+        "nuevoPuesto",
+        "nuevoUbicacion"
+    ];
+
     let listaClientesOficiales = [];
     let sugerenciasFiltradas = [];
     let indiceSugerenciaActiva = 0;
@@ -251,6 +271,7 @@
         configurarPredictivoClientes();
         configurarPredictivoUbicaciones();
         configurarBusquedaPorEnter();
+        configurarAvisoCambiosSinGrabar();
         await cargarClientesEnPredictivo();
         await cargarListasGlobales();
     });
@@ -265,6 +286,60 @@
         if (!anterior) return true;
         return CAMPOS_HISTORIAL.some(campo => {
             return normalizarValorComparacion(anterior[campo]) !== normalizarValorComparacion(actual[campo]);
+        });
+    }
+
+    function leerValoresActuales() {
+        let valAnoFab = document.getElementById("nuevoAFabricacion").value;
+        let valPuesto = document.getElementById("nuevoPuesto").value;
+
+        return {
+            cliente: document.getElementById("nuevoCliente").value.trim() || null,
+            extintor_numero: document.getElementById("nuevoExtintor").value.trim() || null,
+            numero_dps: document.getElementById("nuevoDps").value.trim() || null,
+            oblea: document.getElementById("nuevoOblea").value || null,
+            marca: document.getElementById("nuevoMarca").value.trim().toUpperCase() || null,
+            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase() || null,
+            agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase() || null,
+            capacidad: document.getElementById("nuevoCapacidad").value.trim() || null,
+            ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
+            vto_prueb_hidr: formatearFechaSQL(document.getElementById("nuevoVencPH").value),
+            vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
+            identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
+            ubicacion: document.getElementById("nuevoUbicacion").value.trim() || null
+        };
+    }
+
+    function marcarFondoSinGrabar() {
+        const contenedor = document.getElementById("contenedorPrincipal");
+        contenedor.classList.remove("modo-existente", "modo-recarga");
+        contenedor.classList.add("modo-sin-grabar");
+        document.getElementById("tituloForm").textContent = "🟠 CAMBIOS SIN GRABAR";
+    }
+
+    function revisarEstadoCambiosMatafuegoCargado() {
+        if (guardandoEnCurso || enModoRecarga) return;
+
+        const idCargado = document.getElementById("registroId").value.trim();
+        if (!idCargado || !registroOriginalCargado) {
+            document.getElementById("contenedorPrincipal").classList.remove("modo-sin-grabar");
+            return;
+        }
+
+        const actual = leerValoresActuales();
+        if (huboCambiosEnCampos(registroOriginalCargado, actual)) {
+            marcarFondoSinGrabar();
+        } else {
+            activarEstilosModoExistente();
+        }
+    }
+
+    function configurarAvisoCambiosSinGrabar() {
+        IDS_CAMPOS.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener("input", revisarEstadoCambiosMatafuegoCargado);
+            el.addEventListener("change", revisarEstadoCambiosMatafuegoCargado);
         });
     }
 
@@ -350,6 +425,7 @@
                     const elegida = sugerenciasUbicacion[indiceUbicacionActiva] || sugerenciasUbicacion[0];
                     input.value = elegida.ubicacion;
                     cerrarSugerenciasUbicaciones();
+                    revisarEstadoCambiosMatafuegoCargado();
                     await buscarExtintor();
                 } else if (input.value.trim() !== "") {
                     const resultados = await buscarSugerenciasUbicacionBD(input.value.trim());
@@ -357,6 +433,7 @@
                     if (resultados.length > 0) {
                         input.value = resultados[0].ubicacion;
                     }
+                    revisarEstadoCambiosMatafuegoCargado();
                     await buscarExtintor();
                 }
             } else if (e.key === "Escape") {
@@ -456,6 +533,7 @@
                 e.preventDefault();
                 input.value = item.ubicacion;
                 cerrarSugerenciasUbicaciones();
+                revisarEstadoCambiosMatafuegoCargado();
                 await buscarExtintor();
             });
             listaDiv.appendChild(div);
@@ -607,6 +685,7 @@
         input.value = nombreCliente;
         cerrarSugerenciasClientes();
         ultimaConsultaDuplicado = "";
+        revisarEstadoCambiosMatafuegoCargado();
         verificarDuplicado();
         document.getElementById("nuevoExtintor").focus();
     }
@@ -679,7 +758,7 @@
 
     function activarEstilosModoExistente() {
         const contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-recarga");
+        contenedor.classList.remove("modo-recarga", "modo-sin-grabar");
         contenedor.classList.add("modo-existente");
         document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
 
@@ -729,7 +808,7 @@
         }
 
         let contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-existente");
+        contenedor.classList.remove("modo-existente", "modo-sin-grabar");
         contenedor.classList.add("modo-recarga");
         document.getElementById("tituloForm").textContent = "⚡ MODO RECARGA ACTIVADO";
 
@@ -799,6 +878,7 @@
             alert("⚠️ Tipo inválido. Los tipos permitidos son: A, AB, ABC, BC o K.");
             input.value = "";
             document.getElementById("nuevoAgente").value = "";
+            revisarEstadoCambiosMatafuegoCargado();
             input.focus();
         }
     }
@@ -819,6 +899,7 @@
         if (!regex.test(val)) {
             alert("⚠️ Formato incorrecto. Debe ingresar el mes y año en formato MM/AA (Ej: 11/28).");
             input.value = "";
+            revisarEstadoCambiosMatafuegoCargado();
             input.focus();
         }
     }
@@ -1108,6 +1189,8 @@
             verificarDpsNuevo();
             ultimaConsultaDuplicado = `${registroGuardado.id || ""}|${registroGuardado.cliente || ""}|${registroGuardado.extintor_numero || ""}|${registroGuardado.numero_dps || ""}`;
 
+            activarEstilosModoExistente();
+
             const btn = document.getElementById("btnGuardar");
             btn.innerHTML = eraRecarga ? "⚡ ¡Recarga Guardada!" : "✅ ¡Guardado!";
             btn.classList.remove("existente-btn");
@@ -1131,24 +1214,7 @@
             return copia;
         }
 
-        let valAnoFab = document.getElementById("nuevoAFabricacion").value;
-        let valPuesto = document.getElementById("nuevoPuesto").value;
-
-        return {
-            cliente: document.getElementById("nuevoCliente").value.trim() || null,
-            extintor_numero: document.getElementById("nuevoExtintor").value.trim() || null,
-            numero_dps: document.getElementById("nuevoDps").value.trim() || null,
-            oblea: document.getElementById("nuevoOblea").value || null,
-            marca: document.getElementById("nuevoMarca").value.trim().toUpperCase() || null,
-            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase() || null,
-            agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase() || null,
-            capacidad: document.getElementById("nuevoCapacidad").value.trim() || null,
-            ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
-            vto_prueb_hidr: formatearFechaSQL(document.getElementById("nuevoVencPH").value),
-            vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
-            identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
-            ubicacion: document.getElementById("nuevoUbicacion").value.trim() || null
-        };
+        return leerValoresActuales();
     }
 
     async function eliminarExtintor() {
@@ -1217,13 +1283,12 @@
 
         enModoRecarga = false;
         let contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-existente");
-        contenedor.classList.remove("modo-recarga");
+        contenedor.classList.remove("modo-existente", "modo-recarga", "modo-sin-grabar");
         document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
         
         let btn = document.getElementById("btnGuardar");
         btn.textContent = "💾 Guardar / Actualizar";
-        btn.classList.remove("existente-btn");
+        btn.classList.remove("existente-btn", "success");
         
         verificarExtintorNuevo();
         verificarDpsNuevo();
