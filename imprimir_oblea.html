@@ -21,7 +21,7 @@
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
         
         /* Panel de control superior (solo visible en pantalla) */
-        .control-panel { max-width: 540px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
+        .control-panel { max-width: 560px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
         .control-panel label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
         .control-panel input[type="range"] { width: 100%; cursor: pointer; }
         .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; text-align: left; }
@@ -38,6 +38,76 @@
             margin-bottom: 12px;
             line-height: 1.45;
         }
+
+        /* Estado de desborde en pantalla */
+        .estado-margen {
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12.5px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: left;
+            border: 1px solid #27ae60;
+            background: #eafaf1;
+            color: #1e8449;
+            transition: all 0.2s ease;
+        }
+        .estado-margen.fuera {
+            border-color: #c0392b;
+            background: #fdedec;
+            color: #922b21;
+        }
+
+        /* Zona de calibración en pantalla con marco de medida real */
+        .zona-calibracion {
+            max-width: 760px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .marco-hoja-preview {
+            width: 16.6cm;
+            height: 9.5cm;
+            max-width: 100%;
+            border: 2px solid #2c3e50;
+            background: repeating-linear-gradient(
+                45deg,
+                #ffffff,
+                #ffffff 10px,
+                #f8f9fa 10px,
+                #f8f9fa 20px
+            );
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            position: relative;
+            overflow: visible;
+            box-sizing: border-box;
+            padding: 12px;
+        }
+
+        .marco-hoja-preview.desborda {
+            border-color: #c0392b;
+            box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.25);
+        }
+
+        .etiqueta-medida-hoja {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            font-size: 11px;
+            font-weight: bold;
+            color: #2c3e50;
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .marco-hoja-preview.desborda .etiqueta-medida-hoja {
+            background: #c0392b;
+            color: #fff;
+        }
+
         .btn-accion { background: #2980b9; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; margin: 5px; }
         .btn-accion:hover { background: #1f618d; }
         .btn-volver { background: #7f8c8d; }
@@ -47,14 +117,25 @@
 
         /* Contenedor de la Oblea (Uso Gral) */
         .oblea-container {
-            width: 420px;
-            border: 2px dashed #b2bec3;
-            background: #fff;
-            margin: auto;
-            padding: 15px;
+            width: 100%;
+            border: 2px dashed #27ae60;
+            background: rgba(255, 255, 255, 0.94);
+            margin: 0;
+            padding: 12px;
             box-sizing: border-box;
             position: relative;
             font-size: 12px;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .oblea-container.fuera-margen {
+            border: 2px solid #c0392b !important;
+            background: rgba(253, 237, 236, 0.95) !important;
+        }
+
+        .elemento-desbordado {
+            outline: 2px solid #e74c3c !important;
+            background: rgba(231, 76, 60, 0.14) !important;
         }
 
         .header-oblea {
@@ -139,8 +220,25 @@
                 padding: 0 !important;
                 background: #fff !important;
             }
-            .no-print { display: none !important; }
-            .etiqueta-guia { display: none !important; } 
+            .no-print, .etiqueta-guia, .etiqueta-medida-hoja, .estado-margen { display: none !important; }
+
+            .zona-calibracion {
+                display: block !important;
+                max-width: none !important;
+                margin: 0 !important;
+            }
+
+            .marco-hoja-preview {
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: auto !important;
+                height: auto !important;
+                max-width: none !important;
+                overflow: visible !important;
+            }
             
             .oblea-container { 
                 box-sizing: border-box !important;
@@ -160,6 +258,11 @@
                 left: var(--print-left) !important;
                 overflow: hidden !important;
             }
+
+            .elemento-desbordado {
+                outline: none !important;
+                background: transparent !important;
+            }
             
             .linea-uno { border-bottom: none; }
             .bloque-vencimiento-caja { border: none; background: transparent !important; padding: 0; }
@@ -178,9 +281,13 @@
         <strong>Al imprimir:</strong> configurá <strong>Márgenes: Ninguno</strong> y <strong>Escala: 100%</strong>. Si la vista previa o la impresora muestran A4, revisá el tamaño de papel (<strong>16,6 × 9,5 cm</strong>) en las preferencias de la impresora.
     </div>
 
+    <div id="estadoMargen" class="estado-margen">
+        ✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm).
+    </div>
+
     <div style="margin-bottom: 12px; text-align: left;" class="control-box">
         <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
-        <input type="range" id="sliderDistancia" min="0" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
+        <input type="range" id="sliderDistancia" min="0" max="240" value="30" oninput="cambiarDistanciaA(this.value)">
     </div>
 
     <div class="control-grid">
@@ -195,11 +302,11 @@
         </div>
         <div class="control-box">
             <label for="sliderOffsetX">Ajuste horizontal X: <span id="valOffsetX">0</span> mm</label>
-            <input type="range" id="sliderOffsetX" min="-30" max="30" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
+            <input type="range" id="sliderOffsetX" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
         </div>
         <div class="control-box" style="grid-column: 1 / -1;">
             <label for="sliderOffsetY">Ajuste vertical Y: <span id="valOffsetY">0</span> mm</label>
-            <input type="range" id="sliderOffsetY" min="-30" max="30" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
+            <input type="range" id="sliderOffsetY" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
         </div>
     </div>
 
@@ -210,57 +317,63 @@
     </div>
 </div>
 
-<div class="oblea-container" id="obleaCard">
-    <div class="header-oblea no-print">
-        VIVATEC - VISTA PREVIA (USO GENERAL)
-    </div>
+<div class="zona-calibracion">
+    <div id="marcoHoja" class="marco-hoja-preview">
+        <span class="etiqueta-medida-hoja">HOJA / OBLEA: 16,6 cm × 9,5 cm</span>
 
-    <!-- LÍNEA 1 -->
-    <div class="linea-uno">
-        <!-- Columna 1: Extintor N° + Vencimiento justo abajo -->
-        <div class="campo-item" style="text-align: left; padding-left: 5px;">
-            <span class="etiqueta-guia">Extintor N°</span>
-            <span id="lblExtintor" class="valor-dato">-</span>
+        <div class="oblea-container" id="obleaCard">
+            <div class="header-oblea no-print">
+                VIVATEC - VISTA PREVIA (USO GENERAL)
+            </div>
 
-            <!-- Bloque Vencimiento móvil con Distancia A -->
-            <div id="espacioA" style="margin-top: 30px;">
-                <div class="bloque-vencimiento-caja">
-                    <div class="vencimiento-titulo">
-                        <span class="etiqueta-guia">Vencimiento</span>
-                    </div>
-                    <div class="vencimiento-grid">
-                        <div class="venc-caja">
-                            <span class="etiqueta-guia">Mes</span>
-                            <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
-                        </div>
-                        <div class="venc-caja">
-                            <span class="etiqueta-guia">Año</span>
-                            <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+            <!-- LÍNEA 1 -->
+            <div class="linea-uno">
+                <!-- Columna 1: Extintor N° + Vencimiento justo abajo -->
+                <div class="campo-item" style="text-align: left; padding-left: 5px;">
+                    <span class="etiqueta-guia">Extintor N°</span>
+                    <span id="lblExtintor" class="valor-dato">-</span>
+
+                    <!-- Bloque Vencimiento móvil con Distancia A -->
+                    <div id="espacioA" style="margin-top: 30px;">
+                        <div id="bloqueVencimiento" class="bloque-vencimiento-caja">
+                            <div class="vencimiento-titulo">
+                                <span class="etiqueta-guia">Vencimiento</span>
+                            </div>
+                            <div class="vencimiento-grid">
+                                <div class="venc-caja">
+                                    <span class="etiqueta-guia">Mes</span>
+                                    <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+                                </div>
+                                <div class="venc-caja">
+                                    <span class="etiqueta-guia">Año</span>
+                                    <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Columna 2: Año Fab -->
-        <div class="campo-item">
-            <span class="etiqueta-guia">Año Fab.</span>
-            <span id="lblAnoFab" class="valor-dato">-</span>
-        </div>
-        <!-- Columna 3: Vto P.H. -->
-        <div class="campo-item">
-            <span class="etiqueta-guia">Vto. P.H.</span>
-            <span id="lblVtoPh" class="valor-dato">-</span>
-        </div>
-        <!-- Columna 4: Capacidad -->
-        <div class="campo-item">
-            <span class="etiqueta-guia">Capacidad</span>
-            <span id="lblCapacidad" class="valor-dato">-</span>
-        </div>
-        <!-- Columna 5: Agente -->
-        <div class="campo-item">
-            <span class="etiqueta-guia">Agente</span>
-            <span id="lblAgente" class="valor-dato">-</span>
+                <!-- Columna 2: Año Fab -->
+                <div class="campo-item">
+                    <span class="etiqueta-guia">Año Fab.</span>
+                    <span id="lblAnoFab" class="valor-dato">-</span>
+                </div>
+                <!-- Columna 3: Vto P.H. -->
+                <div class="campo-item">
+                    <span class="etiqueta-guia">Vto. P.H.</span>
+                    <span id="lblVtoPh" class="valor-dato">-</span>
+                </div>
+                <!-- Columna 4: Capacidad -->
+                <div class="campo-item">
+                    <span class="etiqueta-guia">Capacidad</span>
+                    <span id="lblCapacidad" class="valor-dato">-</span>
+                </div>
+                <!-- Columna 5: Agente -->
+                <div class="campo-item">
+                    <span class="etiqueta-guia">Agente</span>
+                    <span id="lblAgente" class="valor-dato">-</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -289,11 +402,68 @@
         }
     }
 
+    function verificarDesbordeEnPantalla() {
+        const marco = document.getElementById("marcoHoja");
+        const oblea = document.getElementById("obleaCard");
+        const estado = document.getElementById("estadoMargen");
+        const bloqueVto = document.getElementById("bloqueVencimiento");
+        if (!marco || !oblea || !estado) return;
+
+        const offsetX = parseFloat(document.getElementById("sliderOffsetX").value) || 0;
+        const offsetY = parseFloat(document.getElementById("sliderOffsetY").value) || 0;
+        const rotacion = document.getElementById("selectRotacion").value || "90deg";
+
+        // Aplicamos una previsualización visual de X e Y sobre la oblea en pantalla
+        // (1 mm ≈ 3.7795 px a 96 dpi)
+        const pxPorMm = 96 / 25.4;
+        const dx = offsetX * pxPorMm;
+        const dy = offsetY * pxPorMm;
+        oblea.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+
+        const rectMarco = marco.getBoundingClientRect();
+        const rectOblea = oblea.getBoundingClientRect();
+
+        const ladosFuera = [];
+        const tol = 1; // tolerancia de 1px por redondeo de subpíxeles
+
+        if (rectOblea.left < rectMarco.left - tol) ladosFuera.push("izquierda");
+        if (rectOblea.right > rectMarco.right + tol) ladosFuera.push("derecha");
+        if (rectOblea.top < rectMarco.top - tol) ladosFuera.push("arriba");
+        if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
+
+        let vtoFuera = false;
+        if (bloqueVto) {
+            const rectVto = bloqueVto.getBoundingClientRect();
+            const vtoSale = (
+                rectVto.left < rectMarco.left - tol ||
+                rectVto.right > rectMarco.right + tol ||
+                rectVto.top < rectMarco.top - tol ||
+                rectVto.bottom > rectMarco.bottom + tol
+            );
+            bloqueVto.classList.toggle("elemento-desbordado", vtoSale);
+            vtoFuera = vtoSale;
+        }
+
+        const hayDesborde = ladosFuera.length > 0 || vtoFuera;
+
+        marco.classList.toggle("desborda", hayDesborde);
+        oblea.classList.toggle("fuera-margen", hayDesborde);
+        estado.classList.toggle("fuera", hayDesborde);
+
+        if (hayDesborde) {
+            const detalle = ladosFuera.length > 0 ? ladosFuera.join(", ") : "bloque de vencimiento";
+            estado.innerHTML = `⚠️ Se sale del área de impresión (16,6 × 9,5 cm) por: <strong>${detalle}</strong> · Giro impreso: <strong>${rotacion}</strong>.`;
+        } else {
+            estado.innerHTML = `✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm) · Giro impreso: <strong>${rotacion}</strong>.`;
+        }
+    }
+
     function cambiarDistanciaA(valor) {
         const num = parseInt(valor, 10) || 0;
         document.getElementById("valDistancia").textContent = num;
         document.getElementById("espacioA").style.marginTop = num + "px";
         guardarStorage(STORAGE_DISTANCIA_KEY, num);
+        verificarDesbordeEnPantalla();
     }
 
     function aplicarRotacion(rotacion) {
@@ -304,11 +474,10 @@
         rootStyle.setProperty("--print-rotacion", rot);
         if (rot === "90deg") {
             rootStyle.setProperty("--print-left", "9.5cm");
-        } else if (rot === "-90deg") {
-            rootStyle.setProperty("--print-left", "0cm");
         } else {
             rootStyle.setProperty("--print-left", "0cm");
         }
+        verificarDesbordeEnPantalla();
     }
 
     function cambiarRotacionImpresion(rotacion) {
@@ -323,12 +492,13 @@
         document.getElementById("valOffsetY").textContent = numY;
         document.documentElement.style.setProperty("--print-offset-x", `${numX}mm`);
         document.documentElement.style.setProperty("--print-offset-y", `${numY}mm`);
+        verificarDesbordeEnPantalla();
     }
 
     function cambiarOffsetImpresion() {
         const x = parseFloat(document.getElementById("sliderOffsetX").value) || 0;
         const y = parseFloat(document.getElementById("sliderOffsetY").value) || 0;
-        aplicOffset(x, y);
+        aplicarOffset(x, y);
         guardarStorage(STORAGE_OFFSET_X_KEY, x);
         guardarStorage(STORAGE_OFFSET_Y_KEY, y);
     }
@@ -342,7 +512,7 @@
 
         document.getElementById("sliderOffsetX").value = 0;
         document.getElementById("sliderOffsetY").value = 0;
-        aplicOffset(0, 0);
+        aplicarOffset(0, 0);
         guardarStorage(STORAGE_OFFSET_X_KEY, 0);
         guardarStorage(STORAGE_OFFSET_Y_KEY, 0);
     }
@@ -363,7 +533,7 @@
         const yGuardado = parseFloat(leerStorage(STORAGE_OFFSET_Y_KEY)) || 0;
         document.getElementById("sliderOffsetX").value = xGuardado;
         document.getElementById("sliderOffsetY").value = yGuardado;
-        aplicOffset(xGuardado, yGuardado);
+        aplicarOffset(xGuardado, yGuardado);
     }
 
     function formatearCapacidad(cap) {
@@ -373,8 +543,11 @@
         return /kg$/i.test(limpio) ? limpio : `${limpio} kg`;
     }
 
+    window.addEventListener("resize", verificarDesbordeEnPantalla);
+
     window.addEventListener("load", async function() {
         cargarCalibracionGuardada();
+        verificarDesbordeEnPantalla();
 
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
@@ -417,6 +590,8 @@
                     document.getElementById("lblAnioVto").textContent = partes[0].slice(-2);
                 }
             }
+
+            verificarDesbordeEnPantalla();
 
         } catch (err) {
             console.error("Error al cargar datos de oblea:", err);
