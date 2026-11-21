@@ -27,10 +27,6 @@
         .modo-existente { border-color: #d35400 !important; background-color: #fdfefe !important; }
         .modo-existente .oblea-header { color: #d35400; border-bottom-color: #d35400; }
 
-        /* MODO CAMBIOS SIN GUARDAR (Fondo Naranja) */
-        .modo-cambios-pendientes { border-color: #e67e22 !important; background-color: #fdebd0 !important; }
-        .modo-cambios-pendientes .oblea-header { color: #af601a; border-bottom-color: #e67e22; }
-
         /* MODO RECARGA (Fondo Amarillo Intenso) */
         .modo-recarga { border-color: #fbc02d !important; background-color: #fff176 !important; }
         .modo-recarga .oblea-header { color: #7d6608; border-bottom-color: #fbc02d; }
@@ -229,22 +225,6 @@
         "ubicacion"
     ];
 
-    const IDS_CAMPOS_FORMULARIO = [
-        "nuevoCliente",
-        "nuevoExtintor",
-        "nuevoDps",
-        "nuevoOblea",
-        "nuevoMarca",
-        "nuevoTipo",
-        "nuevoAgente",
-        "nuevoCapacidad",
-        "nuevoAFabricacion",
-        "nuevoVencPH",
-        "nuevoVencCarga",
-        "nuevoPuesto",
-        "nuevoUbicacion"
-    ];
-
     let listaClientesOficiales = [];
     let sugerenciasFiltradas = [];
     let indiceSugerenciaActiva = 0;
@@ -257,7 +237,6 @@
     let listaDpsExistentes = [];
     let enModoRecarga = false;
     let guardandoEnCurso = false;
-    let hayCambiosSinGuardar = false;
     let ultimaConsultaDuplicado = "";
     let registroOriginalCargado = null;
 
@@ -272,7 +251,6 @@
         configurarPredictivoClientes();
         configurarPredictivoUbicaciones();
         configurarBusquedaPorEnter();
-        configurarDeteccionCambiosSinGuardar();
         await cargarClientesEnPredictivo();
         await cargarListasGlobales();
     });
@@ -287,74 +265,6 @@
         if (!anterior) return true;
         return CAMPOS_HISTORIAL.some(campo => {
             return normalizarValorComparacion(anterior[campo]) !== normalizarValorComparacion(actual[campo]);
-        });
-    }
-
-    function obtenerSnapshotActualDesdeFormulario() {
-        let valAnoFab = document.getElementById("nuevoAFabricacion").value;
-        let valPuesto = document.getElementById("nuevoPuesto").value;
-
-        return {
-            cliente: document.getElementById("nuevoCliente").value.trim() || null,
-            extintor_numero: document.getElementById("nuevoExtintor").value.trim() || null,
-            numero_dps: document.getElementById("nuevoDps").value.trim() || null,
-            oblea: document.getElementById("nuevoOblea").value || null,
-            marca: document.getElementById("nuevoMarca").value.trim().toUpperCase() || null,
-            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase() || null,
-            agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase() || null,
-            capacidad: document.getElementById("nuevoCapacidad").value.trim() || null,
-            ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
-            vto_prueb_hidr: formatearFechaSQL(document.getElementById("nuevoVencPH").value),
-            vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
-            identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
-            ubicacion: document.getElementById("nuevoUbicacion").value.trim() || null
-        };
-    }
-
-    function tieneAlgunDatoIngresado(snap) {
-        return CAMPOS_HISTORIAL.some(campo => {
-            if (campo === "oblea") return false;
-            return normalizarValorComparacion(snap[campo]) !== null;
-        });
-    }
-
-    function aplicarEstiloCambiosPendientes() {
-        const contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-existente", "modo-recarga");
-        contenedor.classList.add("modo-cambios-pendientes");
-        document.getElementById("tituloForm").textContent = "🟠 CAMBIOS SIN GUARDAR";
-    }
-
-    function evaluarCambiosSinGuardar() {
-        if (guardandoEnCurso || enModoRecarga) return;
-
-        const actual = obtenerSnapshotActualDesdeFormulario();
-        const idCargado = document.getElementById("registroId").value.trim();
-
-        if (idCargado && registroOriginalCargado) {
-            hayCambiosSinGuardar = huboCambiosEnCampos(registroOriginalCargado, actual);
-        } else {
-            hayCambiosSinGuardar = tieneAlgunDatoIngresado(actual);
-        }
-
-        if (hayCambiosSinGuardar) {
-            aplicarEstiloCambiosPendientes();
-        } else {
-            document.getElementById("contenedorPrincipal").classList.remove("modo-cambios-pendientes");
-            if (idCargado) {
-                activarEstilosModoExistente();
-            } else {
-                document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
-            }
-        }
-    }
-
-    function configurarDeteccionCambiosSinGuardar() {
-        IDS_CAMPOS_FORMULARIO.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.addEventListener("input", evaluarCambiosSinGuardar);
-            el.addEventListener("change", evaluarCambiosSinGuardar);
         });
     }
 
@@ -440,7 +350,6 @@
                     const elegida = sugerenciasUbicacion[indiceUbicacionActiva] || sugerenciasUbicacion[0];
                     input.value = elegida.ubicacion;
                     cerrarSugerenciasUbicaciones();
-                    evaluarCambiosSinGuardar();
                     await buscarExtintor();
                 } else if (input.value.trim() !== "") {
                     const resultados = await buscarSugerenciasUbicacionBD(input.value.trim());
@@ -448,7 +357,6 @@
                     if (resultados.length > 0) {
                         input.value = resultados[0].ubicacion;
                     }
-                    evaluarCambiosSinGuardar();
                     await buscarExtintor();
                 }
             } else if (e.key === "Escape") {
@@ -548,7 +456,6 @@
                 e.preventDefault();
                 input.value = item.ubicacion;
                 cerrarSugerenciasUbicaciones();
-                evaluarCambiosSinGuardar();
                 await buscarExtintor();
             });
             listaDiv.appendChild(div);
@@ -700,7 +607,6 @@
         input.value = nombreCliente;
         cerrarSugerenciasClientes();
         ultimaConsultaDuplicado = "";
-        evaluarCambiosSinGuardar();
         verificarDuplicado();
         document.getElementById("nuevoExtintor").focus();
     }
@@ -773,7 +679,7 @@
 
     function activarEstilosModoExistente() {
         const contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-recarga", "modo-cambios-pendientes");
+        contenedor.classList.remove("modo-recarga");
         contenedor.classList.add("modo-existente");
         document.getElementById("tituloForm").textContent = "⚠️ EDITANDO / ACTUALIZANDO EQUIPO EXISTENTE";
 
@@ -823,7 +729,7 @@
         }
 
         let contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-existente", "modo-cambios-pendientes");
+        contenedor.classList.remove("modo-existente");
         contenedor.classList.add("modo-recarga");
         document.getElementById("tituloForm").textContent = "⚡ MODO RECARGA ACTIVADO";
 
@@ -893,7 +799,6 @@
             alert("⚠️ Tipo inválido. Los tipos permitidos son: A, AB, ABC, BC o K.");
             input.value = "";
             document.getElementById("nuevoAgente").value = "";
-            evaluarCambiosSinGuardar();
             input.focus();
         }
     }
@@ -914,7 +819,6 @@
         if (!regex.test(val)) {
             alert("⚠️ Formato incorrecto. Debe ingresar el mes y año en formato MM/AA (Ej: 11/28).");
             input.value = "";
-            evaluarCambiosSinGuardar();
             input.focus();
         }
     }
@@ -1018,7 +922,6 @@
             registroOriginalCargado[campo] = ex[campo] ?? null;
         });
 
-        hayCambiosSinGuardar = false;
         activarEstilosModoExistente();
 
         verificarExtintorNuevo();
@@ -1120,7 +1023,6 @@
             alert("⚠️ Por favor, elegí un Cliente válido de la lista oficial y completá el N° de Extintor.");
             document.getElementById("nuevoCliente").focus();
             enModoRecarga = false;
-            evaluarCambiosSinGuardar();
             return;
         }
 
@@ -1199,7 +1101,6 @@
             });
 
             enModoRecarga = false;
-            hayCambiosSinGuardar = false;
 
             ocultarAvisoDuplicado();
             await cargarListasGlobales();
@@ -1230,7 +1131,24 @@
             return copia;
         }
 
-        return obtenerSnapshotActualDesdeFormulario();
+        let valAnoFab = document.getElementById("nuevoAFabricacion").value;
+        let valPuesto = document.getElementById("nuevoPuesto").value;
+
+        return {
+            cliente: document.getElementById("nuevoCliente").value.trim() || null,
+            extintor_numero: document.getElementById("nuevoExtintor").value.trim() || null,
+            numero_dps: document.getElementById("nuevoDps").value.trim() || null,
+            oblea: document.getElementById("nuevoOblea").value || null,
+            marca: document.getElementById("nuevoMarca").value.trim().toUpperCase() || null,
+            tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase() || null,
+            agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase() || null,
+            capacidad: document.getElementById("nuevoCapacidad").value.trim() || null,
+            ano_fab: valAnoFab ? parseInt(valAnoFab, 10) : null,
+            vto_prueb_hidr: formatearFechaSQL(document.getElementById("nuevoVencPH").value),
+            vto_carga: formatearFechaSQL(document.getElementById("nuevoVencCarga").value),
+            identificacion_puesto: valPuesto ? parseInt(valPuesto, 10) : null,
+            ubicacion: document.getElementById("nuevoUbicacion").value.trim() || null
+        };
     }
 
     async function eliminarExtintor() {
@@ -1298,14 +1216,14 @@
         cerrarSugerenciasUbicaciones();
 
         enModoRecarga = false;
-        hayCambiosSinGuardar = false;
         let contenedor = document.getElementById("contenedorPrincipal");
-        contenedor.classList.remove("modo-existente", "modo-recarga", "modo-cambios-pendientes");
+        contenedor.classList.remove("modo-existente");
+        contenedor.classList.remove("modo-recarga");
         document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
         
         let btn = document.getElementById("btnGuardar");
         btn.textContent = "💾 Guardar / Actualizar";
-        btn.classList.remove("existente-btn", "success");
+        btn.classList.remove("existente-btn");
         
         verificarExtintorNuevo();
         verificarDpsNuevo();
