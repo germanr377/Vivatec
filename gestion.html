@@ -689,6 +689,23 @@
         btn.classList.add("existente-btn");
     }
 
+    function aplicarDatosEnInputs(ex) {
+        document.getElementById("registroId").value = ex.id ?? "";
+        document.getElementById("nuevoCliente").value = ex.cliente || "";
+        document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
+        document.getElementById("nuevoDps").value = ex.numero_dps || "";
+        document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
+        document.getElementById("nuevoMarca").value = ex.marca || "";
+        document.getElementById("nuevoTipo").value = ex.tipo || "";
+        document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
+        document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
+        document.getElementById("nuevoAFabricacion").value = ex.ano_fab ?? "";
+        document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
+        document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
+        document.getElementById("nuevoPuesto").value = ex.identificacion_puesto ?? "";
+        document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+    }
+
     async function aplicarRecarga() {
         let ahora = new Date();
         let anioCarga = ahora.getFullYear() + 1;
@@ -898,32 +915,18 @@
     function cargarDatosEnFormulario(ex) {
         ocultarAvisoDuplicado();
         cerrarSugerenciasUbicaciones();
-        document.getElementById("registroId").value = ex.id;
-        document.getElementById("nuevoCliente").value = ex.cliente || "";
-        document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
-        document.getElementById("nuevoDps").value = ex.numero_dps || "";
-        document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
-        document.getElementById("nuevoMarca").value = ex.marca || "";
-        document.getElementById("nuevoTipo").value = ex.tipo || "";
-        document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
-        document.getElementById("nuevoCapacidad").value = ex.capacidad || "";
-        document.getElementById("nuevoAFabricacion").value = ex.ano_fab || "";
-        document.getElementById("nuevoVencPH").value = formatearFechaWeb(ex.vto_prueb_hidr);
-        document.getElementById("nuevoVencCarga").value = formatearFechaWeb(ex.vto_carga);
-        document.getElementById("nuevoPuesto").value = ex.identificacion_puesto || "";
-        document.getElementById("nuevoUbicacion").value = ex.ubicacion || "";
+        aplicarDatosEnInputs(ex);
 
         registroOriginalCargado = {};
         CAMPOS_HISTORIAL.forEach(campo => {
             registroOriginalCargado[campo] = ex[campo] ?? null;
         });
 
-        ultimaConsultaDuplicado = `${ex.cliente || ""}|${ex.extintor_numero || ""}|${ex.numero_dps || ""}`;
-
         activarEstilosModoExistente();
 
         verificarExtintorNuevo();
         verificarDpsNuevo();
+        ultimaConsultaDuplicado = `${ex.cliente || ""}|${ex.extintor_numero || ""}|${ex.numero_dps || ""}`;
     }
 
     function mostrarAvisoDuplicado(texto) {
@@ -939,6 +942,9 @@
     }
 
     async function verificarDuplicado() {
+        if (guardandoEnCurso) return;
+
+        let idActualCargado = document.getElementById("registroId").value.trim();
         let clienteActual = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let dpsNum = document.getElementById("nuevoDps").value.trim();
@@ -948,7 +954,7 @@
             return;
         }
 
-        const claveActual = `${clienteActual}|${extintorNum}|${dpsNum}`;
+        const claveActual = `${idActualCargado}|${clienteActual}|${extintorNum}|${dpsNum}`;
         if (claveActual === ultimaConsultaDuplicado) return;
         ultimaConsultaDuplicado = claveActual;
 
@@ -961,7 +967,31 @@
             const { data, error } = await query;
             if (error) throw error;
 
+            // Si mientras consultaba se inició un guardado o cambió el input, no pisar pantalla
+            if (guardandoEnCurso) return;
+            if (
+                document.getElementById("nuevoExtintor").value.trim() !== extintorNum ||
+                document.getElementById("nuevoDps").value.trim() !== dpsNum
+            ) {
+                return;
+            }
+
             if (data && data.length > 0) {
+                // Si ya estamos editando un registro existente, no reemplazar sus inputs al modificar DPS o N° Extintor
+                if (idActualCargado) {
+                    const otroClienteMismoNumero = data.find(item =>
+                        String(item.id) !== String(idActualCargado) &&
+                        item.cliente &&
+                        item.cliente !== clienteActual
+                    );
+                    if (otroClienteMismoNumero && clienteActual) {
+                        mostrarAvisoDuplicado(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroClienteMismoNumero.cliente}". Podés guardarlo igual ya que es de otro cliente.`);
+                    } else {
+                        ocultarAvisoDuplicado();
+                    }
+                    return;
+                }
+
                 let matchMismoCliente = data.find(item => item.cliente && item.cliente === clienteActual);
 
                 if (matchMismoCliente) {
@@ -985,8 +1015,6 @@
 
     async function guardarOActualizar(opciones = {}) {
         if (guardandoEnCurso) return;
-
-        const mantenerEnPantalla = Boolean(opciones.mantenerEnPantalla);
 
         let clienteIngresado = document.getElementById("nuevoCliente").value.trim();
         let cliente = obtenerClienteOficialValido(clienteIngresado);
@@ -1050,33 +1078,38 @@
                 return;
             }
 
-            if (resultado.data && resultado.data.id) {
-                idAfectado = resultado.data.id;
+            const registroGuardado = resultado.data ? { ...datosRegistro, ...resultado.data } : { ...datosRegistro, id: idAfectado };
+
+            if (registroGuardado.id) {
+                idAfectado = registroGuardado.id;
                 document.getElementById("registroId").value = idAfectado;
             }
 
-            const debeRegistrarHistorial = !idExistente || eraRecarga || huboCambiosEnCampos(registroOriginalCargado, datosRegistro);
+            const debeRegistrarHistorial = !idExistente || eraRecarga || huboCambiosEnCampos(registroOriginalCargado, registroGuardado);
 
             if (debeRegistrarHistorial && idAfectado) {
-                const histRes = await registrarEnHistorialRevisiones(idAfectado, datosRegistro, accionHistorial);
+                const histRes = await registrarEnHistorialRevisiones(idAfectado, registroGuardado, accionHistorial);
                 if (histRes.error) {
                     console.error("Error al guardar en historial_revisiones:", histRes.error);
                     alert("⚠️ El extintor se guardó, pero hubo un error al registrar en historial_revisiones.");
                 }
             }
 
+            // Sincroniza en pantalla los valores ya persistidos (incluido el nuevo numero_dps)
+            aplicarDatosEnInputs(registroGuardado);
+
             registroOriginalCargado = {};
             CAMPOS_HISTORIAL.forEach(campo => {
-                registroOriginalCargado[campo] = datosRegistro[campo] ?? null;
+                registroOriginalCargado[campo] = registroGuardado[campo] ?? null;
             });
 
-            ultimaConsultaDuplicado = `${datosRegistro.cliente || ""}|${datosRegistro.extintor_numero || ""}|${datosRegistro.numero_dps || ""}`;
             enModoRecarga = false;
 
             ocultarAvisoDuplicado();
             await cargarListasGlobales();
             verificarExtintorNuevo();
             verificarDpsNuevo();
+            ultimaConsultaDuplicado = `${registroGuardado.id || ""}|${registroGuardado.cliente || ""}|${registroGuardado.extintor_numero || ""}|${registroGuardado.numero_dps || ""}`;
 
             const btn = document.getElementById("btnGuardar");
             btn.innerHTML = eraRecarga ? "⚡ ¡Recarga Guardada!" : "✅ ¡Guardado!";
@@ -1085,7 +1118,6 @@
 
             setTimeout(() => {
                 btn.classList.remove("success");
-                // Mantiene los datos y el ID en pantalla para poder imprimir o seguir operando
                 activarEstilosModoExistente();
             }, 1500);
         } finally {
