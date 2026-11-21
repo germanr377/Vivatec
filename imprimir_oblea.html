@@ -83,7 +83,7 @@
             position: relative;
             overflow: visible;
             box-sizing: border-box;
-            padding: 12px;
+            padding: 0;
         }
 
         .marco-hoja-preview.desborda {
@@ -118,10 +118,11 @@
         /* Contenedor de la Oblea (Uso Gral) */
         .oblea-container {
             width: 100%;
+            height: 100%;
             border: 2px dashed #27ae60;
             background: rgba(255, 255, 255, 0.94);
             margin: 0;
-            padding: 12px;
+            padding: 3cm 8px 8px 8px;
             box-sizing: border-box;
             position: relative;
             font-size: 12px;
@@ -139,28 +140,51 @@
         }
 
         .header-oblea {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            right: 8px;
             text-align: center;
             font-weight: bold;
-            font-size: 13px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 5px;
-            margin-bottom: 8px;
+            font-size: 12px;
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 4px;
         }
 
-        /* LÍNEA 1 */
+        /* LÍNEA 1: distancia reducida entre campos */
         .linea-uno {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: flex-start;
+            gap: 10px;
             font-weight: bold;
             font-size: 12px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 6px;
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 5px;
         }
 
         .campo-item {
             text-align: center;
-            flex: 1;
+            flex: 0 1 auto;
+            min-width: 52px;
+            padding: 0 2px;
+        }
+
+        .campo-extintor {
+            text-align: left;
+            padding-left: 2px;
+            min-width: 66px;
+        }
+
+        /* RENGLÓN 2: 8 mm debajo del primer renglón */
+        .linea-vivatec {
+            margin-top: 8mm;
+            font-size: 15px;
+            font-weight: bold;
+            color: #000;
+            letter-spacing: 0.4px;
+            display: inline-block;
+            padding-left: 2px;
         }
 
         /* Etiquetas guía que SOLO se ven en pantalla para orientar */
@@ -244,7 +268,7 @@
                 box-sizing: border-box !important;
                 border: none !important; 
                 margin: 0 !important; 
-                padding: 0 !important; 
+                padding: 3cm 8px 8px 8px !important; 
                 width: 16.6cm !important;
                 height: 9.5cm !important;
                 max-width: 16.6cm !important;
@@ -264,7 +288,17 @@
                 background: transparent !important;
             }
             
-            .linea-uno { border-bottom: none; }
+            .linea-uno {
+                border-bottom: none;
+                gap: 10px;
+                padding-bottom: 0;
+            }
+            .linea-vivatec {
+                margin-top: 8mm !important;
+                font-size: 15px !important;
+                font-weight: bold !important;
+                color: #000 !important;
+            }
             .bloque-vencimiento-caja { border: none; background: transparent !important; padding: 0; }
             .vencimiento-titulo { border-bottom: none; }
             .venc-caja { border: none; background: transparent !important; padding: 0 2px; }
@@ -329,7 +363,7 @@
             <!-- LÍNEA 1 -->
             <div class="linea-uno">
                 <!-- Columna 1: Extintor N° + Vencimiento justo abajo -->
-                <div class="campo-item" style="text-align: left; padding-left: 5px;">
+                <div class="campo-item campo-extintor">
                     <span class="etiqueta-guia">Extintor N°</span>
                     <span id="lblExtintor" class="valor-dato">-</span>
 
@@ -374,6 +408,9 @@
                     <span id="lblAgente" class="valor-dato">-</span>
                 </div>
             </div>
+
+            <!-- RENGLÓN 2: 8 mm debajo del primer renglón -->
+            <div id="lineaVivatec" class="linea-vivatec">VIVATEC 382</div>
         </div>
     </div>
 </div>
@@ -407,14 +444,13 @@
         const oblea = document.getElementById("obleaCard");
         const estado = document.getElementById("estadoMargen");
         const bloqueVto = document.getElementById("bloqueVencimiento");
+        const lineaVivatec = document.getElementById("lineaVivatec");
         if (!marco || !oblea || !estado) return;
 
         const offsetX = parseFloat(document.getElementById("sliderOffsetX").value) || 0;
         const offsetY = parseFloat(document.getElementById("sliderOffsetY").value) || 0;
         const rotacion = document.getElementById("selectRotacion").value || "90deg";
 
-        // Aplicamos una previsualización visual de X e Y sobre la oblea en pantalla
-        // (1 mm ≈ 3.7795 px a 96 dpi)
         const pxPorMm = 96 / 25.4;
         const dx = offsetX * pxPorMm;
         const dy = offsetY * pxPorMm;
@@ -424,34 +460,35 @@
         const rectOblea = oblea.getBoundingClientRect();
 
         const ladosFuera = [];
-        const tol = 1; // tolerancia de 1px por redondeo de subpíxeles
+        const tol = 1;
 
         if (rectOblea.left < rectMarco.left - tol) ladosFuera.push("izquierda");
         if (rectOblea.right > rectMarco.right + tol) ladosFuera.push("derecha");
         if (rectOblea.top < rectMarco.top - tol) ladosFuera.push("arriba");
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
-        let vtoFuera = false;
-        if (bloqueVto) {
-            const rectVto = bloqueVto.getBoundingClientRect();
-            const vtoSale = (
-                rectVto.left < rectMarco.left - tol ||
-                rectVto.right > rectMarco.right + tol ||
-                rectVto.top < rectMarco.top - tol ||
-                rectVto.bottom > rectMarco.bottom + tol
+        let elementoFuera = false;
+        [bloqueVto, lineaVivatec].forEach(el => {
+            if (!el) return;
+            const rectEl = el.getBoundingClientRect();
+            const sale = (
+                rectEl.left < rectMarco.left - tol ||
+                rectEl.right > rectMarco.right + tol ||
+                rectEl.top < rectMarco.top - tol ||
+                rectEl.bottom > rectMarco.bottom + tol
             );
-            bloqueVto.classList.toggle("elemento-desbordado", vtoSale);
-            vtoFuera = vtoSale;
-        }
+            el.classList.toggle("elemento-desbordado", sale);
+            if (sale) elementoFuera = true;
+        });
 
-        const hayDesborde = ladosFuera.length > 0 || vtoFuera;
+        const hayDesborde = ladosFuera.length > 0 || elementoFuera;
 
         marco.classList.toggle("desborda", hayDesborde);
         oblea.classList.toggle("fuera-margen", hayDesborde);
         estado.classList.toggle("fuera", hayDesborde);
 
         if (hayDesborde) {
-            const detalle = ladosFuera.length > 0 ? ladosFuera.join(", ") : "bloque de vencimiento";
+            const detalle = ladosFuera.length > 0 ? ladosFuera.join(", ") : "renglón/bloque interno";
             estado.innerHTML = `⚠️ Se sale del área de impresión (16,6 × 9,5 cm) por: <strong>${detalle}</strong> · Giro impreso: <strong>${rotacion}</strong>.`;
         } else {
             estado.innerHTML = `✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm) · Giro impreso: <strong>${rotacion}</strong>.`;
