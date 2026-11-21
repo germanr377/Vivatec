@@ -176,15 +176,16 @@
             min-width: 66px;
         }
 
-        /* RENGLÓN 2: 8 mm debajo del primer renglón */
+        /* RENGLÓN VIVATEC 382: 2 cm del margen izquierdo y 5,6 cm del margen inferior */
         .linea-vivatec {
-            margin-top: 8mm;
+            position: absolute;
+            left: 2cm;
+            bottom: 5.6cm;
             font-size: 15px;
             font-weight: bold;
             color: #000;
             letter-spacing: 0.4px;
-            display: inline-block;
-            padding-left: 2px;
+            white-space: nowrap;
         }
 
         /* Etiquetas guía que SOLO se ven en pantalla para orientar */
@@ -294,7 +295,9 @@
                 padding-bottom: 0;
             }
             .linea-vivatec {
-                margin-top: 8mm !important;
+                position: absolute !important;
+                left: 2cm !important;
+                bottom: 5.6cm !important;
                 font-size: 15px !important;
                 font-weight: bold !important;
                 color: #000 !important;
@@ -409,7 +412,7 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 2: 8 mm debajo del primer renglón -->
+            <!-- RENGLÓN VIVATEC 382: 2 cm del margen izquierdo y 5,6 cm del margen inferior -->
             <div id="lineaVivatec" class="linea-vivatec">VIVATEC 382</div>
         </div>
     </div>
