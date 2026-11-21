@@ -710,8 +710,8 @@
     }
 
     function imprimirOblea() {
-        let id = document.getElementById("registroId").value;
-        let tipoOblea = document.getElementById("nuevoOblea").value.trim();
+        const id = document.getElementById("registroId").value.trim();
+        const tipoOblea = document.getElementById("nuevoOblea").value.trim();
 
         if (!id) {
             alert("⚠️ Primero debés buscar, cargar o guardar un extintor para poder imprimir su oblea.");
@@ -724,7 +724,28 @@
             return;
         }
 
-        window.location.href = `imprimir_oblea.html?id=${id}`;
+        const camposRequeridos = [
+            { idInput: "nuevoExtintor", nombre: "Extintor N°" },
+            { idInput: "nuevoAFabricacion", nombre: "Año Fabricación" },
+            { idInput: "nuevoVencPH", nombre: "Venc. P.H." },
+            { idInput: "nuevoCapacidad", nombre: "Capacidad" },
+            { idInput: "nuevoAgente", nombre: "Agente Extintor" }
+        ];
+
+        const faltantes = camposRequeridos
+            .filter(campo => !document.getElementById(campo.idInput).value.trim())
+            .map(campo => campo.nombre);
+
+        if (faltantes.length > 0) {
+            alert(`⚠️ Para imprimir la oblea debés completar los siguientes datos obligatorios:\n- ${faltantes.join("\n- ")}`);
+            const primerFaltante = camposRequeridos.find(campo => !document.getElementById(campo.idInput).value.trim());
+            if (primerFaltante) {
+                document.getElementById(primerFaltante.idInput).focus();
+            }
+            return;
+        }
+
+        window.location.href = `imprimir_oblea.html?id=${encodeURIComponent(id)}`;
     }
 
     function verificarExtintorNuevo() {
