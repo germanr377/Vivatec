@@ -31,7 +31,7 @@
         .modo-recarga { border-color: #fbc02d !important; background-color: #fff176 !important; }
         .modo-recarga .oblea-header { color: #7d6608; border-bottom-color: #fbc02d; }
 
-        /* Predictivo de clientes */
+        /* Predictivo de clientes y ubicaciones */
         .sugerencias-lista {
             position: absolute;
             top: 100%;
@@ -187,7 +187,8 @@
             </div>
             <div class="form-group" style="flex: 1;">
                 <label>Ubicación:</label>
-                <input type="text" id="nuevoUbicacion">
+                <input type="text" id="nuevoUbicacion" autocomplete="off">
+                <div id="sugerenciasUbicaciones" class="sugerencias-lista"></div>
             </div>
         </div>
 
@@ -228,6 +229,10 @@
     let sugerenciasFiltradas = [];
     let indiceSugerenciaActiva = 0;
 
+    let sugerenciasUbicacion = [];
+    let indiceUbicacionActiva = 0;
+    let timerPredictivoUbicacion = null;
+
     let listaExtintoresExistentes = [];
     let listaDpsExistentes = [];
     let enModoRecarga = false;
@@ -243,6 +248,7 @@
         }
 
         configurarPredictivoClientes();
+        configurarPredictivoUbicaciones();
         configurarBusquedaPorEnter();
         await cargarClientesEnPredictivo();
         await cargarListasGlobales();
@@ -290,6 +296,177 @@
                 }
             });
         });
+    }
+
+    // PREDICTIVO EN BASE DE DATOS PARA UBICACIÓN
+    function configurarPredictivoUbicaciones() {
+        const input = document.getElementById("nuevoUbicacion");
+        const listaDiv = document.getElementById("sugerenciasUbicaciones");
+        if (!input || !listaDiv) return;
+
+        input.addEventListener("input", () => {
+            clearTimeout(timerPredictivoUbicacion);
+            const texto = input.value;
+            timerPredictivoUbicacion = setTimeout(() => {
+                consultarSugerenciasUbicacion(texto);
+            }, 180);
+        });
+
+        input.addEventListener("focus", () => {
+            if (input.value.trim() !== "") {
+                consultarSugerenciasUbicacion(input.value);
+            }
+        });
+
+        input.addEventListener("keydown", async (e) => {
+            const visible = listaDiv.style.display === "block";
+
+            if (e.key === "ArrowDown" && visible && sugerenciasUbicacion.length > 0) {
+                e.preventDefault();
+                indiceUbicacionActiva = (indiceUbicacionActiva + 1) % sugerenciasUbicacion.length;
+                actualizarResaltadoUbicacion();
+            } else if (e.key === "ArrowUp" && visible && sugerenciasUbicacion.length > 0) {
+                e.preventDefault();
+                indiceUbicacionActiva = (indiceUbicacionActiva - 1 + sugerenciasUbicacion.length) % sugerenciasUbicacion.length;
+                actualizarResaltadoUbicacion();
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                clearTimeout(timerPredictivoUbicacion);
+
+                if (visible && sugerenciasUbicacion.length > 0) {
+                    const elegida = sugerenciasUbicacion[indiceUbicacionActiva] || sugerenciasUbicacion[0];
+                    input.value = elegida.ubicacion;
+                    cerrarSugerenciasUbicaciones();
+                    await buscarExtintor();
+                } else if (input.value.trim() !== "") {
+                    const resultados = await buscarSugerenciasUbicacionBD(input.value.trim());
+                    cerrarSugerenciasUbicaciones();
+                    if (resultados.length > 0) {
+                        input.value = resultados[0].ubicacion;
+                    }
+                    await buscarExtintor();
+                }
+            } else if (e.key === "Escape") {
+                cerrarSugerenciasUbicaciones();
+            }
+        });
+
+        input.addEventListener("blur", () => {
+            setTimeout(() => {
+                cerrarSugerenciasUbicaciones();
+            }, 150);
+        });
+    }
+
+    async function buscarSugerenciasUbicacionBD(texto) {
+        const filtro = (texto || "").trim();
+        if (!filtro) return [];
+
+        const clienteFiltro = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value)
+            || document.getElementById("nuevoCliente").value.trim();
+
+        let query = _supabase
+            .from('extintores')
+            .select('ubicacion, cliente, extintor_numero')
+            .ilike('ubicacion', `%${filtro}%`)
+            .limit(30);
+
+        if (clienteFiltro) {
+            query = query.eq('cliente', clienteFiltro);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+            console.error("Error al consultar ubicaciones:", error);
+            return [];
+        }
+
+        const mapaUnicos = new Map();
+        const lowerFiltro = filtro.toLowerCase();
+
+        (data || []).forEach(row => {
+            const ub = row.ubicacion ? String(row.ubicacion).trim() : "";
+            if (!ub) return;
+            const key = ub.toLowerCase();
+            if (!mapaUnicos.has(key)) {
+                mapaUnicos.set(key, {
+                    ubicacion: ub,
+                    cliente: row.cliente ? String(row.cliente).trim() : "",
+                    extintor: row.extintor_numero ? String(row.extintor_numero).trim() : ""
+                });
+            }
+        });
+
+        const lista = Array.from(mapaUnicos.values());
+        lista.sort((a, b) => {
+            const aStarts = a.ubicacion.toLowerCase().startsWith(lowerFiltro) ? 0 : 1;
+            const bStarts = b.ubicacion.toLowerCase().startsWith(lowerFiltro) ? 0 : 1;
+            if (aStarts !== bStarts) return aStarts - bStarts;
+            return a.ubicacion.localeCompare(b.ubicacion, 'es');
+        });
+
+        return lista.slice(0, 15);
+    }
+
+    async function consultarSugerenciasUbicacion(texto) {
+        const listaDiv = document.getElementById("sugerenciasUbicaciones");
+        const input = document.getElementById("nuevoUbicacion");
+        if (!listaDiv || !input) return;
+
+        if (!(texto || "").trim()) {
+            cerrarSugerenciasUbicaciones();
+            return;
+        }
+
+        const resultados = await buscarSugerenciasUbicacionBD(texto);
+        if (input.value.trim() !== (texto || "").trim()) return;
+
+        sugerenciasUbicacion = resultados;
+        indiceUbicacionActiva = 0;
+
+        if (sugerenciasUbicacion.length === 0) {
+            cerrarSugerenciasUbicaciones();
+            return;
+        }
+
+        listaDiv.innerHTML = "";
+        sugerenciasUbicacion.forEach((item, idx) => {
+            const div = document.createElement("div");
+            div.className = "sugerencia-item" + (idx === 0 ? " activa" : "");
+            const detalle = [
+                item.cliente ? `Cliente: ${item.cliente}` : "",
+                item.extintor ? `Ext. #${item.extintor}` : ""
+            ].filter(Boolean).join(" · ");
+
+            div.innerHTML = `${item.ubicacion}` + (detalle ? ` <span class="sugerencia-sub">(${detalle})</span>` : "");
+            div.addEventListener("mousedown", async (e) => {
+                e.preventDefault();
+                input.value = item.ubicacion;
+                cerrarSugerenciasUbicaciones();
+                await buscarExtintor();
+            });
+            listaDiv.appendChild(div);
+        });
+
+        listaDiv.style.display = "block";
+    }
+
+    function actualizarResaltadoUbicacion() {
+        const items = document.querySelectorAll("#sugerenciasUbicaciones .sugerencia-item");
+        items.forEach((el, idx) => {
+            el.classList.toggle("activa", idx === indiceUbicacionActiva);
+            if (idx === indiceUbicacionActiva) {
+                el.scrollIntoView({ block: "nearest" });
+            }
+        });
+    }
+
+    function cerrarSugerenciasUbicaciones() {
+        const listaDiv = document.getElementById("sugerenciasUbicaciones");
+        if (!listaDiv) return;
+        listaDiv.style.display = "none";
+        sugerenciasUbicacion = [];
+        indiceUbicacionActiva = 0;
     }
 
     // LLENAR EL LISTADO PREDICTIVO EXCLUSIVAMENTE CON LA TABLA CLIENTES
@@ -618,12 +795,16 @@
     }
 
     async function buscarExtintor() {
+        cerrarSugerenciasUbicaciones();
+        cerrarSugerenciasClientes();
+
         let extintorNum = document.getElementById("nuevoExtintor").value.trim();
         let dpsNum = document.getElementById("nuevoDps").value.trim();
+        let ubicacionTexto = document.getElementById("nuevoUbicacion").value.trim();
         let clienteFiltro = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
 
-        if (!extintorNum && !dpsNum) {
-            alert("Por favor, ingresá al menos un N° de Extintor o N° de DPS para buscar.");
+        if (!extintorNum && !dpsNum && !ubicacionTexto) {
+            alert("Por favor, ingresá al menos un N° de Extintor, N° de DPS o Ubicación para buscar.");
             return;
         }
 
@@ -631,6 +812,7 @@
             let query = _supabase.from('extintores').select('*');
             if (extintorNum) query = query.eq('extintor_numero', extintorNum);
             if (dpsNum) query = query.eq('numero_dps', dpsNum);
+            if (ubicacionTexto) query = query.ilike('ubicacion', `%${ubicacionTexto}%`);
             if (clienteFiltro) query = query.eq('cliente', clienteFiltro);
 
             const { data, error } = await query;
@@ -643,13 +825,13 @@
 
             let registroACargar = data[0];
 
-            if (data.length > 1 && !clienteFiltro) {
-                let mensaje = "Se encontraron varios registros con ese número. Elegí el cliente:\n";
+            if (data.length > 1) {
+                let mensaje = "Se encontraron varios registros. Elegí uno:\n";
                 data.forEach((item, index) => {
-                    mensaje += `[${index + 1}] Cliente: ${item.cliente} (Extintor: ${item.extintor_numero}, DPS: ${item.numero_dps || '-'})\n`;
+                    mensaje += `[${index + 1}] Cliente: ${item.cliente} | Ext: ${item.extintor_numero || '-'} | DPS: ${item.numero_dps || '-'} | Ubicación: ${item.ubicacion || '-'}\n`;
                 });
                 let seleccion = prompt(mensaje + "\nIngresá el número de opción:");
-                let idx = parseInt(seleccion) - 1;
+                let idx = parseInt(seleccion, 10) - 1;
                 if (isNaN(idx) || !data[idx]) {
                     alert("Selección inválida.");
                     return;
@@ -667,6 +849,7 @@
 
     function cargarDatosEnFormulario(ex) {
         ocultarAvisoDuplicado();
+        cerrarSugerenciasUbicaciones();
         document.getElementById("registroId").value = ex.id;
         document.getElementById("nuevoCliente").value = ex.cliente || "";
         document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
@@ -930,6 +1113,7 @@
         ultimaConsultaDuplicado = "";
         ocultarAvisoDuplicado();
         cerrarSugerenciasClientes();
+        cerrarSugerenciasUbicaciones();
 
         enModoRecarga = false;
         let contenedor = document.getElementById("contenedorPrincipal");
