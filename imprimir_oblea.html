@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @page {
-            size: 16.6cm 9.5cm;
+            size: 9.5cm 16.6cm;
             margin: 0;
         }
 
@@ -109,11 +109,11 @@
             border-right: none; 
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN (16.6cm x 9.5cm, rota 90 grados y oculta guías) */
+        /* CONFIGURACIÓN DE IMPRESIÓN (9.5cm x 16.6cm, rota 90 grados y oculta guías) */
         @media print {
             html, body {
-                width: 16.6cm;
-                height: 9.5cm;
+                width: 9.5cm;
+                height: 16.6cm;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #fff !important;
@@ -126,7 +126,7 @@
                 border: none; 
                 margin: 0; 
                 padding: 0; 
-                width: 9.5cm; 
+                width: 16.6cm; 
                 box-shadow: none; 
                 background: transparent !important; 
                 transform: rotate(90deg);
@@ -147,7 +147,7 @@
 <body>
 
 <div class="control-panel no-print">
-    <h3>🖨️ Calibración Oblea - Uso Gral (16,6 × 9,5 cm)</h3>
+    <h3>🖨️ Calibración Oblea - Uso Gral (9,5 × 16,6 cm)</h3>
     <div style="margin-bottom: 12px;">
         <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
         <input type="range" id="sliderDistancia" min="0" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
