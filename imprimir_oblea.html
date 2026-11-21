@@ -11,16 +11,39 @@
             margin: 0;
         }
 
+        :root {
+            --print-rotacion: 90deg;
+            --print-offset-x: 0mm;
+            --print-offset-y: 0mm;
+            --print-left: 9.5cm;
+        }
+
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
         
         /* Panel de control superior (solo visible en pantalla) */
-        .control-panel { max-width: 500px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
-        .control-panel label { font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px; color: #333; }
+        .control-panel { max-width: 540px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
+        .control-panel label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
         .control-panel input[type="range"] { width: 100%; cursor: pointer; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; text-align: left; }
+        .control-box { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 8px 10px; }
+        .control-box select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; }
+        .nota-impresion {
+            background: #eef6fc;
+            border-left: 4px solid #2980b9;
+            color: #1f4e78;
+            padding: 9px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: left;
+            margin-bottom: 12px;
+            line-height: 1.45;
+        }
         .btn-accion { background: #2980b9; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; margin: 5px; }
         .btn-accion:hover { background: #1f618d; }
         .btn-volver { background: #7f8c8d; }
         .btn-volver:hover { background: #626567; }
+        .btn-reset { background: #d35400; }
+        .btn-reset:hover { background: #a04000; }
 
         /* Contenedor de la Oblea (Uso Gral) */
         .oblea-container {
@@ -130,11 +153,11 @@
                 max-height: 9.5cm !important;
                 box-shadow: none !important; 
                 background: transparent !important; 
-                transform: rotate(90deg) !important;
+                transform: translate(var(--print-offset-x), var(--print-offset-y)) rotate(var(--print-rotacion)) !important;
                 transform-origin: top left !important;
                 position: fixed !important;
                 top: 0 !important;
-                left: 9.5cm !important;
+                left: var(--print-left) !important;
                 overflow: hidden !important;
             }
             
@@ -150,12 +173,39 @@
 
 <div class="control-panel no-print">
     <h3>🖨️ Calibración Oblea - Uso Gral (16,6 × 9,5 cm)</h3>
-    <div style="margin-bottom: 12px;">
+
+    <div class="nota-impresion">
+        <strong>Al imprimir:</strong> configurá <strong>Márgenes: Ninguno</strong> y <strong>Escala: 100%</strong>. Si la vista previa o la impresora muestran A4, revisá el tamaño de papel (<strong>16,6 × 9,5 cm</strong>) en las preferencias de la impresora.
+    </div>
+
+    <div style="margin-bottom: 12px; text-align: left;" class="control-box">
         <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
         <input type="range" id="sliderDistancia" min="0" max="150" value="30" oninput="cambiarDistanciaA(this.value)">
     </div>
+
+    <div class="control-grid">
+        <div class="control-box">
+            <label for="selectRotacion">Rotación al imprimir:</label>
+            <select id="selectRotacion" onchange="cambiarRotacionImpresion(this.value)">
+                <option value="90deg" selected>90° (Horario)</option>
+                <option value="0deg">0° (Sin rotar)</option>
+                <option value="-90deg">-90° (Antihorario)</option>
+                <option value="180deg">180°</option>
+            </select>
+        </div>
+        <div class="control-box">
+            <label for="sliderOffsetX">Ajuste horizontal X: <span id="valOffsetX">0</span> mm</label>
+            <input type="range" id="sliderOffsetX" min="-30" max="30" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
+        </div>
+        <div class="control-box" style="grid-column: 1 / -1;">
+            <label for="sliderOffsetY">Ajuste vertical Y: <span id="valOffsetY">0</span> mm</label>
+            <input type="range" id="sliderOffsetY" min="-30" max="30" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
+        </div>
+    </div>
+
     <div>
         <button class="btn-accion" onclick="window.print()">🖨️ Imprimir Oblea</button>
+        <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear Ajuste</button>
         <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Volver a Gestión</button>
     </div>
 </div>
@@ -219,27 +269,101 @@
     const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const STORAGE_DISTANCIA_KEY = "vivatec_oblea_distancia_a";
+    const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
+    const STORAGE_OFFSET_X_KEY = "vivatec_oblea_offset_x";
+    const STORAGE_OFFSET_Y_KEY = "vivatec_oblea_offset_y";
+
+    function guardarStorage(clave, valor) {
+        try {
+            localStorage.setItem(clave, String(valor));
+        } catch (e) {}
+    }
+
+    function leerStorage(clave) {
+        try {
+            return localStorage.getItem(clave);
+        } catch (e) {
+            return null;
+        }
+    }
 
     function cambiarDistanciaA(valor) {
         const num = parseInt(valor, 10) || 0;
         document.getElementById("valDistancia").textContent = num;
         document.getElementById("espacioA").style.marginTop = num + "px";
-        try {
-            localStorage.setItem(STORAGE_DISTANCIA_KEY, String(num));
-        } catch (e) {}
+        guardarStorage(STORAGE_DISTANCIA_KEY, num);
     }
 
-    function cargarDistanciaGuardada() {
-        try {
-            const guardada = localStorage.getItem(STORAGE_DISTANCIA_KEY);
-            if (guardada !== null) {
-                const slider = document.getElementById("sliderDistancia");
-                slider.value = guardada;
-                document.getElementById("valDistancia").textContent = guardada;
-                document.getElementById("espacioA").style.marginTop = guardada + "px";
-            }
-        } catch (e) {}
+    function aplicarRotacion(rotacion) {
+        const permitidas = ["90deg", "0deg", "-90deg", "180deg"];
+        const rot = permitidas.includes(rotacion) ? rotacion : "90deg";
+        const rootStyle = document.documentElement.style;
+
+        rootStyle.setProperty("--print-rotacion", rot);
+        if (rot === "90deg") {
+            rootStyle.setProperty("--print-left", "9.5cm");
+        } else if (rot === "-90deg") {
+            rootStyle.setProperty("--print-left", "0cm");
+        } else {
+            rootStyle.setProperty("--print-left", "0cm");
+        }
+    }
+
+    function cambiarRotacionImpresion(rotacion) {
+        aplicarRotacion(rotacion);
+        guardarStorage(STORAGE_ROTACION_KEY, rotacion);
+    }
+
+    function aplicarOffset(x, y) {
+        const numX = parseFloat(x) || 0;
+        const numY = parseFloat(y) || 0;
+        document.getElementById("valOffsetX").textContent = numX;
+        document.getElementById("valOffsetY").textContent = numY;
+        document.documentElement.style.setProperty("--print-offset-x", `${numX}mm`);
+        document.documentElement.style.setProperty("--print-offset-y", `${numY}mm`);
+    }
+
+    function cambiarOffsetImpresion() {
+        const x = parseFloat(document.getElementById("sliderOffsetX").value) || 0;
+        const y = parseFloat(document.getElementById("sliderOffsetY").value) || 0;
+        aplicOffset(x, y);
+        guardarStorage(STORAGE_OFFSET_X_KEY, x);
+        guardarStorage(STORAGE_OFFSET_Y_KEY, y);
+    }
+
+    function resetearCalibracion() {
+        document.getElementById("sliderDistancia").value = 30;
+        cambiarDistanciaA(30);
+
+        document.getElementById("selectRotacion").value = "90deg";
+        cambiarRotacionImpresion("90deg");
+
+        document.getElementById("sliderOffsetX").value = 0;
+        document.getElementById("sliderOffsetY").value = 0;
+        aplicOffset(0, 0);
+        guardarStorage(STORAGE_OFFSET_X_KEY, 0);
+        guardarStorage(STORAGE_OFFSET_Y_KEY, 0);
+    }
+
+    function cargarCalibracionGuardada() {
+        const distGuardada = leerStorage(STORAGE_DISTANCIA_KEY);
+        if (distGuardada !== null) {
+            document.getElementById("sliderDistancia").value = distGuardada;
+            document.getElementById("valDistancia").textContent = distGuardada;
+            document.getElementById("espacioA").style.marginTop = distGuardada + "px";
+        }
+
+        const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
+        document.getElementById("selectRotacion").value = rotGuardada;
+        aplicarRotacion(rotGuardada);
+
+        const xGuardado = parseFloat(leerStorage(STORAGE_OFFSET_X_KEY)) || 0;
+        const yGuardado = parseFloat(leerStorage(STORAGE_OFFSET_Y_KEY)) || 0;
+        document.getElementById("sliderOffsetX").value = xGuardado;
+        document.getElementById("sliderOffsetY").value = yGuardado;
+        aplicOffset(xGuardado, yGuardado);
     }
 
     function formatearCapacidad(cap) {
@@ -250,7 +374,7 @@
     }
 
     window.addEventListener("load", async function() {
-        cargarDistanciaGuardada();
+        cargarCalibracionGuardada();
 
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
