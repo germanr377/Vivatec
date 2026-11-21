@@ -201,7 +201,7 @@
             <button class="btn-base btn-buscar" onclick="buscarExtintor()">🔍 Buscar</button>
             <button class="btn-base btn-recarga" onclick="aplicarRecarga()">⚡ Recarga</button>
             <button class="btn-base btn-print" onclick="imprimirOblea()">🖨️ Imprimir Oblea</button>
-            <button id="btnGuardar" class="btn-base btn-save" onclick="guardarOActualizar()">💾 Guardar / Actualizar</button>
+            <button id="btnGuardar" class="btn-base btn-save" onclick="guardarOActualizar()">💾 Grabar</button>
             <button class="btn-base btn-delete" onclick="eliminarExtintor()">🗑️ Eliminar</button>
             <button class="btn-base btn-clean" onclick="limpiarFormulario()">🧹 Limpiar</button>
         </div>
@@ -310,27 +310,42 @@
         };
     }
 
-    function marcarFondoSinGrabar() {
+    function marcarFondoSinGrabar(esNuevo = false) {
         const contenedor = document.getElementById("contenedorPrincipal");
         contenedor.classList.remove("modo-existente", "modo-recarga");
         contenedor.classList.add("modo-sin-grabar");
-        document.getElementById("tituloForm").textContent = "🟠 CAMBIOS SIN GRABAR";
+        document.getElementById("tituloForm").textContent = esNuevo 
+            ? "🟠 CAMBIOS SIN GRABAR - EXTINTOR NUEVO" 
+            : "🟠 CAMBIOS SIN GRABAR";
     }
 
     function revisarEstadoCambiosMatafuegoCargado() {
         if (guardandoEnCurso || enModoRecarga) return;
 
         const idCargado = document.getElementById("registroId").value.trim();
-        if (!idCargado || !registroOriginalCargado) {
-            document.getElementById("contenedorPrincipal").classList.remove("modo-sin-grabar");
+        const actual = leerValoresActuales();
+
+        // Caso 1: Ya existe un extintor cargado desde la BD
+        if (idCargado && registroOriginalCargado) {
+            if (huboCambiosEnCampos(registroOriginalCargado, actual)) {
+                marcarFondoSinGrabar(false);
+            } else {
+                activarEstilosModoExistente();
+            }
             return;
         }
 
-        const actual = leerValoresActuales();
-        if (huboCambiosEnCampos(registroOriginalCargado, actual)) {
-            marcarFondoSinGrabar();
+        // Caso 2: Es un extintor NUEVO (sin idCargado)
+        const tieneDatos = CAMPOS_HISTORIAL.some(campo => {
+            if (campo === "oblea") return false;
+            return normalizarValorComparacion(actual[campo]) !== null;
+        });
+
+        if (tieneDatos) {
+            marcarFondoSinGrabar(true);
         } else {
-            activarEstilosModoExistente();
+            document.getElementById("contenedorPrincipal").classList.remove("modo-sin-grabar");
+            document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
         }
     }
 
@@ -814,7 +829,7 @@
 
         enModoRecarga = true;
 
-        // Guarda directamente en la base de datos sin exigir apretar Actualizar
+        // Guarda directamente en la base de datos sin exigir apretar Grabar
         await guardarOActualizar({ mantenerEnPantalla: true });
     }
 
@@ -966,6 +981,7 @@
 
             if (!data || data.length === 0) {
                 alert("No se encontró ningún equipo con los datos indicados.");
+                revisarEstadoCambiosMatafuegoCargado();
                 return;
             }
 
@@ -1081,6 +1097,7 @@
                     document.getElementById("registroId").value = "";
                     registroOriginalCargado = null;
                     mostrarAvisoDuplicado(`ℹ️ Aviso: Este número ya está registrado bajo el cliente "${otroCliente}". Podés guardarlo igual ya que es de otro cliente.`);
+                    revisarEstadoCambiosMatafuegoCargado();
                 } else {
                     ocultarAvisoDuplicado();
                 }
@@ -1192,7 +1209,7 @@
             activarEstilosModoExistente();
 
             const btn = document.getElementById("btnGuardar");
-            btn.innerHTML = eraRecarga ? "⚡ ¡Recarga Guardada!" : "✅ ¡Guardado!";
+            btn.innerHTML = eraRecarga ? "⚡ ¡Recarga Guardada!" : "✅ ¡Grabado!";
             btn.classList.remove("existente-btn");
             btn.classList.add("success");
 
@@ -1287,7 +1304,7 @@
         document.getElementById("tituloForm").textContent = "PANEL DE CONTROL DE EQUIPOS";
         
         let btn = document.getElementById("btnGuardar");
-        btn.textContent = "💾 Guardar / Actualizar";
+        btn.textContent = "💾 Grabar";
         btn.classList.remove("existente-btn", "success");
         
         verificarExtintorNuevo();
