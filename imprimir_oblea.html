@@ -263,7 +263,8 @@
             position: absolute;
             top: var(--linea1-top);
             left: var(--linea1-left);
-            display: inline-flex;
+            display: flex;
+            flex-direction: row;
             justify-content: flex-start;
             align-items: flex-end;
             gap: 0;
@@ -281,14 +282,17 @@
             padding: 0;
         }
 
-        /* Recuadro guía de tamaño exacto del dato: el borde derecho de uno es el izquierdo del consecutivo */
+        /* Recuadro guía de tamaño exacto del dato: costado izquierdo de uno = costado derecho del anterior */
         .caja-dato-guia {
             height: 0.5cm;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            border: 1px dashed #2980b9;
+            border-top: 1px dashed #2980b9;
+            border-bottom: 1px dashed #2980b9;
+            border-right: 1px dashed #2980b9;
+            border-left: 1px dashed #2980b9;
             background: rgba(41, 128, 185, 0.06);
             box-sizing: border-box;
             padding: 0 2px;
@@ -332,7 +336,8 @@
             color: #d35400;
             text-transform: uppercase;
             font-weight: bold;
-            margin-bottom: 2px;
+            margin: 0 0 2px 0;
+            padding: 0;
             white-space: nowrap;
             text-align: center;
         }
