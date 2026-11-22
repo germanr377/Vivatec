@@ -15,8 +15,8 @@
             --print-rotacion: 90deg;
             --print-left: 9.5cm;
 
-            --linea1-top: 113px; /* ~3 cm iniciales */
-            --linea1-left: 10mm; /* 1 cm inicial */
+            --linea1-top: 113px;
+            --linea1-left: 10mm;
 
             --linea2-top: 147px;
             --linea2-left: 10mm;
@@ -32,11 +32,11 @@
             --sello-left: 82mm;
             --ancho-sello: 52mm;
 
-            --ancho-extintor: 24mm;   /* 2,4 cm */
-            --ancho-ano-fab: 14mm;    /* 1,4 cm */
-            --ancho-vto-ph: 12mm;     /* 1,2 cm */
-            --ancho-capacidad: 10mm;  /* 1,0 cm */
-            --ancho-agente: 19mm;     /* 1,9 cm */
+            --ancho-extintor: 24mm;
+            --ancho-ano-fab: 14mm;
+            --ancho-vto-ph: 12mm;
+            --ancho-capacidad: 10mm;
+            --ancho-agente: 19mm;
 
             --ancho-r2-c1: 24mm;
             --ancho-r2-c2: 14mm;
@@ -54,7 +54,6 @@
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
 
-        /* Panel flotante compacto */
         .control-panel {
             position: fixed;
             top: 12px;
@@ -114,7 +113,6 @@
             margin: 0;
         }
 
-        /* Único slider finito y compacto */
         .control-panel input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -298,7 +296,8 @@
             background: rgba(253, 237, 236, 0.95) !important;
         }
 
-        .elemento-seleccionable {
+        .elemento-seleccionable,
+        .campo-item {
             cursor: pointer;
         }
 
@@ -306,6 +305,11 @@
             outline: 2px solid #e67e22 !important;
             outline-offset: 1px;
             background: rgba(230, 126, 34, 0.14) !important;
+        }
+
+        .campo-ancho-activo .caja-dato-guia {
+            border-color: #8e44ad !important;
+            background: rgba(142, 68, 173, 0.18) !important;
         }
 
         .elemento-desbordado {
@@ -521,6 +525,7 @@
             }
 
             .elemento-seleccionado,
+            .campo-ancho-activo .caja-dato-guia,
             .elemento-desbordado {
                 outline: none !important;
                 background: transparent !important;
@@ -641,7 +646,7 @@
     <h3>🖨️ Oblea Uso Gral (16,6 × 9,5 cm)</h3>
 
     <div class="nota-impresion">
-        Hacé clic en un renglón o sello en la oblea, elegí <strong>Vertical</strong> u <strong>Horizontal</strong> y mové el slider.
+        <strong>1 clic</strong> en renglón/sello = mover · <strong>Doble clic</strong> en campo/sello = modificar ancho.
     </div>
 
     <div id="estadoMargen" class="estado-margen">
@@ -650,7 +655,7 @@
 
     <div class="control-box">
         <div id="textoSeleccionado" class="seleccion-actual">
-            Elemento: Renglón 1
+            Elemento: Renglón 1 (Vertical)
         </div>
 
         <label>Sentido del movimiento:</label>
@@ -669,26 +674,6 @@
             <span id="etiquetaValorSlider">Valor:</span> <span id="valUnicoSlider">113</span> <span id="unidadUnicoSlider">px</span>
         </label>
         <input type="range" id="unicoSlider" min="0" max="280" step="1" value="113" oninput="aplicarUnicoSlider(this.value)">
-
-        <label for="selectAncho" style="margin-top: 8px;">Ancho de caja / bloque (opcional):</label>
-        <select id="selectAncho" onchange="seleccionarParametroDirecto(this.value)">
-            <option value="">-- Elegir ancho --</option>
-            <option value="ancho_extintor">Renglón 1 - Ancho Extintor N° (mm)</option>
-            <option value="ancho_ano_fab">Renglón 1 - Ancho Año Fab. (mm)</option>
-            <option value="ancho_vto_ph">Renglón 1 - Ancho Vto. P.H. (mm)</option>
-            <option value="ancho_capacidad">Renglón 1 - Ancho Capacidad (mm)</option>
-            <option value="ancho_agente">Renglón 1 - Ancho Agente (mm)</option>
-            <option value="ancho_r2_c1">Renglón 2 - Ancho Campo 1 (VIVATEC) (mm)</option>
-            <option value="ancho_r2_c2">Renglón 2 - Ancho Campo 2 (382) (mm)</option>
-            <option value="ancho_r2_c3">Renglón 2 - Ancho Campo 3 (Vacío) (mm)</option>
-            <option value="ancho_r22_extintor">Renglón 22 - Ancho Extintor N° (mm)</option>
-            <option value="ancho_r22_vto_ph">Renglón 22 - Ancho Venc. P.H. (mm)</option>
-            <option value="ancho_r3_mes">Renglón 3 - Ancho Mes (mm)</option>
-            <option value="ancho_r3_anio">Renglón 3 - Ancho Año (mm)</option>
-            <option value="ancho_r4_mes">Renglón 4 - Ancho Mes (mm)</option>
-            <option value="ancho_r4_anio">Renglón 4 - Ancho Año (mm)</option>
-            <option value="ancho_sello">Sello - Ancho del bloque (mm)</option>
-        </select>
     </div>
 
     <div class="control-box">
@@ -719,32 +704,32 @@
             </div>
 
             <!-- RENGLÓN 1 -->
-            <div id="linea1" class="linea-1 elemento-seleccionable" data-elemento="linea1" onclick="seleccionarElementoEnPantalla('linea1', event)">
-                <div class="campo-item campo-extintor">
+            <div id="linea1" class="linea-1 elemento-seleccionable" data-elemento="linea1" onclick="programarSeleccionElemento('linea1', event)">
+                <div class="campo-item campo-extintor" data-ancho-key="ancho_extintor" data-ancho-label="Renglón 1 - Extintor N°" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblExtintor" class="valor-dato">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-ano-fab">
+                <div class="campo-item campo-ano-fab" data-ancho-key="ancho_ano_fab" data-ancho-label="Renglón 1 - Año Fab." ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblAnoFab" class="valor-dato">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-vto-ph">
+                <div class="campo-item campo-vto-ph" data-ancho-key="ancho_vto_ph" data-ancho-label="Renglón 1 - Vto. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblVtoPh" class="valor-dato">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-capacidad">
+                <div class="campo-item campo-capacidad" data-ancho-key="ancho_capacidad" data-ancho-label="Renglón 1 - Capacidad" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblCapacidad" class="valor-dato">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-agente">
+                <div class="campo-item campo-agente" data-ancho-key="ancho_agente" data-ancho-label="Renglón 1 - Agente" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblAgente" class="valor-dato">-</span>
                     </div>
@@ -752,20 +737,20 @@
             </div>
 
             <!-- RENGLÓN 2 -->
-            <div id="linea2" class="linea-2 elemento-seleccionable" data-elemento="linea2" onclick="seleccionarElementoEnPantalla('linea2', event)">
-                <div class="campo-item campo-r2-1">
+            <div id="linea2" class="linea-2 elemento-seleccionable" data-elemento="linea2" onclick="programarSeleccionElemento('linea2', event)">
+                <div class="campo-item campo-r2-1" data-ancho-key="ancho_r2_c1" data-ancho-label="Renglón 2 - Campo 1 (VIVATEC)" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span class="valor-dato">VIVATEC</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-r2-2">
+                <div class="campo-item campo-r2-2" data-ancho-key="ancho_r2_c2" data-ancho-label="Renglón 2 - Campo 2 (382)" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span class="valor-dato">382</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-r2-3">
+                <div class="campo-item campo-r2-3" data-ancho-key="ancho_r2_c3" data-ancho-label="Renglón 2 - Campo 3 (Vacío)" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span class="valor-dato"></span>
                     </div>
@@ -773,14 +758,14 @@
             </div>
 
             <!-- RENGLÓN 22 -->
-            <div id="linea22" class="linea-22 elemento-seleccionable" data-elemento="linea22" onclick="seleccionarElementoEnPantalla('linea22', event)">
-                <div class="campo-item campo-r22-extintor">
+            <div id="linea22" class="linea-22 elemento-seleccionable" data-elemento="linea22" onclick="programarSeleccionElemento('linea22', event)">
+                <div class="campo-item campo-r22-extintor" data-ancho-key="ancho_r22_extintor" data-ancho-label="Renglón 22 - Extintor N°" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblExtintorR22" class="valor-dato">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-r22-vto-ph">
+                <div class="campo-item campo-r22-vto-ph" data-ancho-key="ancho_r22_vto_ph" data-ancho-label="Renglón 22 - Venc. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblVtoPhR22" class="valor-dato">-</span>
                     </div>
@@ -788,14 +773,14 @@
             </div>
 
             <!-- RENGLÓN 3 -->
-            <div id="linea3" class="linea-3 elemento-seleccionable" data-elemento="linea3" onclick="seleccionarElementoEnPantalla('linea3', event)">
-                <div class="campo-item campo-r3-mes">
+            <div id="linea3" class="linea-3 elemento-seleccionable" data-elemento="linea3" onclick="programarSeleccionElemento('linea3', event)">
+                <div class="campo-item campo-r3-mes" data-ancho-key="ancho_r3_mes" data-ancho-label="Renglón 3 - Mes" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblMesVto" class="valor-dato valor-vto-destacado">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-r3-anio">
+                <div class="campo-item campo-r3-anio" data-ancho-key="ancho_r3_anio" data-ancho-label="Renglón 3 - Año" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblAnioVto" class="valor-dato valor-vto-destacado">-</span>
                     </div>
@@ -803,14 +788,14 @@
             </div>
 
             <!-- RENGLÓN 4 -->
-            <div id="linea4" class="linea-4 elemento-seleccionable" data-elemento="linea4" onclick="seleccionarElementoEnPantalla('linea4', event)">
-                <div class="campo-item campo-r4-mes">
+            <div id="linea4" class="linea-4 elemento-seleccionable" data-elemento="linea4" onclick="programarSeleccionElemento('linea4', event)">
+                <div class="campo-item campo-r4-mes" data-ancho-key="ancho_r4_mes" data-ancho-label="Renglón 4 - Mes" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblMesVtoR4" class="valor-dato valor-vto-destacado">-</span>
                     </div>
                 </div>
 
-                <div class="campo-item campo-r4-anio">
+                <div class="campo-item campo-r4-anio" data-ancho-key="ancho_r4_anio" data-ancho-label="Renglón 4 - Año" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia">
                         <span id="lblAnioVtoR4" class="valor-dato valor-vto-destacado">-</span>
                     </div>
@@ -818,7 +803,7 @@
             </div>
 
             <!-- BLOQUE SELLO -->
-            <div id="bloqueSello" class="bloque-sello elemento-seleccionable" data-elemento="bloqueSello" onclick="seleccionarElementoEnPantalla('bloqueSello', event)">
+            <div id="bloqueSello" class="bloque-sello elemento-seleccionable" data-elemento="bloqueSello" data-ancho-key="ancho_sello" data-ancho-label="Sello" onclick="programarSeleccionElemento('bloqueSello', event)" ondblclick="seleccionarAnchoCampo(this, event)">
                 <div class="sello-renglon sello-nombre">IGNACIO REPETTO</div>
                 <div class="sello-renglon sello-titulo">INGENIERO INDUSTRIAL</div>
                 <div class="sello-renglon sello-matricula">C.I.P.B.A Mat 51142</div>
@@ -869,235 +854,37 @@
     };
 
     const PARAMETROS = {
-        linea1_top: {
-            cssVar: "--linea1-top",
-            unidad: "px",
-            min: 0,
-            max: 280,
-            step: 1,
-            defaultVal: 113,
-            storageKey: "vivatec_oblea_altura_renglon_1"
-        },
-        linea1_left: {
-            cssVar: "--linea1-left",
-            unidad: "mm",
-            min: 0,
-            max: 120,
-            step: 0.5,
-            defaultVal: 10,
-            storageKey: "vivatec_oblea_pos_x_renglon_1"
-        },
-        ancho_extintor: {
-            cssVar: "--ancho-extintor",
-            unidad: "mm",
-            min: 5,
-            max: 60,
-            step: 0.5,
-            defaultVal: 24,
-            storageKey: "vivatec_oblea_ancho_extintor"
-        },
-        ancho_ano_fab: {
-            cssVar: "--ancho-ano-fab",
-            unidad: "mm",
-            min: 5,
-            max: 60,
-            step: 0.5,
-            defaultVal: 14,
-            storageKey: "vivatec_oblea_ancho_ano_fab"
-        },
-        ancho_vto_ph: {
-            cssVar: "--ancho-vto-ph",
-            unidad: "mm",
-            min: 5,
-            max: 60,
-            step: 0.5,
-            defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_vto_ph"
-        },
-        ancho_capacidad: {
-            cssVar: "--ancho-capacidad",
-            unidad: "mm",
-            min: 5,
-            max: 60,
-            step: 0.5,
-            defaultVal: 10,
-            storageKey: "vivatec_oblea_ancho_capacidad"
-        },
-        ancho_agente: {
-            cssVar: "--ancho-agente",
-            unidad: "mm",
-            min: 5,
-            max: 60,
-            step: 0.5,
-            defaultVal: 19,
-            storageKey: "vivatec_oblea_ancho_agente"
-        },
-        linea2_top: {
-            cssVar: "--linea2-top",
-            unidad: "px",
-            min: 0,
-            max: 280,
-            step: 1,
-            defaultVal: 147,
-            storageKey: "vivatec_oblea_altura_renglon_2"
-        },
-        linea2_left: {
-            cssVar: "--linea2-left",
-            unidad: "mm",
-            min: 0,
-            max: 120,
-            step: 0.5,
-            defaultVal: 10,
-            storageKey: "vivatec_oblea_pos_x_renglon_2"
-        },
-        ancho_r2_c1: {
-            cssVar: "--ancho-r2-c1",
-            unidad: "mm",
-            min: 5,
-            max: 70,
-            step: 0.5,
-            defaultVal: 24,
-            storageKey: "vivatec_oblea_ancho_r2_c1"
-        },
-        ancho_r2_c2: {
-            cssVar: "--ancho-r2-c2",
-            unidad: "mm",
-            min: 5,
-            max: 70,
-            step: 0.5,
-            defaultVal: 14,
-            storageKey: "vivatec_oblea_ancho_r2_c2"
-        },
-        ancho_r2_c3: {
-            cssVar: "--ancho-r2-c3",
-            unidad: "mm",
-            min: 5,
-            max: 70,
-            step: 0.5,
-            defaultVal: 24,
-            storageKey: "vivatec_oblea_ancho_r2_c3"
-        },
-        linea22_left: {
-            cssVar: "--linea22-left",
-            unidad: "mm",
-            min: 0,
-            max: 145,
-            step: 0.5,
-            defaultVal: 78,
-            storageKey: "vivatec_oblea_pos_x_renglon_22"
-        },
-        ancho_r22_extintor: {
-            cssVar: "--ancho-r22-extintor",
-            unidad: "mm",
-            min: 5,
-            max: 60,
-            step: 0.5,
-            defaultVal: 24,
-            storageKey: "vivatec_oblea_ancho_r22_extintor"
-        },
-        ancho_r22_vto_ph: {
-            cssVar: "--ancho-r22-vto-ph",
-            unidad: "mm",
-            min: 5,
-            max: 50,
-            step: 0.5,
-            defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_r22_vto_ph"
-        },
-        linea3_top: {
-            cssVar: "--linea3-top",
-            unidad: "px",
-            min: 0,
-            max: 280,
-            step: 1,
-            defaultVal: 185,
-            storageKey: "vivatec_oblea_altura_renglon_3"
-        },
-        linea3_left: {
-            cssVar: "--linea3-left",
-            unidad: "mm",
-            min: 0,
-            max: 140,
-            step: 0.5,
-            defaultVal: 10,
-            storageKey: "vivatec_oblea_pos_x_renglon_3"
-        },
-        ancho_r3_mes: {
-            cssVar: "--ancho-r3-mes",
-            unidad: "mm",
-            min: 5,
-            max: 50,
-            step: 0.5,
-            defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_r3_mes"
-        },
-        ancho_r3_anio: {
-            cssVar: "--ancho-r3-anio",
-            unidad: "mm",
-            min: 5,
-            max: 50,
-            step: 0.5,
-            defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_r3_anio"
-        },
-        linea4_left: {
-            cssVar: "--linea4-left",
-            unidad: "mm",
-            min: 0,
-            max: 140,
-            step: 0.5,
-            defaultVal: 45,
-            storageKey: "vivatec_oblea_pos_x_renglon_4"
-        },
-        ancho_r4_mes: {
-            cssVar: "--ancho-r4-mes",
-            unidad: "mm",
-            min: 5,
-            max: 50,
-            step: 0.5,
-            defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_r4_mes"
-        },
-        ancho_r4_anio: {
-            cssVar: "--ancho-r4-anio",
-            unidad: "mm",
-            min: 5,
-            max: 50,
-            step: 0.5,
-            defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_r4_anio"
-        },
-        sello_top: {
-            cssVar: "--sello-top",
-            unidad: "px",
-            min: 0,
-            max: 280,
-            step: 1,
-            defaultVal: 185,
-            storageKey: "vivatec_oblea_altura_sello"
-        },
-        sello_left: {
-            cssVar: "--sello-left",
-            unidad: "mm",
-            min: 0,
-            max: 140,
-            step: 0.5,
-            defaultVal: 82,
-            storageKey: "vivatec_oblea_pos_x_sello"
-        },
-        ancho_sello: {
-            cssVar: "--ancho-sello",
-            unidad: "mm",
-            min: 20,
-            max: 90,
-            step: 0.5,
-            defaultVal: 52,
-            storageKey: "vivatec_oblea_ancho_sello"
-        }
+        linea1_top: { cssVar: "--linea1-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 113, storageKey: "vivatec_oblea_altura_renglon_1" },
+        linea1_left: { cssVar: "--linea1-left", unidad: "mm", min: 0, max: 120, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_pos_x_renglon_1" },
+        ancho_extintor: { cssVar: "--ancho-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_extintor" },
+        ancho_ano_fab: { cssVar: "--ancho-ano-fab", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 14, storageKey: "vivatec_oblea_ancho_ano_fab" },
+        ancho_vto_ph: { cssVar: "--ancho-vto-ph", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_vto_ph" },
+        ancho_capacidad: { cssVar: "--ancho-capacidad", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_ancho_capacidad" },
+        ancho_agente: { cssVar: "--ancho-agente", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 19, storageKey: "vivatec_oblea_ancho_agente" },
+        linea2_top: { cssVar: "--linea2-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 147, storageKey: "vivatec_oblea_altura_renglon_2" },
+        linea2_left: { cssVar: "--linea2-left", unidad: "mm", min: 0, max: 120, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_pos_x_renglon_2" },
+        ancho_r2_c1: { cssVar: "--ancho-r2-c1", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_r2_c1" },
+        ancho_r2_c2: { cssVar: "--ancho-r2-c2", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 14, storageKey: "vivatec_oblea_ancho_r2_c2" },
+        ancho_r2_c3: { cssVar: "--ancho-r2-c3", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_r2_c3" },
+        linea22_left: { cssVar: "--linea22-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 78, storageKey: "vivatec_oblea_pos_x_renglon_22" },
+        ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_r22_extintor" },
+        ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto_ph", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r22_vto_ph" },
+        linea3_top: { cssVar: "--linea3-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "vivatec_oblea_altura_renglon_3" },
+        linea3_left: { cssVar: "--linea3-left", unidad: "mm", min: 0, max: 140, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_pos_x_renglon_3" },
+        ancho_r3_mes: { cssVar: "--ancho-r3-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r3_mes" },
+        ancho_r3_anio: { cssVar: "--ancho-r3-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r3_anio" },
+        linea4_left: { cssVar: "--linea4-left", unidad: "mm", min: 0, max: 140, step: 0.5, defaultVal: 45, storageKey: "vivatec_oblea_pos_x_renglon_4" },
+        ancho_r4_mes: { cssVar: "--ancho-r4-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r4_mes" },
+        ancho_r4_anio: { cssVar: "--ancho-r4-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r4_anio" },
+        sello_top: { cssVar: "--sello-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "vivatec_oblea_altura_sello" },
+        sello_left: { cssVar: "--sello-left", unidad: "mm", min: 0, max: 140, step: 0.5, defaultVal: 82, storageKey: "vivatec_oblea_pos_x_sello" },
+        ancho_sello: { cssVar: "--ancho-sello", unidad: "mm", min: 20, max: 90, step: 0.5, defaultVal: 52, storageKey: "vivatec_oblea_ancho_sello" }
     };
 
     let elementoSeleccionadoId = "linea1";
+    let campoAnchoActivoEl = null;
     let parametroActivoKey = "linea1_top";
+    let timerClicSimple = null;
 
     function guardarStorage(clave, valor) {
         try {
@@ -1134,8 +921,14 @@
     function actualizarResaltadoVisual() {
         Object.keys(ELEMENTOS_CONFIG).forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.classList.toggle("elemento-seleccionado", id === elementoSeleccionadoId);
+            if (el) el.classList.toggle("elemento-seleccionado", !campoAnchoActivoEl && id === elementoSeleccionadoId);
         });
+        document.querySelectorAll(".campo-ancho-activo").forEach(el => {
+            if (el !== campoAnchoActivoEl) el.classList.remove("campo-ancho-activo");
+        });
+        if (campoAnchoActivoEl) {
+            campoAnchoActivoEl.classList.add("campo-ancho-activo");
+        }
     }
 
     function obtenerEjeSeleccionado() {
@@ -1157,12 +950,10 @@
         document.getElementById("unidadUnicoSlider").textContent = cfg.unidad;
     }
 
-    function seleccionarElementoEnPantalla(idElemento, evento) {
-        if (evento) evento.stopPropagation();
+    function aplicarSeleccionElemento(idElemento) {
         if (!ELEMENTOS_CONFIG[idElemento]) return;
-
+        campoAnchoActivoEl = null;
         elementoSeleccionadoId = idElemento;
-        document.getElementById("selectAncho").value = "";
         actualizarResaltadoVisual();
 
         const eje = obtenerEjeSeleccionado();
@@ -1176,8 +967,33 @@
         cargarParametroEnSlider(key);
     }
 
+    function programarSeleccionElemento(idElemento, evento) {
+        if (evento) evento.stopPropagation();
+        if (timerClicSimple) clearTimeout(timerClicSimple);
+        timerClicSimple = setTimeout(() => {
+            aplicarSeleccionElemento(idElemento);
+        }, 180);
+    }
+
+    function seleccionarAnchoCampo(elementoCampo, evento) {
+        if (evento) evento.stopPropagation();
+        if (timerClicSimple) {
+            clearTimeout(timerClicSimple);
+            timerClicSimple = null;
+        }
+        const anchoKey = elementoCampo.getAttribute("data-ancho-key");
+        const anchoLabel = elementoCampo.getAttribute("data-ancho-label") || anchoKey;
+        if (!anchoKey || !PARAMETROS[anchoKey]) return;
+
+        campoAnchoActivoEl = elementoCampo;
+        actualizarResaltadoVisual();
+        document.getElementById("textoSeleccionado").textContent = `Ancho: ${anchoLabel}`;
+        cargarParametroEnSlider(anchoKey);
+    }
+
     function cambiarEje() {
-        document.getElementById("selectAncho").value = "";
+        campoAnchoActivoEl = null;
+        actualizarResaltadoVisual();
         const eje = obtenerEjeSeleccionado();
         const cfgEl = ELEMENTOS_CONFIG[elementoSeleccionadoId] || ELEMENTOS_CONFIG.linea1;
         const key = eje === "horizontal" ? cfgEl.horizontal : cfgEl.vertical;
@@ -1186,16 +1002,6 @@
         document.getElementById("textoSeleccionado").textContent =
             `Elemento: ${cfgEl.nombre} (${textoEje})`;
 
-        cargarParametroEnSlider(key);
-    }
-
-    function seleccionarParametroDirecto(key) {
-        if (!key || !PARAMETROS[key]) {
-            cambiarEje();
-            return;
-        }
-        const opcionTexto = document.querySelector(`#selectAncho option[value="${key}"]`)?.textContent || key;
-        document.getElementById("textoSeleccionado").textContent = `Medida: ${opcionTexto}`;
         cargarParametroEnSlider(key);
     }
 
@@ -1368,7 +1174,7 @@
         Object.keys(PARAMETROS).forEach(key => {
             setearValorParametro(key, PARAMETROS[key].defaultVal);
         });
-        document.getElementById("selectAncho").value = "";
+        campoAnchoActivoEl = null;
         cambiarEje();
 
         document.getElementById("selectRotacion").value = "90deg";
