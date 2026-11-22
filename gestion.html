@@ -148,7 +148,8 @@
             <div class="form-group" style="flex: none; width: 16ch;">
                 <label>Tipo Oblea:</label>
                 <select id="nuevoOblea">
-                    <option value="Uso Gral" selected>Uso Gral</option>
+                    <option value="" selected></option>
+                    <option value="Uso Gral">Uso Gral</option>
                     <option value="Vehicular 1K">Vehicular 1K</option>
                     <option value="Vehicular">Vehicular</option>
                 </select>
@@ -788,7 +789,7 @@
         document.getElementById("nuevoCliente").value = ex.cliente || "";
         document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
         document.getElementById("nuevoDps").value = ex.numero_dps || "";
-        document.getElementById("nuevoOblea").value = ex.oblea || "Uso Gral";
+        document.getElementById("nuevoOblea").value = ex.oblea || "";
         document.getElementById("nuevoMarca").value = ex.marca || "";
         document.getElementById("nuevoTipo").value = ex.tipo || "";
         document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
@@ -1131,7 +1132,7 @@
 
         const datosRegistro = {
             cliente: cliente,
-            oblea: document.getElementById("nuevoOblea").value,
+            oblea: document.getElementById("nuevoOblea").value || null,
             extintor_numero: extintorNumero,
             tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase(),
             agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase(),
@@ -1282,7 +1283,7 @@
         document.getElementById("nuevoCliente").value = "";
         document.getElementById("nuevoExtintor").value = "";
         document.getElementById("nuevoDps").value = "";
-        document.getElementById("nuevoOblea").value = "Uso Gral";
+        document.getElementById("nuevoOblea").value = "";
         document.getElementById("nuevoMarca").value = "";
         document.getElementById("nuevoTipo").value = "";
         document.getElementById("nuevoAgente").value = "";
