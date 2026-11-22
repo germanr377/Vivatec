@@ -266,7 +266,7 @@
             display: flex;
             flex-direction: row;
             justify-content: flex-start;
-            align-items: flex-end;
+            align-items: center;
             gap: 0;
             margin: 0;
             padding: 0;
@@ -289,10 +289,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            border-top: 1px dashed #2980b9;
-            border-bottom: 1px dashed #2980b9;
-            border-right: 1px dashed #2980b9;
-            border-left: 1px dashed #2980b9;
+            border: 1px dashed #2980b9;
             background: rgba(41, 128, 185, 0.06);
             box-sizing: border-box;
             padding: 0 2px;
@@ -327,19 +324,6 @@
             color: #000;
             letter-spacing: 0.4px;
             white-space: nowrap;
-        }
-
-        /* Etiquetas guía que SOLO se ven en pantalla para orientar */
-        .etiqueta-guia {
-            display: block;
-            font-size: 7.5px;
-            color: #d35400;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin: 0 0 2px 0;
-            padding: 0;
-            white-space: nowrap;
-            text-align: center;
         }
 
         .valor-dato {
@@ -394,7 +378,7 @@
                 padding: 0 !important;
                 background: #fff !important;
             }
-            .no-print, .etiqueta-guia, .etiqueta-medida-hoja, .estado-margen { display: none !important; }
+            .no-print, .etiqueta-medida-hoja, .estado-margen { display: none !important; }
 
             .zona-calibracion {
                 display: block !important;
@@ -548,35 +532,30 @@
             <!-- LÍNEA 1: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
-                    <span class="etiqueta-guia" id="guiaExtintor">Extintor N° (2,4×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblExtintor" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-ano-fab">
-                    <span class="etiqueta-guia" id="guiaAnoFab">Año Fab. (1,4×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblAnoFab" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-vto-ph">
-                    <span class="etiqueta-guia" id="guiaVtoPh">Vto. P.H. (1,2×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblVtoPh" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-capacidad">
-                    <span class="etiqueta-guia" id="guiaCapacidad">Cap. (1×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblCapacidad" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-agente">
-                    <span class="etiqueta-guia" id="guiaAgente">Agente (1,9×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblAgente" class="valor-dato">-</span>
                     </div>
@@ -586,16 +565,12 @@
             <!-- BLOQUE DE VENCIMIENTO independiente de Línea 1 -->
             <div id="bloqueVencimientoPos" class="bloque-vencimiento-pos">
                 <div id="bloqueVencimiento" class="bloque-vencimiento-caja">
-                    <div class="vencimiento-titulo">
-                        <span class="etiqueta-guia">Vencimiento</span>
-                    </div>
+                    <div class="vencimiento-titulo">Vencimiento</div>
                     <div class="vencimiento-grid">
                         <div class="venc-caja">
-                            <span class="etiqueta-guia">Mes</span>
                             <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
                         </div>
                         <div class="venc-caja">
-                            <span class="etiqueta-guia">Año</span>
                             <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
                         </div>
                     </div>
@@ -659,9 +634,7 @@
             max: 60,
             step: 0.5,
             defaultVal: 24,
-            storageKey: "vivatec_oblea_ancho_extintor",
-            guiaId: "guiaExtintor",
-            nombreGuia: "Extintor N°"
+            storageKey: "vivatec_oblea_ancho_extintor"
         },
         ancho_ano_fab: {
             cssVar: "--ancho-ano-fab",
@@ -670,9 +643,7 @@
             max: 60,
             step: 0.5,
             defaultVal: 14,
-            storageKey: "vivatec_oblea_ancho_ano_fab",
-            guiaId: "guiaAnoFab",
-            nombreGuia: "Año Fab."
+            storageKey: "vivatec_oblea_ancho_ano_fab"
         },
         ancho_vto_ph: {
             cssVar: "--ancho-vto-ph",
@@ -681,9 +652,7 @@
             max: 60,
             step: 0.5,
             defaultVal: 12,
-            storageKey: "vivatec_oblea_ancho_vto_ph",
-            guiaId: "guiaVtoPh",
-            nombreGuia: "Vto. P.H."
+            storageKey: "vivatec_oblea_ancho_vto_ph"
         },
         ancho_capacidad: {
             cssVar: "--ancho-capacidad",
@@ -692,9 +661,7 @@
             max: 60,
             step: 0.5,
             defaultVal: 10,
-            storageKey: "vivatec_oblea_ancho_capacidad",
-            guiaId: "guiaCapacidad",
-            nombreGuia: "Cap."
+            storageKey: "vivatec_oblea_ancho_capacidad"
         },
         ancho_agente: {
             cssVar: "--ancho-agente",
@@ -703,9 +670,7 @@
             max: 60,
             step: 0.5,
             defaultVal: 19,
-            storageKey: "vivatec_oblea_ancho_agente",
-            guiaId: "guiaAgente",
-            nombreGuia: "Agente"
+            storageKey: "vivatec_oblea_ancho_agente"
         }
     };
 
@@ -732,15 +697,6 @@
         return Number.isNaN(num) ? cfg.defaultVal : num;
     }
 
-    function actualizarGuiaAncho(key, mmVal) {
-        const cfg = PARAMETROS[key];
-        if (!cfg || !cfg.guiaId) return;
-        const guiaEl = document.getElementById(cfg.guiaId);
-        if (!guiaEl) return;
-        const cmStr = (mmVal / 10).toFixed(1).replace(".", ",").replace(",0", "");
-        guiaEl.textContent = `${cfg.nombreGuia} (${cmStr}×0,5)`;
-    }
-
     function setearValorParametro(key, valor) {
         const cfg = PARAMETROS[key];
         if (!cfg) return;
@@ -748,7 +704,6 @@
         const limpio = Number.isNaN(num) ? cfg.defaultVal : num;
         document.documentElement.style.setProperty(cfg.cssVar, `${limpio}${cfg.unidad}`);
         guardarStorage(cfg.storageKey, limpio);
-        actualizarGuiaAncho(key, limpio);
     }
 
     function sincronizarUnicoSlider() {
