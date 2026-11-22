@@ -72,35 +72,35 @@
         <div class="form-grid">
             <div class="form-group">
                 <label>Nombre Comercial / Corto * <span id="lblEstadoCliente"></span></label>
-                <input type="text" id="nombre_cliente" list="sugerenciasClientes" placeholder="Ej: Supermercado Don Juan" oninput="verificarPredictivo()">
+                <input type="text" id="nombre_cliente" list="sugerenciasClientes" oninput="verificarPredictivo()">
                 <datalist id="sugerenciasClientes">
                     <!-- Se llena dinámicamente -->
                 </datalist>
             </div>
             <div class="form-group">
                 <label>Razón Social (Legal)</label>
-                <input type="text" id="razon_social" placeholder="Ej: Don Juan S.R.L.">
+                <input type="text" id="razon_social">
             </div>
             <div class="form-group">
                 <label>CUIT</label>
-                <input type="text" id="cuit" placeholder="Ej: 30-71234567-9">
+                <input type="text" id="cuit">
             </div>
             <div class="form-group">
                 <label>Nombre de Contacto</label>
-                <input type="text" id="nombre_contacto" placeholder="Ej: Carlos Pérez">
+                <input type="text" id="nombre_contacto">
             </div>
             <div class="form-group">
                 <label>Dirección / Domicilio</label>
-                <input type="text" id="direccion" placeholder="Ej: San Martín 450, Mza">
+                <input type="text" id="direccion">
             </div>
             <div class="form-group">
                 <label>Teléfono</label>
-                <input type="text" id="telefono" placeholder="Ej: 2614567890">
+                <input type="text" id="telefono">
             </div>
         </div>
         <div class="form-group" style="margin-top: 10px;">
             <label>Observaciones / Notas</label>
-            <textarea id="observaciones" placeholder="Ej: Atienden por la mañana, portón trasero..."></textarea>
+            <textarea id="observaciones"></textarea>
         </div>
         <div class="form-acciones">
             <button class="btn btn-buscar" onclick="filtrarClientesPorCampos()">🔍 Buscar</button>
