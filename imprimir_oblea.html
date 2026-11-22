@@ -152,32 +152,34 @@
             padding-bottom: 4px;
         }
 
-        /* LÍNEA 1: movida de forma independiente por "Altura de renglón 1" */
+        /* LÍNEA 1: largo fijo de 7,8 cm acomodado para los 5 campos */
         .linea-1 {
             position: absolute;
             top: var(--linea1-top);
             left: 1cm;
+            width: 7.8cm;
+            box-sizing: border-box;
             display: flex;
-            justify-content: flex-start;
+            justify-content: space-between;
             align-items: flex-start;
-            gap: 10px;
+            gap: 3px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             border-bottom: 1px dashed #ccc;
-            padding-bottom: 5px;
+            padding-bottom: 4px;
         }
 
         .campo-item {
             text-align: center;
-            flex: 0 1 auto;
-            min-width: 52px;
-            padding: 0 2px;
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 0 1px;
+            overflow: hidden;
         }
 
         .campo-extintor {
             text-align: left;
             padding-left: 0;
-            min-width: 66px;
         }
 
         /* BLOQUE DE VENCIMIENTO independiente de Línea 1 */
@@ -202,16 +204,23 @@
         /* Etiquetas guía que SOLO se ven en pantalla para orientar */
         .etiqueta-guia {
             display: block;
-            font-size: 8.5px;
+            font-size: 8px;
             color: #d35400;
             text-transform: uppercase;
             font-weight: bold;
             margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .valor-dato {
-            font-size: 11px;
+            font-size: 10.5px;
             color: #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
         }
 
         .bloque-vencimiento-caja {
@@ -303,8 +312,10 @@
                 position: absolute !important;
                 top: var(--linea1-top) !important;
                 left: 1cm !important;
+                width: 7.8cm !important;
+                box-sizing: border-box !important;
                 border-bottom: none;
-                gap: 10px;
+                gap: 3px;
                 padding-bottom: 0;
             }
 
@@ -325,7 +336,7 @@
             .bloque-vencimiento-caja { border: none; background: transparent !important; padding: 0; }
             .vencimiento-titulo { border-bottom: none; }
             .venc-caja { border: none; background: transparent !important; padding: 0 2px; }
-            .valor-dato, .venc-caja .valor-dato { font-size: 12px; font-weight: bold; color: #000; } 
+            .valor-dato, .venc-caja .valor-dato { font-size: 11px; font-weight: bold; color: #000; } 
         }
     </style>
 </head>
@@ -383,7 +394,7 @@
                 VIVATEC - VISTA PREVIA (USO GENERAL)
             </div>
 
-            <!-- LÍNEA 1: se mueve sola con "Altura de renglón 1" -->
+            <!-- LÍNEA 1: largo 7,8 cm, se mueve sola con "Altura de renglón 1" -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
                     <span class="etiqueta-guia">Extintor N°</span>
