@@ -258,15 +258,17 @@
             padding-bottom: 4px;
         }
 
-        /* LÍNEA 1: distancia horizontal 0 entre campos y datos centrados en cada campo */
+        /* LÍNEA 1: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
         .linea-1 {
             position: absolute;
             top: var(--linea1-top);
             left: var(--linea1-left);
-            display: flex;
+            display: inline-flex;
             justify-content: flex-start;
             align-items: flex-end;
             gap: 0;
+            margin: 0;
+            padding: 0;
             font-weight: bold;
             font-size: 11px;
         }
@@ -275,9 +277,11 @@
             flex: 0 0 auto;
             box-sizing: border-box;
             text-align: center;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Recuadro guía de tamaño exacto del dato (solo en pantalla, pegados entre sí, centrado) */
+        /* Recuadro guía de tamaño exacto del dato: el borde derecho de uno es el izquierdo del consecutivo */
         .caja-dato-guia {
             height: 0.5cm;
             display: flex;
@@ -285,15 +289,15 @@
             justify-content: center;
             text-align: center;
             border: 1px dashed #2980b9;
-            border-right: none;
             background: rgba(41, 128, 185, 0.06);
             box-sizing: border-box;
             padding: 0 2px;
+            margin: 0;
             overflow: hidden;
         }
 
-        .campo-item:last-child .caja-dato-guia {
-            border-right: 1px dashed #2980b9;
+        .campo-item + .campo-item .caja-dato-guia {
+            border-left: none;
         }
 
         .campo-extintor .caja-dato-guia  { width: var(--ancho-extintor); }
@@ -437,14 +441,19 @@
                 box-sizing: border-box !important;
                 border-bottom: none !important;
                 gap: 0 !important;
-                padding-bottom: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
+            .campo-item,
+            .campo-item + .campo-item .caja-dato-guia,
             .caja-dato-guia {
                 border: none !important;
+                border-left: none !important;
                 border-right: none !important;
                 background: transparent !important;
                 outline: none !important;
+                margin: 0 !important;
                 overflow: visible !important;
                 justify-content: center !important;
                 align-items: center !important;
@@ -531,7 +540,7 @@
                 VIVATEC - VISTA PREVIA (USO GENERAL)
             </div>
 
-            <!-- LÍNEA 1: cajas pegadas por el costado (gap 0, alto 0,5 cm) y datos centrados -->
+            <!-- LÍNEA 1: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
                     <span class="etiqueta-guia" id="guiaExtintor">Extintor N° (2,4×0,5)</span>
