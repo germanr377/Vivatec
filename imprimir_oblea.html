@@ -54,12 +54,12 @@
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
 
-        /* Panel flotante compacto: siempre visible para ver la oblea en vivo al mover el único slider */
+        /* Panel flotante compacto */
         .control-panel {
             position: fixed;
             top: 12px;
             right: 12px;
-            width: 310px;
+            width: 315px;
             max-width: calc(100vw - 24px);
             z-index: 1000;
             background: rgba(255, 255, 255, 0.97);
@@ -80,6 +80,38 @@
             display: block;
             margin-bottom: 4px;
             color: #333;
+        }
+
+        .seleccion-actual {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1f4e78;
+            background: #eef6fc;
+            border: 1px solid #c6def5;
+            border-radius: 5px;
+            padding: 5px 8px;
+            margin-bottom: 7px;
+        }
+
+        .radios-eje {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            margin: 5px 0 6px 0;
+        }
+        .radio-opcion {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold !important;
+            font-size: 12px !important;
+            cursor: pointer;
+            margin: 0 !important;
+        }
+        .radio-opcion input[type="radio"] {
+            accent-color: #2980b9;
+            cursor: pointer;
+            margin: 0;
         }
 
         /* Único slider finito y compacto */
@@ -127,7 +159,7 @@
             padding: 5px 6px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            font-size: 12.5px;
+            font-size: 12px;
             background: #fff;
         }
 
@@ -142,7 +174,6 @@
             line-height: 1.35;
         }
 
-        /* Estado de desborde en pantalla */
         .estado-margen {
             padding: 6px 8px;
             border-radius: 5px;
@@ -167,11 +198,10 @@
             justify-content: space-between;
         }
 
-        /* Zona de calibración en pantalla con marco de medida real */
         .zona-calibracion {
             max-width: 760px;
             margin: 18px auto 0 auto;
-            padding-right: 325px;
+            padding-right: 330px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -180,7 +210,7 @@
         @media (max-width: 1080px) {
             .zona-calibracion {
                 padding-right: 0;
-                margin-top: 290px;
+                margin-top: 330px;
             }
             .control-panel {
                 left: 12px;
@@ -250,7 +280,6 @@
         .btn-reset { background: #d35400; }
         .btn-reset:hover { background: #a04000; }
 
-        /* Contenedor de la Oblea (Uso Gral) */
         .oblea-container {
             width: 100%;
             height: 100%;
@@ -267,6 +296,16 @@
         .oblea-container.fuera-margen {
             border: 2px solid #c0392b !important;
             background: rgba(253, 237, 236, 0.95) !important;
+        }
+
+        .elemento-seleccionable {
+            cursor: pointer;
+        }
+
+        .elemento-seleccionado {
+            outline: 2px solid #e67e22 !important;
+            outline-offset: 1px;
+            background: rgba(230, 126, 34, 0.14) !important;
         }
 
         .elemento-desbordado {
@@ -286,7 +325,6 @@
             padding-bottom: 4px;
         }
 
-        /* RENGLONES: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
         .linea-1,
         .linea-2,
         .linea-22,
@@ -329,7 +367,6 @@
             left: var(--linea4-left);
         }
 
-        /* BLOQUE SELLO: 3 renglones centrados como un bloque cuadrado */
         .bloque-sello {
             position: absolute;
             top: var(--sello-top);
@@ -379,7 +416,6 @@
             padding: 0;
         }
 
-        /* Recuadro guía de tamaño exacto del dato: costado izquierdo de uno = costado derecho del anterior */
         .caja-dato-guia {
             height: 0.5cm;
             display: flex;
@@ -438,7 +474,6 @@
             color: #000;
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN: bloque físico fijo de 16.6 cm de largo x 9.5 cm de ancho, sin guías */
         @media print {
             html, body {
                 margin: 0 !important;
@@ -485,6 +520,7 @@
                 overflow: hidden !important;
             }
 
+            .elemento-seleccionado,
             .elemento-desbordado {
                 outline: none !important;
                 background: transparent !important;
@@ -605,7 +641,7 @@
     <h3>🖨️ Oblea Uso Gral (16,6 × 9,5 cm)</h3>
 
     <div class="nota-impresion">
-        <strong>Impresión:</strong> Márgenes <strong>Ninguno</strong> · Escala <strong>100%</strong> · Papel <strong>16,6 × 9,5 cm</strong>. Guías azules solo en pantalla.
+        Hacé clic en un renglón o sello en la oblea, elegí <strong>Vertical</strong> u <strong>Horizontal</strong> y mové el slider.
     </div>
 
     <div id="estadoMargen" class="estado-margen">
@@ -613,39 +649,46 @@
     </div>
 
     <div class="control-box">
-        <label for="selectParametro">Distancia / medida a modificar:</label>
-        <select id="selectParametro" onchange="sincronizarUnicoSlider()">
-            <option value="linea1_top">Renglón 1 - Altura vertical (px)</option>
-            <option value="linea1_left">Renglón 1 - Posición horizontal (mm)</option>
+        <div id="textoSeleccionado" class="seleccion-actual">
+            Elemento: Renglón 1
+        </div>
+
+        <label>Sentido del movimiento:</label>
+        <div class="radios-eje">
+            <label class="radio-opcion">
+                <input type="radio" name="ejeMovimiento" id="radioVertical" value="vertical" checked onchange="cambiarEje()">
+                Vertical
+            </label>
+            <label class="radio-opcion">
+                <input type="radio" name="ejeMovimiento" id="radioHorizontal" value="horizontal" onchange="cambiarEje()">
+                Horizontal
+            </label>
+        </div>
+
+        <label for="unicoSlider" style="margin-top: 4px;">
+            <span id="etiquetaValorSlider">Valor:</span> <span id="valUnicoSlider">113</span> <span id="unidadUnicoSlider">px</span>
+        </label>
+        <input type="range" id="unicoSlider" min="0" max="280" step="1" value="113" oninput="aplicarUnicoSlider(this.value)">
+
+        <label for="selectAncho" style="margin-top: 8px;">Ancho de caja / bloque (opcional):</label>
+        <select id="selectAncho" onchange="seleccionarParametroDirecto(this.value)">
+            <option value="">-- Elegir ancho --</option>
             <option value="ancho_extintor">Renglón 1 - Ancho Extintor N° (mm)</option>
             <option value="ancho_ano_fab">Renglón 1 - Ancho Año Fab. (mm)</option>
             <option value="ancho_vto_ph">Renglón 1 - Ancho Vto. P.H. (mm)</option>
             <option value="ancho_capacidad">Renglón 1 - Ancho Capacidad (mm)</option>
             <option value="ancho_agente">Renglón 1 - Ancho Agente (mm)</option>
-            <option value="linea2_top">Renglones 2 y 22 - Altura vertical (px)</option>
-            <option value="linea2_left">Renglón 2 - Posición horizontal (mm)</option>
             <option value="ancho_r2_c1">Renglón 2 - Ancho Campo 1 (VIVATEC) (mm)</option>
             <option value="ancho_r2_c2">Renglón 2 - Ancho Campo 2 (382) (mm)</option>
             <option value="ancho_r2_c3">Renglón 2 - Ancho Campo 3 (Vacío) (mm)</option>
-            <option value="linea22_left">Renglón 22 - Posición horizontal (mm)</option>
             <option value="ancho_r22_extintor">Renglón 22 - Ancho Extintor N° (mm)</option>
             <option value="ancho_r22_vto_ph">Renglón 22 - Ancho Venc. P.H. (mm)</option>
-            <option value="linea3_top">Renglones 3 y 4 - Altura vertical (px)</option>
-            <option value="linea3_left">Renglón 3 - Posición horizontal (mm)</option>
             <option value="ancho_r3_mes">Renglón 3 - Ancho Mes (mm)</option>
             <option value="ancho_r3_anio">Renglón 3 - Ancho Año (mm)</option>
-            <option value="linea4_left">Renglón 4 - Posición horizontal (mm)</option>
             <option value="ancho_r4_mes">Renglón 4 - Ancho Mes (mm)</option>
             <option value="ancho_r4_anio">Renglón 4 - Ancho Año (mm)</option>
-            <option value="sello_top">Sello - Altura vertical (px)</option>
-            <option value="sello_left">Sello - Posición horizontal (mm)</option>
             <option value="ancho_sello">Sello - Ancho del bloque (mm)</option>
         </select>
-
-        <label for="unicoSlider" style="margin-top: 6px;">
-            <span id="etiquetaValorSlider">Valor:</span> <span id="valUnicoSlider">113</span> <span id="unidadUnicoSlider">px</span>
-        </label>
-        <input type="range" id="unicoSlider" min="0" max="280" step="1" value="113" oninput="aplicarUnicoSlider(this.value)">
     </div>
 
     <div class="control-box">
@@ -676,7 +719,7 @@
             </div>
 
             <!-- RENGLÓN 1 -->
-            <div id="linea1" class="linea-1">
+            <div id="linea1" class="linea-1 elemento-seleccionable" data-elemento="linea1" onclick="seleccionarElementoEnPantalla('linea1', event)">
                 <div class="campo-item campo-extintor">
                     <div class="caja-dato-guia">
                         <span id="lblExtintor" class="valor-dato">-</span>
@@ -708,8 +751,8 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 2: 3 campos pegados borde con borde (VIVATEC | 382 | vacío) -->
-            <div id="linea2" class="linea-2">
+            <!-- RENGLÓN 2 -->
+            <div id="linea2" class="linea-2 elemento-seleccionable" data-elemento="linea2" onclick="seleccionarElementoEnPantalla('linea2', event)">
                 <div class="campo-item campo-r2-1">
                     <div class="caja-dato-guia">
                         <span class="valor-dato">VIVATEC</span>
@@ -729,8 +772,8 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 22: misma altura que renglón 2, posición horizontal independiente (Extintor N° | Venc. P.H.) -->
-            <div id="linea22" class="linea-22">
+            <!-- RENGLÓN 22 -->
+            <div id="linea22" class="linea-22 elemento-seleccionable" data-elemento="linea22" onclick="seleccionarElementoEnPantalla('linea22', event)">
                 <div class="campo-item campo-r22-extintor">
                     <div class="caja-dato-guia">
                         <span id="lblExtintorR22" class="valor-dato">-</span>
@@ -744,8 +787,8 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 3: Mes y Año de vencimiento, sin etiqueta -->
-            <div id="linea3" class="linea-3">
+            <!-- RENGLÓN 3 -->
+            <div id="linea3" class="linea-3 elemento-seleccionable" data-elemento="linea3" onclick="seleccionarElementoEnPantalla('linea3', event)">
                 <div class="campo-item campo-r3-mes">
                     <div class="caja-dato-guia">
                         <span id="lblMesVto" class="valor-dato valor-vto-destacado">-</span>
@@ -759,8 +802,8 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 4: mismos datos que renglón 3, misma altura vertical, posición horizontal independiente -->
-            <div id="linea4" class="linea-4">
+            <!-- RENGLÓN 4 -->
+            <div id="linea4" class="linea-4 elemento-seleccionable" data-elemento="linea4" onclick="seleccionarElementoEnPantalla('linea4', event)">
                 <div class="campo-item campo-r4-mes">
                     <div class="caja-dato-guia">
                         <span id="lblMesVtoR4" class="valor-dato valor-vto-destacado">-</span>
@@ -774,8 +817,8 @@
                 </div>
             </div>
 
-            <!-- BLOQUE SELLO: 3 renglones centrados -->
-            <div id="bloqueSello" class="bloque-sello">
+            <!-- BLOQUE SELLO -->
+            <div id="bloqueSello" class="bloque-sello elemento-seleccionable" data-elemento="bloqueSello" onclick="seleccionarElementoEnPantalla('bloqueSello', event)">
                 <div class="sello-renglon sello-nombre">IGNACIO REPETTO</div>
                 <div class="sello-renglon sello-titulo">INGENIERO INDUSTRIAL</div>
                 <div class="sello-renglon sello-matricula">C.I.P.B.A Mat 51142</div>
@@ -791,6 +834,39 @@
 
     const TIPO_OBLEA = "uso_gral";
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
+
+    const ELEMENTOS_CONFIG = {
+        linea1: {
+            nombre: "Renglón 1",
+            vertical: "linea1_top",
+            horizontal: "linea1_left"
+        },
+        linea2: {
+            nombre: "Renglón 2",
+            vertical: "linea2_top",
+            horizontal: "linea2_left"
+        },
+        linea22: {
+            nombre: "Renglón 22",
+            vertical: "linea2_top",
+            horizontal: "linea22_left"
+        },
+        linea3: {
+            nombre: "Renglón 3",
+            vertical: "linea3_top",
+            horizontal: "linea3_left"
+        },
+        linea4: {
+            nombre: "Renglón 4",
+            vertical: "linea3_top",
+            horizontal: "linea4_left"
+        },
+        bloqueSello: {
+            nombre: "Sello",
+            vertical: "sello_top",
+            horizontal: "sello_left"
+        }
+    };
 
     const PARAMETROS = {
         linea1_top: {
@@ -1020,6 +1096,9 @@
         }
     };
 
+    let elementoSeleccionadoId = "linea1";
+    let parametroActivoKey = "linea1_top";
+
     function guardarStorage(clave, valor) {
         try {
             localStorage.setItem(clave, String(valor));
@@ -1052,10 +1131,22 @@
         guardarStorage(cfg.storageKey, limpio);
     }
 
-    function sincronizarUnicoSlider() {
-        const key = document.getElementById("selectParametro").value;
+    function actualizarResaltadoVisual() {
+        Object.keys(ELEMENTOS_CONFIG).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle("elemento-seleccionado", id === elementoSeleccionadoId);
+        });
+    }
+
+    function obtenerEjeSeleccionado() {
+        const marcado = document.querySelector('input[name="ejeMovimiento"]:checked');
+        return marcado ? marcado.value : "vertical";
+    }
+
+    function cargarParametroEnSlider(key) {
         const cfg = PARAMETROS[key];
         if (!cfg) return;
+        parametroActivoKey = key;
         const val = obtenerValorParametro(key);
         const slider = document.getElementById("unicoSlider");
         slider.min = cfg.min;
@@ -1066,13 +1157,54 @@
         document.getElementById("unidadUnicoSlider").textContent = cfg.unidad;
     }
 
+    function seleccionarElementoEnPantalla(idElemento, evento) {
+        if (evento) evento.stopPropagation();
+        if (!ELEMENTOS_CONFIG[idElemento]) return;
+
+        elementoSeleccionadoId = idElemento;
+        document.getElementById("selectAncho").value = "";
+        actualizarResaltadoVisual();
+
+        const eje = obtenerEjeSeleccionado();
+        const cfgEl = ELEMENTOS_CONFIG[idElemento];
+        const key = eje === "horizontal" ? cfgEl.horizontal : cfgEl.vertical;
+        const textoEje = eje === "horizontal" ? "Horizontal" : "Vertical";
+
+        document.getElementById("textoSeleccionado").textContent =
+            `Elemento: ${cfgEl.nombre} (${textoEje})`;
+
+        cargarParametroEnSlider(key);
+    }
+
+    function cambiarEje() {
+        document.getElementById("selectAncho").value = "";
+        const eje = obtenerEjeSeleccionado();
+        const cfgEl = ELEMENTOS_CONFIG[elementoSeleccionadoId] || ELEMENTOS_CONFIG.linea1;
+        const key = eje === "horizontal" ? cfgEl.horizontal : cfgEl.vertical;
+        const textoEje = eje === "horizontal" ? "Horizontal" : "Vertical";
+
+        document.getElementById("textoSeleccionado").textContent =
+            `Elemento: ${cfgEl.nombre} (${textoEje})`;
+
+        cargarParametroEnSlider(key);
+    }
+
+    function seleccionarParametroDirecto(key) {
+        if (!key || !PARAMETROS[key]) {
+            cambiarEje();
+            return;
+        }
+        const opcionTexto = document.querySelector(`#selectAncho option[value="${key}"]`)?.textContent || key;
+        document.getElementById("textoSeleccionado").textContent = `Medida: ${opcionTexto}`;
+        cargarParametroEnSlider(key);
+    }
+
     function aplicarUnicoSlider(valor) {
-        const key = document.getElementById("selectParametro").value;
-        const cfg = PARAMETROS[key];
+        const cfg = PARAMETROS[parametroActivoKey];
         if (!cfg) return;
         const num = parseFloat(valor) || 0;
         document.getElementById("valUnicoSlider").textContent = num;
-        setearValorParametro(key, num);
+        setearValorParametro(parametroActivoKey, num);
         verificarDesbordeEnPantalla();
     }
 
@@ -1106,7 +1238,7 @@
                         }
                     }
                 });
-                sincronizarUnicoSlider();
+                cargarParametroEnSlider(parametroActivoKey);
             }
 
             if (data.rotacion) {
@@ -1236,7 +1368,8 @@
         Object.keys(PARAMETROS).forEach(key => {
             setearValorParametro(key, PARAMETROS[key].defaultVal);
         });
-        sincronizarUnicoSlider();
+        document.getElementById("selectAncho").value = "";
+        cambiarEje();
 
         document.getElementById("selectRotacion").value = "90deg";
         cambiarRotacionImpresion("90deg");
@@ -1248,7 +1381,8 @@
             const val = obtenerValorParametro(key);
             setearValorParametro(key, val);
         });
-        sincronizarUnicoSlider();
+        actualizarResaltadoVisual();
+        cambiarEje();
 
         const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
         document.getElementById("selectRotacion").value = rotGuardada;
