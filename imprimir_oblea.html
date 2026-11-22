@@ -26,7 +26,7 @@
         .control-panel { max-width: 560px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
         .control-panel label { font-weight: bold; font-size: 13px; display: block; margin-bottom: 5px; color: #333; }
         .control-panel input[type="range"] { width: 100%; cursor: pointer; }
-        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; text-align: left; }
+        .control-stack { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; text-align: left; }
         .control-box { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 8px 10px; }
         .control-box select { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; }
         .nota-impresion {
@@ -369,7 +369,7 @@
         ✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm).
     </div>
 
-    <div class="control-grid">
+    <div class="control-stack">
         <div class="control-box">
             <label for="sliderAlturaRenglon1">Altura de renglón 1 (Vertical): <span id="valAlturaRenglon1">113</span> px</label>
             <input type="range" id="sliderAlturaRenglon1" min="0" max="280" value="113" oninput="cambiarAlturaRenglon1(this.value)">
@@ -378,9 +378,14 @@
             <label for="sliderPosXRenglon1">Posición horizontal de renglón 1: <span id="valPosXRenglon1">10</span> mm</label>
             <input type="range" id="sliderPosXRenglon1" min="0" max="120" step="0.5" value="10" oninput="cambiarPosXRenglon1(this.value)">
         </div>
-    </div>
-
-    <div class="control-grid">
+        <div class="control-box">
+            <label for="sliderOffsetX">Ajuste horizontal X (Hoja): <span id="valOffsetX">0</span> mm</label>
+            <input type="range" id="sliderOffsetX" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
+        </div>
+        <div class="control-box">
+            <label for="sliderOffsetY">Ajuste vertical Y (Hoja): <span id="valOffsetY">0</span> mm</label>
+            <input type="range" id="sliderOffsetY" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
+        </div>
         <div class="control-box">
             <label for="selectRotacion">Rotación al imprimir:</label>
             <select id="selectRotacion" onchange="cambiarRotacionImpresion(this.value)">
@@ -389,14 +394,6 @@
                 <option value="-90deg">-90° (Antihorario)</option>
                 <option value="180deg">180°</option>
             </select>
-        </div>
-        <div class="control-box">
-            <label for="sliderOffsetX">Ajuste horizontal X (Hoja): <span id="valOffsetX">0</span> mm</label>
-            <input type="range" id="sliderOffsetX" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
-        </div>
-        <div class="control-box" style="grid-column: 1 / -1;">
-            <label for="sliderOffsetY">Ajuste vertical Y (Hoja): <span id="valOffsetY">0</span> mm</label>
-            <input type="range" id="sliderOffsetY" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
         </div>
     </div>
 
