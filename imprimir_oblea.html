@@ -24,6 +24,8 @@
             --linea3-top: 185px;
             --linea3-left: 10mm;
 
+            --linea4-left: 45mm;
+
             --ancho-extintor: 24mm;   /* 2,4 cm */
             --ancho-ano-fab: 14mm;    /* 1,4 cm */
             --ancho-vto-ph: 12mm;     /* 1,2 cm */
@@ -36,6 +38,9 @@
 
             --ancho-r3-mes: 12mm;
             --ancho-r3-anio: 12mm;
+
+            --ancho-r4-mes: 12mm;
+            --ancho-r4-anio: 12mm;
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -270,10 +275,11 @@
             padding-bottom: 4px;
         }
 
-        /* RENGLONES 1, 2 y 3: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
+        /* RENGLONES 1, 2, 3 y 4: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
         .linea-1,
         .linea-2,
-        .linea-3 {
+        .linea-3,
+        .linea-4 {
             position: absolute;
             display: flex;
             flex-direction: row;
@@ -299,6 +305,11 @@
         .linea-3 {
             top: var(--linea3-top);
             left: var(--linea3-left);
+        }
+
+        .linea-4 {
+            top: var(--linea3-top);
+            left: var(--linea4-left);
         }
 
         .campo-item {
@@ -343,6 +354,9 @@
 
         .campo-r3-mes .caja-dato-guia  { width: var(--ancho-r3-mes); }
         .campo-r3-anio .caja-dato-guia { width: var(--ancho-r3-anio); }
+
+        .campo-r4-mes .caja-dato-guia  { width: var(--ancho-r4-mes); }
+        .campo-r4-anio .caja-dato-guia { width: var(--ancho-r4-anio); }
 
         .valor-dato {
             font-size: 10px;
@@ -447,6 +461,17 @@
                 padding: 0 !important;
             }
 
+            .linea-4 {
+                position: absolute !important;
+                top: var(--linea3-top) !important;
+                left: var(--linea4-left) !important;
+                box-sizing: border-box !important;
+                border-bottom: none !important;
+                gap: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .campo-item,
             .campo-item + .campo-item .caja-dato-guia,
             .caja-dato-guia {
@@ -505,10 +530,13 @@
             <option value="ancho_r2_c1">Renglón 2 - Ancho Campo 1 (VIVATEC) (mm)</option>
             <option value="ancho_r2_c2">Renglón 2 - Ancho Campo 2 (382) (mm)</option>
             <option value="ancho_r2_c3">Renglón 2 - Ancho Campo 3 (Vacío) (mm)</option>
-            <option value="linea3_top">Renglón 3 (Venc.) - Altura vertical (px)</option>
-            <option value="linea3_left">Renglón 3 (Venc.) - Posición horizontal (mm)</option>
+            <option value="linea3_top">Renglones 3 y 4 - Altura vertical (px)</option>
+            <option value="linea3_left">Renglón 3 - Posición horizontal (mm)</option>
             <option value="ancho_r3_mes">Renglón 3 - Ancho Mes (mm)</option>
             <option value="ancho_r3_anio">Renglón 3 - Ancho Año (mm)</option>
+            <option value="linea4_left">Renglón 4 - Posición horizontal (mm)</option>
+            <option value="ancho_r4_mes">Renglón 4 - Ancho Mes (mm)</option>
+            <option value="ancho_r4_anio">Renglón 4 - Ancho Año (mm)</option>
         </select>
 
         <label for="unicoSlider" style="margin-top: 6px;">
@@ -597,7 +625,7 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 3: bloque independiente de Mes y Año de vencimiento, sin etiqueta -->
+            <!-- RENGLÓN 3: Mes y Año de vencimiento, sin etiqueta -->
             <div id="linea3" class="linea-3">
                 <div class="campo-item campo-r3-mes">
                     <div class="caja-dato-guia">
@@ -608,6 +636,21 @@
                 <div class="campo-item campo-r3-anio">
                     <div class="caja-dato-guia">
                         <span id="lblAnioVto" class="valor-dato valor-vto-destacado">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RENGLÓN 4: mismos datos que renglón 3, misma altura vertical, posición horizontal independiente -->
+            <div id="linea4" class="linea-4">
+                <div class="campo-item campo-r4-mes">
+                    <div class="caja-dato-guia">
+                        <span id="lblMesVtoR4" class="valor-dato valor-vto-destacado">-</span>
+                    </div>
+                </div>
+
+                <div class="campo-item campo-r4-anio">
+                    <div class="caja-dato-guia">
+                        <span id="lblAnioVtoR4" class="valor-dato valor-vto-destacado">-</span>
                     </div>
                 </div>
             </div>
@@ -744,7 +787,7 @@
             cssVar: "--linea3-left",
             unidad: "mm",
             min: 0,
-            max: 120,
+            max: 140,
             step: 0.5,
             defaultVal: 10,
             storageKey: "vivatec_oblea_pos_x_renglon_3"
@@ -766,6 +809,33 @@
             step: 0.5,
             defaultVal: 12,
             storageKey: "vivatec_oblea_ancho_r3_anio"
+        },
+        linea4_left: {
+            cssVar: "--linea4-left",
+            unidad: "mm",
+            min: 0,
+            max: 140,
+            step: 0.5,
+            defaultVal: 45,
+            storageKey: "vivatec_oblea_pos_x_renglon_4"
+        },
+        ancho_r4_mes: {
+            cssVar: "--ancho-r4-mes",
+            unidad: "mm",
+            min: 5,
+            max: 50,
+            step: 0.5,
+            defaultVal: 12,
+            storageKey: "vivatec_oblea_ancho_r4_mes"
+        },
+        ancho_r4_anio: {
+            cssVar: "--ancho-r4-anio",
+            unidad: "mm",
+            min: 5,
+            max: 50,
+            step: 0.5,
+            defaultVal: 12,
+            storageKey: "vivatec_oblea_ancho_r4_anio"
         }
     };
 
@@ -832,6 +902,7 @@
         const linea1 = document.getElementById("linea1");
         const linea2 = document.getElementById("linea2");
         const linea3 = document.getElementById("linea3");
+        const linea4 = document.getElementById("linea4");
         if (!marco || !oblea || !estado) return;
 
         const rotacion = document.getElementById("selectRotacion").value || "90deg";
@@ -847,7 +918,7 @@
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
         let elementoFuera = false;
-        [linea1, linea2, linea3].forEach(el => {
+        [linea1, linea2, linea3, linea4].forEach(el => {
             if (!el) return;
             const rectEl = el.getBoundingClientRect();
             const sale = (
@@ -966,8 +1037,12 @@
             if (data.vto_carga) {
                 let partes = String(data.vto_carga).split("-");
                 if (partes.length === 3) {
-                    document.getElementById("lblMesVto").textContent = partes[1];
-                    document.getElementById("lblAnioVto").textContent = partes[0].slice(-2);
+                    const mes = partes[1];
+                    const anio = partes[0].slice(-2);
+                    document.getElementById("lblMesVto").textContent = mes;
+                    document.getElementById("lblAnioVto").textContent = anio;
+                    document.getElementById("lblMesVtoR4").textContent = mes;
+                    document.getElementById("lblAnioVtoR4").textContent = anio;
                 }
             }
 
