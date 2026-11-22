@@ -16,6 +16,7 @@
             --print-offset-x: 0mm;
             --print-offset-y: 0mm;
             --print-left: 9.5cm;
+            --linea1-top: 113px; /* ~3 cm iniciales */
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -151,10 +152,10 @@
             padding-bottom: 4px;
         }
 
-        /* LÍNEA 1: inicia a 3 cm del margen superior y 1 cm del margen izquierdo */
-        .linea-uno {
+        /* LÍNEA 1: movida de forma independiente por "Altura de renglón 1" */
+        .linea-1 {
             position: absolute;
-            top: 3cm;
+            top: var(--linea1-top);
             left: 1cm;
             display: flex;
             justify-content: flex-start;
@@ -177,6 +178,13 @@
             text-align: left;
             padding-left: 0;
             min-width: 66px;
+        }
+
+        /* BLOQUE DE VENCIMIENTO independiente de Línea 1 */
+        .bloque-vencimiento-pos {
+            position: absolute;
+            top: calc(var(--linea1-top) + 30px);
+            left: 1cm;
         }
 
         /* RENGLÓN VIVATEC 382: 2 cm del margen izquierdo y 5,6 cm del margen inferior */
@@ -206,7 +214,6 @@
             color: #000;
         }
 
-        /* BLOQUE DE VENCIMIENTO (Justo debajo de Extintor N°) */
         .bloque-vencimiento-caja {
             border: 1.5px dashed #ccc;
             padding: 4px;
@@ -292,14 +299,21 @@
                 background: transparent !important;
             }
             
-            .linea-uno {
+            .linea-1 {
                 position: absolute !important;
-                top: 3cm !important;
+                top: var(--linea1-top) !important;
                 left: 1cm !important;
                 border-bottom: none;
                 gap: 10px;
                 padding-bottom: 0;
             }
+
+            .bloque-vencimiento-pos {
+                position: absolute !important;
+                top: calc(var(--linea1-top) + 30px) !important;
+                left: 1cm !important;
+            }
+
             .linea-vivatec {
                 position: absolute !important;
                 left: 2cm !important;
@@ -329,8 +343,8 @@
     </div>
 
     <div style="margin-bottom: 12px; text-align: left;" class="control-box">
-        <label for="sliderDistancia">Distancia A (Espacio vertical debajo de Extintor N°): <span id="valDistancia">30</span>px</label>
-        <input type="range" id="sliderDistancia" min="0" max="240" value="30" oninput="cambiarDistanciaA(this.value)">
+        <label for="sliderAlturaRenglon1">Altura de renglón 1 (Posición vertical de Línea 1): <span id="valAlturaRenglon1">113</span>px</label>
+        <input type="range" id="sliderAlturaRenglon1" min="0" max="280" value="113" oninput="cambiarAlturaRenglon1(this.value)">
     </div>
 
     <div class="control-grid">
@@ -369,52 +383,50 @@
                 VIVATEC - VISTA PREVIA (USO GENERAL)
             </div>
 
-            <!-- LÍNEA 1: inicia a 3 cm arriba y 1 cm a la izquierda -->
-            <div id="lineaUno" class="linea-uno">
-                <!-- Columna 1: Extintor N° + Vencimiento justo abajo -->
+            <!-- LÍNEA 1: se mueve sola con "Altura de renglón 1" -->
+            <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
                     <span class="etiqueta-guia">Extintor N°</span>
                     <span id="lblExtintor" class="valor-dato">-</span>
-
-                    <!-- Bloque Vencimiento móvil con Distancia A -->
-                    <div id="espacioA" style="margin-top: 30px;">
-                        <div id="bloqueVencimiento" class="bloque-vencimiento-caja">
-                            <div class="vencimiento-titulo">
-                                <span class="etiqueta-guia">Vencimiento</span>
-                            </div>
-                            <div class="vencimiento-grid">
-                                <div class="venc-caja">
-                                    <span class="etiqueta-guia">Mes</span>
-                                    <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
-                                </div>
-                                <div class="venc-caja">
-                                    <span class="etiqueta-guia">Año</span>
-                                    <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Columna 2: Año Fab -->
                 <div class="campo-item">
                     <span class="etiqueta-guia">Año Fab.</span>
                     <span id="lblAnoFab" class="valor-dato">-</span>
                 </div>
-                <!-- Columna 3: Vto P.H. -->
+
                 <div class="campo-item">
                     <span class="etiqueta-guia">Vto. P.H.</span>
                     <span id="lblVtoPh" class="valor-dato">-</span>
                 </div>
-                <!-- Columna 4: Capacidad -->
+
                 <div class="campo-item">
                     <span class="etiqueta-guia">Capacidad</span>
                     <span id="lblCapacidad" class="valor-dato">-</span>
                 </div>
-                <!-- Columna 5: Agente -->
+
                 <div class="campo-item">
                     <span class="etiqueta-guia">Agente</span>
                     <span id="lblAgente" class="valor-dato">-</span>
+                </div>
+            </div>
+
+            <!-- BLOQUE DE VENCIMIENTO independiente de Línea 1 -->
+            <div id="bloqueVencimientoPos" class="bloque-vencimiento-pos">
+                <div id="bloqueVencimiento" class="bloque-vencimiento-caja">
+                    <div class="vencimiento-titulo">
+                        <span class="etiqueta-guia">Vencimiento</span>
+                    </div>
+                    <div class="vencimiento-grid">
+                        <div class="venc-caja">
+                            <span class="etiqueta-guia">Mes</span>
+                            <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+                        </div>
+                        <div class="venc-caja">
+                            <span class="etiqueta-guia">Año</span>
+                            <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -429,7 +441,7 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const STORAGE_DISTANCIA_KEY = "vivatec_oblea_distancia_a";
+    const STORAGE_ALTURA_R1_KEY = "vivatec_oblea_altura_renglon_1";
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
     const STORAGE_OFFSET_X_KEY = "vivatec_oblea_offset_x";
     const STORAGE_OFFSET_Y_KEY = "vivatec_oblea_offset_y";
@@ -452,7 +464,7 @@
         const marco = document.getElementById("marcoHoja");
         const oblea = document.getElementById("obleaCard");
         const estado = document.getElementById("estadoMargen");
-        const lineaUno = document.getElementById("lineaUno");
+        const linea1 = document.getElementById("linea1");
         const bloqueVto = document.getElementById("bloqueVencimiento");
         const lineaVivatec = document.getElementById("lineaVivatec");
         if (!marco || !oblea || !estado) return;
@@ -478,7 +490,7 @@
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
         let elementoFuera = false;
-        [lineaUno, bloqueVto, lineaVivatec].forEach(el => {
+        [linea1, bloqueVto, lineaVivatec].forEach(el => {
             if (!el) return;
             const rectEl = el.getBoundingClientRect();
             const sale = (
@@ -505,11 +517,11 @@
         }
     }
 
-    function cambiarDistanciaA(valor) {
+    function cambiarAlturaRenglon1(valor) {
         const num = parseInt(valor, 10) || 0;
-        document.getElementById("valDistancia").textContent = num;
-        document.getElementById("espacioA").style.marginTop = num + "px";
-        guardarStorage(STORAGE_DISTANCIA_KEY, num);
+        document.getElementById("valAlturaRenglon1").textContent = num;
+        document.documentElement.style.setProperty("--linea1-top", `${num}px`);
+        guardarStorage(STORAGE_ALTURA_R1_KEY, num);
         verificarDesbordeEnPantalla();
     }
 
@@ -551,8 +563,8 @@
     }
 
     function resetearCalibracion() {
-        document.getElementById("sliderDistancia").value = 30;
-        cambiarDistanciaA(30);
+        document.getElementById("sliderAlturaRenglon1").value = 113;
+        cambiarAlturaRenglon1(113);
 
         document.getElementById("selectRotacion").value = "90deg";
         cambiarRotacionImpresion("90deg");
@@ -565,11 +577,11 @@
     }
 
     function cargarCalibracionGuardada() {
-        const distGuardada = leerStorage(STORAGE_DISTANCIA_KEY);
-        if (distGuardada !== null) {
-            document.getElementById("sliderDistancia").value = distGuardada;
-            document.getElementById("valDistancia").textContent = distGuardada;
-            document.getElementById("espacioA").style.marginTop = distGuardada + "px";
+        const alturaGuardada = leerStorage(STORAGE_ALTURA_R1_KEY);
+        if (alturaGuardada !== null) {
+            document.getElementById("sliderAlturaRenglon1").value = alturaGuardada;
+            document.getElementById("valAlturaRenglon1").textContent = alturaGuardada;
+            document.documentElement.style.setProperty("--linea1-top", `${alturaGuardada}px`);
         }
 
         const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
