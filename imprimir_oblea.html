@@ -331,14 +331,6 @@
             background: rgba(253, 237, 236, 0.95) !important;
         }
 
-        /* Los 2 renglones extra solo se muestran en oblea vehicular */
-        .renglon-extra-vehicular {
-            display: none;
-        }
-        .oblea-container.modo-vehicular .renglon-extra-vehicular {
-            display: flex;
-        }
-
         .elemento-seleccionable,
         .campo-item {
             cursor: pointer;
@@ -392,6 +384,14 @@
             font-size: 11px;
         }
 
+        /* Renglón 5 y 6 ocultos en Oblea General; visibles solo en Oblea Vehicular */
+        .renglon-extra-vehicular {
+            display: none !important;
+        }
+        .oblea-container.modo-vehicular .renglon-extra-vehicular {
+            display: flex !important;
+        }
+
         .linea-1 { top: var(--linea1-top); left: var(--linea1-left); }
         .linea-2 { top: var(--linea2-top); left: var(--linea1-left); }
         .linea-22 { top: var(--linea2-top); left: var(--linea22-left); }
@@ -405,6 +405,7 @@
             top: var(--sello-top);
             left: var(--sello-left);
             width: var(--ancho-sello);
+            z-index: 10;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -435,12 +436,14 @@
             top: var(--firma-top);
             left: var(--firma-left);
             width: var(--ancho-firma);
+            z-index: 20;
             box-sizing: border-box;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px dashed #2980b9;
-            background: rgba(41, 128, 185, 0.04);
+            background: transparent;
+            mix-blend-mode: multiply;
             padding: 1px;
         }
 
@@ -450,6 +453,7 @@
             height: auto;
             max-height: 22mm;
             object-fit: contain;
+            mix-blend-mode: multiply;
             pointer-events: none;
             user-select: none;
         }
@@ -595,6 +599,7 @@
                 top: var(--sello-top) !important;
                 left: var(--sello-left) !important;
                 width: var(--ancho-sello) !important;
+                z-index: 10 !important;
                 border: none !important;
                 background: transparent !important;
                 outline: none !important;
@@ -612,8 +617,10 @@
                 top: var(--firma-top) !important;
                 left: var(--firma-left) !important;
                 width: var(--ancho-firma) !important;
+                z-index: 20 !important;
                 border: none !important;
                 background: transparent !important;
+                mix-blend-mode: multiply !important;
                 outline: none !important;
                 padding: 0 !important;
             }
@@ -811,6 +818,7 @@
 
     const PX_POR_MM = 96 / 25.4;
     let tipoObleaActual = "general";
+    let ubicacionActualEquipo = "-";
 
     const ELEMENTOS_CONFIG = {
         linea1: { nombre: "Renglón 1 (Horiz. R1/R2/R3)", vertical: "linea1_top", horizontal: "linea1_left" },
@@ -945,6 +953,12 @@
         if (select) {
             select.value = tipoObleaActual;
         }
+
+        const lblR5 = document.getElementById("lblR5Ubicacion");
+        const lblR6 = document.getElementById("lblR6Ubicacion");
+        if (lblR5) lblR5.textContent = esVehicular ? ubicacionActualEquipo : "";
+        if (lblR6) lblR6.textContent = esVehicular ? ubicacionActualEquipo : "";
+
         if (!esVehicular && (elementoSeleccionadoId === "linea5" || elementoSeleccionadoId === "linea6")) {
             aplicarSeleccionElemento("linea1");
         }
@@ -1365,12 +1379,14 @@
                 return;
             }
 
+            ubicacionActualEquipo = data.ubicacion || "-";
+
             if (!tipoParam && data.oblea) {
                 tipoObleaActual = normalizarTipoOblea(data.oblea);
-                actualizarUIPorTipoOblea();
-                cargarCalibracionGuardada();
             }
 
+            actualizarUIPorTipoOblea();
+            cargarCalibracionGuardada();
             await cargarUltimoGrabado(false);
 
             const extintorNum = data.extintor_numero || "-";
@@ -1397,10 +1413,6 @@
                     document.getElementById("lblAnioVtoR4").textContent = anio;
                 }
             }
-
-            const ubicacionTexto = data.ubicacion || "-";
-            document.getElementById("lblR5Ubicacion").textContent = ubicacionTexto;
-            document.getElementById("lblR6Ubicacion").textContent = ubicacionTexto;
 
             verificarDesbordeEnPantalla();
 
