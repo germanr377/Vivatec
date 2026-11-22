@@ -77,7 +77,7 @@
             font-weight: bold;
             font-size: 12px;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             color: #333;
         }
 
@@ -89,28 +89,7 @@
             border: 1px solid #c6def5;
             border-radius: 5px;
             padding: 5px 8px;
-            margin-bottom: 7px;
-        }
-
-        .radios-eje {
-            display: flex;
-            gap: 14px;
-            align-items: center;
-            margin: 5px 0 6px 0;
-        }
-        .radio-opcion {
-            display: inline-flex !important;
-            align-items: center;
-            gap: 5px;
-            font-weight: bold !important;
-            font-size: 12px !important;
-            cursor: pointer;
-            margin: 0 !important;
-        }
-        .radio-opcion input[type="radio"] {
-            accent-color: #2980b9;
-            cursor: pointer;
-            margin: 0;
+            margin-bottom: 8px;
         }
 
         .control-panel input[type="range"] {
@@ -122,7 +101,7 @@
             border-radius: 999px;
             outline: none;
             cursor: pointer;
-            margin: 6px 0;
+            margin: 4px 0 9px 0;
         }
         .control-panel input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -208,7 +187,7 @@
         @media (max-width: 1080px) {
             .zona-calibracion {
                 padding-right: 0;
-                margin-top: 330px;
+                margin-top: 340px;
             }
             .control-panel {
                 left: 12px;
@@ -346,30 +325,11 @@
             font-size: 11px;
         }
 
-        .linea-1 {
-            top: var(--linea1-top);
-            left: var(--linea1-left);
-        }
-
-        .linea-2 {
-            top: var(--linea2-top);
-            left: var(--linea2-left);
-        }
-
-        .linea-22 {
-            top: var(--linea2-top);
-            left: var(--linea22-left);
-        }
-
-        .linea-3 {
-            top: var(--linea3-top);
-            left: var(--linea3-left);
-        }
-
-        .linea-4 {
-            top: var(--linea3-top);
-            left: var(--linea4-left);
-        }
+        .linea-1 { top: var(--linea1-top); left: var(--linea1-left); }
+        .linea-2 { top: var(--linea2-top); left: var(--linea2-left); }
+        .linea-22 { top: var(--linea2-top); left: var(--linea22-left); }
+        .linea-3 { top: var(--linea3-top); left: var(--linea3-left); }
+        .linea-4 { top: var(--linea3-top); left: var(--linea4-left); }
 
         .bloque-sello {
             position: absolute;
@@ -397,20 +357,9 @@
             white-space: nowrap;
         }
 
-        .sello-nombre {
-            font-weight: bold;
-            font-style: normal;
-        }
-
-        .sello-titulo {
-            font-weight: bold;
-            font-style: italic;
-        }
-
-        .sello-matricula {
-            font-weight: bold;
-            font-style: normal;
-        }
+        .sello-nombre { font-weight: bold; font-style: normal; }
+        .sello-titulo { font-weight: bold; font-style: italic; }
+        .sello-matricula { font-weight: bold; font-style: normal; }
 
         .campo-item {
             flex: 0 0 auto;
@@ -531,60 +480,11 @@
                 background: transparent !important;
             }
             
-            .linea-1 {
-                position: absolute !important;
-                top: var(--linea1-top) !important;
-                left: var(--linea1-left) !important;
-                box-sizing: border-box !important;
-                border-bottom: none !important;
-                gap: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .linea-2 {
-                position: absolute !important;
-                top: var(--linea2-top) !important;
-                left: var(--linea2-left) !important;
-                box-sizing: border-box !important;
-                border-bottom: none !important;
-                gap: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .linea-22 {
-                position: absolute !important;
-                top: var(--linea2-top) !important;
-                left: var(--linea22-left) !important;
-                box-sizing: border-box !important;
-                border-bottom: none !important;
-                gap: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .linea-3 {
-                position: absolute !important;
-                top: var(--linea3-top) !important;
-                left: var(--linea3-left) !important;
-                box-sizing: border-box !important;
-                border-bottom: none !important;
-                gap: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .linea-4 {
-                position: absolute !important;
-                top: var(--linea3-top) !important;
-                left: var(--linea4-left) !important;
-                box-sizing: border-box !important;
-                border-bottom: none !important;
-                gap: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
+            .linea-1 { position: absolute !important; top: var(--linea1-top) !important; left: var(--linea1-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-2 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea2-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-22 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea22-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-3 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea3-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-4 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea4-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
 
             .bloque-sello {
                 position: absolute !important;
@@ -600,15 +500,8 @@
                 text-align: center !important;
             }
 
-            .sello-renglon {
-                font-size: 10px !important;
-                text-align: center !important;
-                color: #000 !important;
-            }
-
-            .sello-titulo {
-                font-style: italic !important;
-            }
+            .sello-renglon { font-size: 10px !important; text-align: center !important; color: #000 !important; }
+            .sello-titulo { font-style: italic !important; }
 
             .campo-item,
             .campo-item + .campo-item .caja-dato-guia,
@@ -625,18 +518,8 @@
                 text-align: center !important;
             }
 
-            .valor-dato {
-                font-size: 10px !important;
-                font-weight: bold !important;
-                color: #000 !important;
-                text-align: center !important;
-            }
-            .valor-vto-destacado {
-                font-size: 11px !important;
-                font-weight: bold !important;
-                color: #000 !important;
-                text-align: center !important;
-            }
+            .valor-dato { font-size: 10px !important; font-weight: bold !important; color: #000 !important; text-align: center !important; }
+            .valor-vto-destacado { font-size: 11px !important; font-weight: bold !important; color: #000 !important; text-align: center !important; }
         }
     </style>
 </head>
@@ -646,7 +529,7 @@
     <h3>🖨️ Oblea Uso Gral (16,6 × 9,5 cm)</h3>
 
     <div class="nota-impresion">
-        <strong>1 clic</strong> en renglón/sello = mover · <strong>Doble clic</strong> en campo/sello = modificar ancho.
+        <strong>1 clic</strong> en renglón/sello = mover · <strong>Doble clic</strong> en campo/sello = ancho en slider horizontal.
     </div>
 
     <div id="estadoMargen" class="estado-margen">
@@ -655,25 +538,18 @@
 
     <div class="control-box">
         <div id="textoSeleccionado" class="seleccion-actual">
-            Elemento: Renglón 1 (Vertical)
+            Seleccionado: Renglón 1
         </div>
 
-        <label>Sentido del movimiento:</label>
-        <div class="radios-eje">
-            <label class="radio-opcion">
-                <input type="radio" name="ejeMovimiento" id="radioVertical" value="vertical" checked onchange="cambiarEje()">
-                Vertical
-            </label>
-            <label class="radio-opcion">
-                <input type="radio" name="ejeMovimiento" id="radioHorizontal" value="horizontal" onchange="cambiarEje()">
-                Horizontal
-            </label>
-        </div>
-
-        <label for="unicoSlider" style="margin-top: 4px;">
-            <span id="etiquetaValorSlider">Valor:</span> <span id="valUnicoSlider">113</span> <span id="unidadUnicoSlider">px</span>
+        <label for="sliderVertical">
+            Vertical: <span id="valVertical">113</span> <span id="unidadVertical">px</span>
         </label>
-        <input type="range" id="unicoSlider" min="0" max="280" step="1" value="113" oninput="aplicarUnicoSlider(this.value)">
+        <input type="range" id="sliderVertical" min="0" max="280" step="1" value="113" oninput="aplicarSliderVertical(this.value)">
+
+        <label for="sliderHorizontal">
+            <span id="etiquetaHorizontal">Horizontal:</span> <span id="valHorizontal">10</span> <span id="unidadHorizontal">mm</span>
+        </label>
+        <input type="range" id="sliderHorizontal" min="0" max="120" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
     </div>
 
     <div class="control-box">
@@ -706,99 +582,62 @@
             <!-- RENGLÓN 1 -->
             <div id="linea1" class="linea-1 elemento-seleccionable" data-elemento="linea1" onclick="programarSeleccionElemento('linea1', event)">
                 <div class="campo-item campo-extintor" data-ancho-key="ancho_extintor" data-ancho-label="Renglón 1 - Extintor N°" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblExtintor" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblExtintor" class="valor-dato">-</span></div>
                 </div>
-
                 <div class="campo-item campo-ano-fab" data-ancho-key="ancho_ano_fab" data-ancho-label="Renglón 1 - Año Fab." ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblAnoFab" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblAnoFab" class="valor-dato">-</span></div>
                 </div>
-
                 <div class="campo-item campo-vto-ph" data-ancho-key="ancho_vto_ph" data-ancho-label="Renglón 1 - Vto. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblVtoPh" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblVtoPh" class="valor-dato">-</span></div>
                 </div>
-
                 <div class="campo-item campo-capacidad" data-ancho-key="ancho_capacidad" data-ancho-label="Renglón 1 - Capacidad" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblCapacidad" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblCapacidad" class="valor-dato">-</span></div>
                 </div>
-
                 <div class="campo-item campo-agente" data-ancho-key="ancho_agente" data-ancho-label="Renglón 1 - Agente" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblAgente" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblAgente" class="valor-dato">-</span></div>
                 </div>
             </div>
 
             <!-- RENGLÓN 2 -->
             <div id="linea2" class="linea-2 elemento-seleccionable" data-elemento="linea2" onclick="programarSeleccionElemento('linea2', event)">
                 <div class="campo-item campo-r2-1" data-ancho-key="ancho_r2_c1" data-ancho-label="Renglón 2 - Campo 1 (VIVATEC)" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span class="valor-dato">VIVATEC</span>
-                    </div>
+                    <div class="caja-dato-guia"><span class="valor-dato">VIVATEC</span></div>
                 </div>
-
                 <div class="campo-item campo-r2-2" data-ancho-key="ancho_r2_c2" data-ancho-label="Renglón 2 - Campo 2 (382)" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span class="valor-dato">382</span>
-                    </div>
+                    <div class="caja-dato-guia"><span class="valor-dato">382</span></div>
                 </div>
-
                 <div class="campo-item campo-r2-3" data-ancho-key="ancho_r2_c3" data-ancho-label="Renglón 2 - Campo 3 (Vacío)" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span class="valor-dato"></span>
-                    </div>
+                    <div class="caja-dato-guia"><span class="valor-dato"></span></div>
                 </div>
             </div>
 
             <!-- RENGLÓN 22 -->
             <div id="linea22" class="linea-22 elemento-seleccionable" data-elemento="linea22" onclick="programarSeleccionElemento('linea22', event)">
                 <div class="campo-item campo-r22-extintor" data-ancho-key="ancho_r22_extintor" data-ancho-label="Renglón 22 - Extintor N°" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblExtintorR22" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblExtintorR22" class="valor-dato">-</span></div>
                 </div>
-
                 <div class="campo-item campo-r22-vto-ph" data-ancho-key="ancho_r22_vto_ph" data-ancho-label="Renglón 22 - Venc. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblVtoPhR22" class="valor-dato">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblVtoPhR22" class="valor-dato">-</span></div>
                 </div>
             </div>
 
             <!-- RENGLÓN 3 -->
             <div id="linea3" class="linea-3 elemento-seleccionable" data-elemento="linea3" onclick="programarSeleccionElemento('linea3', event)">
                 <div class="campo-item campo-r3-mes" data-ancho-key="ancho_r3_mes" data-ancho-label="Renglón 3 - Mes" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblMesVto" class="valor-dato valor-vto-destacado">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblMesVto" class="valor-dato valor-vto-destacado">-</span></div>
                 </div>
-
                 <div class="campo-item campo-r3-anio" data-ancho-key="ancho_r3_anio" data-ancho-label="Renglón 3 - Año" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblAnioVto" class="valor-dato valor-vto-destacado">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblAnioVto" class="valor-dato valor-vto-destacado">-</span></div>
                 </div>
             </div>
 
             <!-- RENGLÓN 4 -->
             <div id="linea4" class="linea-4 elemento-seleccionable" data-elemento="linea4" onclick="programarSeleccionElemento('linea4', event)">
                 <div class="campo-item campo-r4-mes" data-ancho-key="ancho_r4_mes" data-ancho-label="Renglón 4 - Mes" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblMesVtoR4" class="valor-dato valor-vto-destacado">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblMesVtoR4" class="valor-dato valor-vto-destacado">-</span></div>
                 </div>
-
                 <div class="campo-item campo-r4-anio" data-ancho-key="ancho_r4_anio" data-ancho-label="Renglón 4 - Año" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia">
-                        <span id="lblAnioVtoR4" class="valor-dato valor-vto-destacado">-</span>
-                    </div>
+                    <div class="caja-dato-guia"><span id="lblAnioVtoR4" class="valor-dato valor-vto-destacado">-</span></div>
                 </div>
             </div>
 
@@ -821,36 +660,12 @@
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
 
     const ELEMENTOS_CONFIG = {
-        linea1: {
-            nombre: "Renglón 1",
-            vertical: "linea1_top",
-            horizontal: "linea1_left"
-        },
-        linea2: {
-            nombre: "Renglón 2",
-            vertical: "linea2_top",
-            horizontal: "linea2_left"
-        },
-        linea22: {
-            nombre: "Renglón 22",
-            vertical: "linea2_top",
-            horizontal: "linea22_left"
-        },
-        linea3: {
-            nombre: "Renglón 3",
-            vertical: "linea3_top",
-            horizontal: "linea3_left"
-        },
-        linea4: {
-            nombre: "Renglón 4",
-            vertical: "linea3_top",
-            horizontal: "linea4_left"
-        },
-        bloqueSello: {
-            nombre: "Sello",
-            vertical: "sello_top",
-            horizontal: "sello_left"
-        }
+        linea1: { nombre: "Renglón 1", vertical: "linea1_top", horizontal: "linea1_left" },
+        linea2: { nombre: "Renglón 2", vertical: "linea2_top", horizontal: "linea2_left" },
+        linea22: { nombre: "Renglón 22", vertical: "linea2_top", horizontal: "linea22_left" },
+        linea3: { nombre: "Renglón 3", vertical: "linea3_top", horizontal: "linea3_left" },
+        linea4: { nombre: "Renglón 4", vertical: "linea3_top", horizontal: "linea4_left" },
+        bloqueSello: { nombre: "Sello", vertical: "sello_top", horizontal: "sello_left" }
     };
 
     const PARAMETROS = {
@@ -883,21 +698,16 @@
 
     let elementoSeleccionadoId = "linea1";
     let campoAnchoActivoEl = null;
-    let parametroActivoKey = "linea1_top";
+    let keyVerticalActual = "linea1_top";
+    let keyHorizontalActual = "linea1_left";
     let timerClicSimple = null;
 
     function guardarStorage(clave, valor) {
-        try {
-            localStorage.setItem(clave, String(valor));
-        } catch (e) {}
+        try { localStorage.setItem(clave, String(valor)); } catch (e) {}
     }
 
     function leerStorage(clave) {
-        try {
-            return localStorage.getItem(clave);
-        } catch (e) {
-            return null;
-        }
+        try { return localStorage.getItem(clave); } catch (e) { return null; }
     }
 
     function obtenerValorParametro(key) {
@@ -931,23 +741,31 @@
         }
     }
 
-    function obtenerEjeSeleccionado() {
-        const marcado = document.querySelector('input[name="ejeMovimiento"]:checked');
-        return marcado ? marcado.value : "vertical";
-    }
+    function sincronizarSliders() {
+        const cfgV = PARAMETROS[keyVerticalActual];
+        const cfgH = PARAMETROS[keyHorizontalActual];
 
-    function cargarParametroEnSlider(key) {
-        const cfg = PARAMETROS[key];
-        if (!cfg) return;
-        parametroActivoKey = key;
-        const val = obtenerValorParametro(key);
-        const slider = document.getElementById("unicoSlider");
-        slider.min = cfg.min;
-        slider.max = cfg.max;
-        slider.step = cfg.step;
-        slider.value = val;
-        document.getElementById("valUnicoSlider").textContent = val;
-        document.getElementById("unidadUnicoSlider").textContent = cfg.unidad;
+        if (cfgV) {
+            const valV = obtenerValorParametro(keyVerticalActual);
+            const sV = document.getElementById("sliderVertical");
+            sV.min = cfgV.min;
+            sV.max = cfgV.max;
+            sV.step = cfgV.step;
+            sV.value = valV;
+            document.getElementById("valVertical").textContent = valV;
+            document.getElementById("unidadVertical").textContent = cfgV.unidad;
+        }
+
+        if (cfgH) {
+            const valH = obtenerValorParametro(keyHorizontalActual);
+            const sH = document.getElementById("sliderHorizontal");
+            sH.min = cfgH.min;
+            sH.max = cfgH.max;
+            sH.step = cfgH.step;
+            sH.value = valH;
+            document.getElementById("valHorizontal").textContent = valH;
+            document.getElementById("unidadHorizontal").textContent = cfgH.unidad;
+        }
     }
 
     function aplicarSeleccionElemento(idElemento) {
@@ -956,15 +774,13 @@
         elementoSeleccionadoId = idElemento;
         actualizarResaltadoVisual();
 
-        const eje = obtenerEjeSeleccionado();
         const cfgEl = ELEMENTOS_CONFIG[idElemento];
-        const key = eje === "horizontal" ? cfgEl.horizontal : cfgEl.vertical;
-        const textoEje = eje === "horizontal" ? "Horizontal" : "Vertical";
+        keyVerticalActual = cfgEl.vertical;
+        keyHorizontalActual = cfgEl.horizontal;
 
-        document.getElementById("textoSeleccionado").textContent =
-            `Elemento: ${cfgEl.nombre} (${textoEje})`;
-
-        cargarParametroEnSlider(key);
+        document.getElementById("textoSeleccionado").textContent = `Seleccionado: ${cfgEl.nombre}`;
+        document.getElementById("etiquetaHorizontal").textContent = "Horizontal:";
+        sincronizarSliders();
     }
 
     function programarSeleccionElemento(idElemento, evento) {
@@ -985,32 +801,33 @@
         const anchoLabel = elementoCampo.getAttribute("data-ancho-label") || anchoKey;
         if (!anchoKey || !PARAMETROS[anchoKey]) return;
 
+        const renglonPadre = elementoCampo.closest("[data-elemento]");
+        const idRenglon = renglonPadre ? renglonPadre.getAttribute("data-elemento") : elementoSeleccionadoId;
+        if (idRenglon && ELEMENTOS_CONFIG[idRenglon]) {
+            elementoSeleccionadoId = idRenglon;
+            keyVerticalActual = ELEMENTOS_CONFIG[idRenglon].vertical;
+        }
+
         campoAnchoActivoEl = elementoCampo;
+        keyHorizontalActual = anchoKey;
         actualizarResaltadoVisual();
+
         document.getElementById("textoSeleccionado").textContent = `Ancho: ${anchoLabel}`;
-        cargarParametroEnSlider(anchoKey);
+        document.getElementById("etiquetaHorizontal").textContent = "Ancho:";
+        sincronizarSliders();
     }
 
-    function cambiarEje() {
-        campoAnchoActivoEl = null;
-        actualizarResaltadoVisual();
-        const eje = obtenerEjeSeleccionado();
-        const cfgEl = ELEMENTOS_CONFIG[elementoSeleccionadoId] || ELEMENTOS_CONFIG.linea1;
-        const key = eje === "horizontal" ? cfgEl.horizontal : cfgEl.vertical;
-        const textoEje = eje === "horizontal" ? "Horizontal" : "Vertical";
-
-        document.getElementById("textoSeleccionado").textContent =
-            `Elemento: ${cfgEl.nombre} (${textoEje})`;
-
-        cargarParametroEnSlider(key);
-    }
-
-    function aplicarUnicoSlider(valor) {
-        const cfg = PARAMETROS[parametroActivoKey];
-        if (!cfg) return;
+    function aplicarSliderVertical(valor) {
         const num = parseFloat(valor) || 0;
-        document.getElementById("valUnicoSlider").textContent = num;
-        setearValorParametro(parametroActivoKey, num);
+        document.getElementById("valVertical").textContent = num;
+        setearValorParametro(keyVerticalActual, num);
+        verificarDesbordeEnPantalla();
+    }
+
+    function aplicarSliderHorizontal(valor) {
+        const num = parseFloat(valor) || 0;
+        document.getElementById("valHorizontal").textContent = num;
+        setearValorParametro(keyHorizontalActual, num);
         verificarDesbordeEnPantalla();
     }
 
@@ -1044,7 +861,7 @@
                         }
                     }
                 });
-                cargarParametroEnSlider(parametroActivoKey);
+                sincronizarSliders();
             }
 
             if (data.rotacion) {
@@ -1174,8 +991,7 @@
         Object.keys(PARAMETROS).forEach(key => {
             setearValorParametro(key, PARAMETROS[key].defaultVal);
         });
-        campoAnchoActivoEl = null;
-        cambiarEje();
+        aplicarSeleccionElemento(elementoSeleccionadoId);
 
         document.getElementById("selectRotacion").value = "90deg";
         cambiarRotacionImpresion("90deg");
@@ -1187,8 +1003,7 @@
             const val = obtenerValorParametro(key);
             setearValorParametro(key, val);
         });
-        actualizarResaltadoVisual();
-        cambiarEje();
+        aplicarSeleccionElemento(elementoSeleccionadoId);
 
         const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
         document.getElementById("selectRotacion").value = rotGuardada;
