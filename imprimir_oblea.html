@@ -243,6 +243,8 @@
             flex: 1 1 auto;
         }
         .btn-accion:hover { background: #1f618d; }
+        .btn-guardar { background: #27ae60; }
+        .btn-guardar:hover { background: #1e8449; }
         .btn-volver { background: #7f8c8d; }
         .btn-volver:hover { background: #626567; }
         .btn-reset { background: #d35400; }
@@ -657,6 +659,7 @@
     </div>
 
     <div class="acciones-panel">
+        <button id="btnGuardarBD" class="btn-accion btn-guardar" onclick="guardarConfiguracionEnBD()">💾 Guardar Configuracion</button>
         <button class="btn-accion" onclick="window.print()">🖨️ Imprimir</button>
         <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear</button>
         <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Gestión</button>
@@ -786,6 +789,7 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const TIPO_OBLEA = "uso_gral";
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
 
     const PARAMETROS = {
@@ -1072,6 +1076,91 @@
         verificarDesbordeEnPantalla();
     }
 
+    function recolectarConfiguracionActual() {
+        const valores = {};
+        Object.keys(PARAMETROS).forEach(key => {
+            valores[key] = obtenerValorParametro(key);
+        });
+        return {
+            configuracion: valores,
+            rotacion: document.getElementById("selectRotacion").value || "90deg"
+        };
+    }
+
+    async function cargarConfiguracionDesdeBD() {
+        try {
+            const { data, error } = await _supabase
+                .from("config_oblea")
+                .select("configuracion, rotacion")
+                .eq("tipo_oblea", TIPO_OBLEA)
+                .maybeSingle();
+
+            if (error || !data) return;
+
+            if (data.configuracion && typeof data.configuracion === "object") {
+                Object.keys(PARAMETROS).forEach(key => {
+                    if (data.configuracion[key] !== undefined && data.configuracion[key] !== null) {
+                        const num = parseFloat(data.configuracion[key]);
+                        if (!Number.isNaN(num)) {
+                            setearValorParametro(key, num);
+                        }
+                    }
+                });
+                sincronizarUnicoSlider();
+            }
+
+            if (data.rotacion) {
+                document.getElementById("selectRotacion").value = data.rotacion;
+                aplicarRotacion(data.rotacion);
+                guardarStorage(STORAGE_ROTACION_KEY, data.rotacion);
+            }
+
+            verificarDesbordeEnPantalla();
+        } catch (err) {
+            console.error("Error cargando config_oblea desde BD:", err);
+        }
+    }
+
+    async function guardarConfiguracionEnBD() {
+        const btn = document.getElementById("btnGuardarBD");
+        const payload = recolectarConfiguracionActual();
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "⏳ Guardando...";
+        }
+
+        try {
+            const { error } = await _supabase
+                .from("config_oblea")
+                .upsert(
+                    {
+                        tipo_oblea: TIPO_OBLEA,
+                        configuracion: payload.configuracion,
+                        rotacion: payload.rotacion,
+                        updated_at: new Date().toISOString()
+                    },
+                    { onConflict: "tipo_oblea" }
+                );
+
+            if (error) {
+                console.error("Error guardando config_oblea en BD:", error);
+                alert("⚠️ No se pudo guardar la configuración. Verificá que exista la tabla config_oblea y las políticas.");
+                return;
+            }
+
+            alert("✅ Configuración guardada (Oblea Uso General).");
+        } catch (err) {
+            console.error("Error inesperado al guardar configuración:", err);
+            alert("⚠️ Ocurrió un error al guardar la configuración.");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "💾 Guardar Configuracion";
+            }
+        }
+    }
+
     function verificarDesbordeEnPantalla() {
         const marco = document.getElementById("marcoHoja");
         const oblea = document.getElementById("obleaCard");
@@ -1184,6 +1273,8 @@
             window.location.href = "login.html";
             return;
         }
+
+        await cargarConfiguracionDesdeBD();
 
         const urlParams = new URLSearchParams(window.location.search);
         const idRegistro = urlParams.get('id');
