@@ -32,6 +32,10 @@
             --sello-left: 82mm;
             --ancho-sello: 52mm;
 
+            --firma-top: 62mm;
+            --firma-left: 90mm;
+            --ancho-firma: 35mm;
+
             --ancho-extintor: 24mm;
             --ancho-ano-fab: 14mm;
             --ancho-vto-ph: 12mm;
@@ -346,7 +350,8 @@
             background: rgba(230, 126, 34, 0.14) !important;
         }
 
-        .campo-ancho-activo .caja-dato-guia {
+        .campo-ancho-activo .caja-dato-guia,
+        .bloque-firma.campo-ancho-activo {
             border-color: #8e44ad !important;
             background: rgba(142, 68, 173, 0.18) !important;
         }
@@ -424,6 +429,30 @@
         .sello-nombre { font-weight: bold; font-style: normal; }
         .sello-titulo { font-weight: bold; font-style: italic; }
         .sello-matricula { font-weight: bold; font-style: normal; }
+
+        .bloque-firma {
+            position: absolute;
+            top: var(--firma-top);
+            left: var(--firma-left);
+            width: var(--ancho-firma);
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #2980b9;
+            background: rgba(41, 128, 185, 0.04);
+            padding: 1px;
+        }
+
+        .img-firma {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 22mm;
+            object-fit: contain;
+            pointer-events: none;
+            user-select: none;
+        }
 
         .campo-item {
             flex: 0 0 auto;
@@ -547,6 +576,7 @@
 
             .elemento-seleccionado,
             .campo-ancho-activo .caja-dato-guia,
+            .bloque-firma.campo-ancho-activo,
             .elemento-desbordado {
                 outline: none !important;
                 background: transparent !important;
@@ -576,6 +606,17 @@
 
             .sello-renglon { font-size: 10px !important; text-align: center !important; color: #000 !important; }
             .sello-titulo { font-style: italic !important; }
+
+            .bloque-firma {
+                position: absolute !important;
+                top: var(--firma-top) !important;
+                left: var(--firma-left) !important;
+                width: var(--ancho-firma) !important;
+                border: none !important;
+                background: transparent !important;
+                outline: none !important;
+                padding: 0 !important;
+            }
 
             .campo-item,
             .campo-item + .campo-item .caja-dato-guia,
@@ -614,7 +655,7 @@
     </div>
 
     <div class="nota-impresion">
-        <strong>1 clic</strong> en renglón/sello = mover · <strong>Doble clic</strong> en campo/sello = ancho en slider horizontal.
+        <strong>1 clic</strong> en renglón/sello/firma = mover · <strong>Doble clic</strong> en campo/sello/firma = ancho en slider horizontal.
     </div>
 
     <div id="estadoMargen" class="estado-margen">
@@ -754,6 +795,11 @@
                 <div class="sello-renglon sello-titulo">INGENIERO INDUSTRIAL</div>
                 <div class="sello-renglon sello-matricula">C.I.P.B.A Mat 51142</div>
             </div>
+
+            <!-- BLOQUE FIRMA (IMAGEN) -->
+            <div id="bloqueFirma" class="bloque-firma elemento-seleccionable" data-elemento="bloqueFirma" data-ancho-key="ancho_firma" data-ancho-label="Firma" onclick="programarSeleccionElemento('bloqueFirma', event)" ondblclick="seleccionarAnchoCampo(this, event)">
+                <img id="imgFirma" src="firma.png" alt="Firma" class="img-firma" onerror="this.alt='Colocá firma.png en la carpeta'">
+            </div>
         </div>
     </div>
 </div>
@@ -774,7 +820,8 @@
         linea4: { nombre: "Renglón 4 (Horiz. R22/R4)", vertical: "linea3_top", horizontal: "linea22_left" },
         linea5: { nombre: "Renglón 5 (Vehicular)", vertical: "linea3_top", horizontal: "linea5_left" },
         linea6: { nombre: "Renglón 6 (Vehicular)", vertical: "linea3_top", horizontal: "linea6_left" },
-        bloqueSello: { nombre: "Sello", vertical: "sello_top", horizontal: "sello_left" }
+        bloqueSello: { nombre: "Sello", vertical: "sello_top", horizontal: "sello_left" },
+        bloqueFirma: { nombre: "Firma", vertical: "firma_top", horizontal: "firma_left" }
     };
 
     const PARAMETROS = {
@@ -802,7 +849,10 @@
         ancho_r6_ub: { cssVar: "--ancho-r6-ub", esVertical: false, min: 5, max: 120, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_ub" },
         sello_top: { cssVar: "--sello-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 48.9, storageKey: "altura_sello" },
         sello_left: { cssVar: "--sello-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 82, storageKey: "pos_x_sello" },
-        ancho_sello: { cssVar: "--ancho-sello", esVertical: false, min: 20, max: 120, step: 0.5, defaultVal: 52, storageKey: "ancho_sello" }
+        ancho_sello: { cssVar: "--ancho-sello", esVertical: false, min: 20, max: 120, step: 0.5, defaultVal: 52, storageKey: "ancho_sello" },
+        firma_top: { cssVar: "--firma-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 62, storageKey: "altura_firma" },
+        firma_left: { cssVar: "--firma-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 90, storageKey: "pos_x_firma" },
+        ancho_firma: { cssVar: "--ancho-firma", esVertical: false, min: 8, max: 120, step: 0.5, defaultVal: 35, storageKey: "ancho_firma" }
     };
 
     let elementoSeleccionadoId = "linea1";
@@ -1190,6 +1240,7 @@
         const linea5 = document.getElementById("linea5");
         const linea6 = document.getElementById("linea6");
         const bloqueSello = document.getElementById("bloqueSello");
+        const bloqueFirma = document.getElementById("bloqueFirma");
         if (!marco || !oblea || !estado) return;
 
         const rotacion = document.getElementById("selectRotacion").value || "90deg";
@@ -1205,8 +1256,8 @@
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
         const elementosAVerificar = tipoObleaActual === "vehicular"
-            ? [linea1, linea2, linea22, linea3, linea4, linea5, linea6, bloqueSello]
-            : [linea1, linea2, linea22, linea3, linea4, bloqueSello];
+            ? [linea1, linea2, linea22, linea3, linea4, linea5, linea6, bloqueSello, bloqueFirma]
+            : [linea1, linea2, linea22, linea3, linea4, bloqueSello, bloqueFirma];
 
         let elementoFuera = false;
         elementosAVerificar.forEach(el => {
