@@ -172,7 +172,7 @@
             </div>
         </div>
 
-        <!-- FILA 3: Año Fab, Vencimientos y Ubicación -->
+        <!-- FILA 3: Año Fab, Vencimientos y Ubicación/Dominio -->
         <div class="form-row">
             <div class="form-group" style="flex: none; width: 10ch;">
                 <label>Año Fab.:</label>
@@ -191,7 +191,7 @@
                 <input type="number" id="nuevoPuesto">
             </div>
             <div class="form-group" style="flex: 1;">
-                <label>Ubicación:</label>
+                <label>Ubicación/Dominio:</label>
                 <input type="text" id="nuevoUbicacion" autocomplete="off">
                 <div id="sugerenciasUbicaciones" class="sugerencias-lista"></div>
             </div>
@@ -849,6 +849,15 @@
             return;
         }
 
+        const esVehicular = /^vehicular/i.test(tipoOblea);
+        const ubicacionDominio = document.getElementById("nuevoUbicacion").value.trim();
+
+        if (esVehicular && !ubicacionDominio) {
+            alert("⚠️ Para imprimir una oblea vehicular falta el dato de Ubicación/Dominio.");
+            document.getElementById("nuevoUbicacion").focus();
+            return;
+        }
+
         const camposRequeridos = [
             { idInput: "nuevoExtintor", nombre: "Extintor N°" },
             { idInput: "nuevoAFabricacion", nombre: "Año Fabricación" },
@@ -966,7 +975,7 @@
         let clienteFiltro = obtenerClienteOficialValido(document.getElementById("nuevoCliente").value) || document.getElementById("nuevoCliente").value.trim();
 
         if (!extintorNum && !dpsNum && !ubicacionTexto) {
-            alert("Por favor, ingresá al menos un N° de Extintor, N° de DPS o Ubicación para buscar.");
+            alert("Por favor, ingresá al menos un N° de Extintor, N° de DPS o Ubicación/Dominio para buscar.");
             return;
         }
 
@@ -991,7 +1000,7 @@
             if (data.length > 1) {
                 let mensaje = "Se encontraron varios registros. Elegí uno:\n";
                 data.forEach((item, index) => {
-                    mensaje += `[${index + 1}] Cliente: ${item.cliente} | Ext: ${item.extintor_numero || '-'} | DPS: ${item.numero_dps || '-'} | Ubicación: ${item.ubicacion || '-'}\n`;
+                    mensaje += `[${index + 1}] Cliente: ${item.cliente} | Ext: ${item.extintor_numero || '-'} | DPS: ${item.numero_dps || '-'} | Ubicación/Dominio: ${item.ubicacion || '-'}\n`;
                 });
                 let seleccion = prompt(mensaje + "\nIngresá el número de opción:");
                 let idx = parseInt(seleccion, 10) - 1;
