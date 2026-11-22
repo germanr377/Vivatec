@@ -17,6 +17,7 @@
             --print-offset-y: 0mm;
             --print-left: 9.5cm;
             --linea1-top: 113px; /* ~3 cm iniciales */
+            --linea1-left: 1cm;
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -152,15 +153,15 @@
             padding-bottom: 4px;
         }
 
-        /* LÍNEA 1: movida de forma independiente por "Altura de renglón 1" */
+        /* LÍNEA 1: campos pegados por el costado y movibles vertical y horizontalmente */
         .linea-1 {
             position: absolute;
             top: var(--linea1-top);
-            left: 1cm;
+            left: var(--linea1-left);
             display: flex;
             justify-content: flex-start;
-            align-items: flex-start;
-            gap: 2px;
+            align-items: flex-end;
+            gap: 0;
             font-weight: bold;
             font-size: 11px;
         }
@@ -170,15 +171,20 @@
             box-sizing: border-box;
         }
 
-        /* Recuadro guía de tamaño exacto del dato (solo en pantalla) */
+        /* Recuadro guía de tamaño exacto del dato (solo en pantalla, pegados entre sí) */
         .caja-dato-guia {
             height: 0.5cm;
             line-height: 0.5cm;
             border: 1px dashed #2980b9;
+            border-right: none;
             background: rgba(41, 128, 185, 0.06);
             box-sizing: border-box;
             padding: 0 2px;
             overflow: hidden;
+        }
+
+        .campo-item:last-child .caja-dato-guia {
+            border-right: 1px dashed #2980b9;
         }
 
         .campo-extintor .caja-dato-guia { width: 2.4cm; text-align: left; }
@@ -314,15 +320,16 @@
             .linea-1 {
                 position: absolute !important;
                 top: var(--linea1-top) !important;
-                left: 1cm !important;
+                left: var(--linea1-left) !important;
                 box-sizing: border-box !important;
                 border-bottom: none !important;
-                gap: 2px !important;
+                gap: 0 !important;
                 padding-bottom: 0 !important;
             }
 
             .caja-dato-guia {
                 border: none !important;
+                border-right: none !important;
                 background: transparent !important;
                 outline: none !important;
                 overflow: visible !important;
@@ -362,9 +369,15 @@
         ✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm).
     </div>
 
-    <div style="margin-bottom: 12px; text-align: left;" class="control-box">
-        <label for="sliderAlturaRenglon1">Altura de renglón 1 (Posición vertical de Línea 1): <span id="valAlturaRenglon1">113</span>px</label>
-        <input type="range" id="sliderAlturaRenglon1" min="0" max="280" value="113" oninput="cambiarAlturaRenglon1(this.value)">
+    <div class="control-grid">
+        <div class="control-box">
+            <label for="sliderAlturaRenglon1">Altura de renglón 1 (Vertical): <span id="valAlturaRenglon1">113</span> px</label>
+            <input type="range" id="sliderAlturaRenglon1" min="0" max="280" value="113" oninput="cambiarAlturaRenglon1(this.value)">
+        </div>
+        <div class="control-box">
+            <label for="sliderPosXRenglon1">Posición horizontal de renglón 1: <span id="valPosXRenglon1">10</span> mm</label>
+            <input type="range" id="sliderPosXRenglon1" min="0" max="120" step="0.5" value="10" oninput="cambiarPosXRenglon1(this.value)">
+        </div>
     </div>
 
     <div class="control-grid">
@@ -378,11 +391,11 @@
             </select>
         </div>
         <div class="control-box">
-            <label for="sliderOffsetX">Ajuste horizontal X: <span id="valOffsetX">0</span> mm</label>
+            <label for="sliderOffsetX">Ajuste horizontal X (Hoja): <span id="valOffsetX">0</span> mm</label>
             <input type="range" id="sliderOffsetX" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
         </div>
         <div class="control-box" style="grid-column: 1 / -1;">
-            <label for="sliderOffsetY">Ajuste vertical Y: <span id="valOffsetY">0</span> mm</label>
+            <label for="sliderOffsetY">Ajuste vertical Y (Hoja): <span id="valOffsetY">0</span> mm</label>
             <input type="range" id="sliderOffsetY" min="-50" max="50" step="0.5" value="0" oninput="cambiarOffsetImpresion()">
         </div>
     </div>
@@ -403,38 +416,38 @@
                 VIVATEC - VISTA PREVIA (USO GENERAL)
             </div>
 
-            <!-- LÍNEA 1: cajas con medidas exactas (alto 0,5 cm) -->
+            <!-- LÍNEA 1: cajas pegadas por el costado (alto 0,5 cm), movibles vertical y horizontalmente -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
-                    <span class="etiqueta-guia">Extintor N° (2,4×0,5 cm)</span>
+                    <span class="etiqueta-guia">Extintor N° (2,4×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblExtintor" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-ano-fab">
-                    <span class="etiqueta-guia">Año Fab. (1,4×0,5 cm)</span>
+                    <span class="etiqueta-guia">Año Fab. (1,4×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblAnoFab" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-vto-ph">
-                    <span class="etiqueta-guia">Vto. P.H. (1,2×0,5 cm)</span>
+                    <span class="etiqueta-guia">Vto. P.H. (1,2×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblVtoPh" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-capacidad">
-                    <span class="etiqueta-guia">Cap. (1×0,5 cm)</span>
+                    <span class="etiqueta-guia">Cap. (1×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblCapacidad" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-agente">
-                    <span class="etiqueta-guia">Agente (1,9×0,5 cm)</span>
+                    <span class="etiqueta-guia">Agente (1,9×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblAgente" class="valor-dato">-</span>
                     </div>
@@ -472,6 +485,7 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const STORAGE_ALTURA_R1_KEY = "vivatec_oblea_altura_renglon_1";
+    const STORAGE_POS_X_R1_KEY = "vivatec_oblea_pos_x_renglon_1";
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
     const STORAGE_OFFSET_X_KEY = "vivatec_oblea_offset_x";
     const STORAGE_OFFSET_Y_KEY = "vivatec_oblea_offset_y";
@@ -555,6 +569,14 @@
         verificarDesbordeEnPantalla();
     }
 
+    function cambiarPosXRenglon1(valor) {
+        const num = parseFloat(valor) || 0;
+        document.getElementById("valPosXRenglon1").textContent = num;
+        document.documentElement.style.setProperty("--linea1-left", `${num}mm`);
+        guardarStorage(STORAGE_POS_X_R1_KEY, num);
+        verificarDesbordeEnPantalla();
+    }
+
     function aplicarRotacion(rotacion) {
         const permitidas = ["90deg", "0deg", "-90deg", "180deg"];
         const rot = permitidas.includes(rotacion) ? rotacion : "90deg";
@@ -596,6 +618,9 @@
         document.getElementById("sliderAlturaRenglon1").value = 113;
         cambiarAlturaRenglon1(113);
 
+        document.getElementById("sliderPosXRenglon1").value = 10;
+        cambiarPosXRenglon1(10);
+
         document.getElementById("selectRotacion").value = "90deg";
         cambiarRotacionImpresion("90deg");
 
@@ -612,6 +637,13 @@
             document.getElementById("sliderAlturaRenglon1").value = alturaGuardada;
             document.getElementById("valAlturaRenglon1").textContent = alturaGuardada;
             document.documentElement.style.setProperty("--linea1-top", `${alturaGuardada}px`);
+        }
+
+        const posXGuardada = leerStorage(STORAGE_POS_X_R1_KEY);
+        if (posXGuardada !== null) {
+            document.getElementById("sliderPosXRenglon1").value = posXGuardada;
+            document.getElementById("valPosXRenglon1").textContent = posXGuardada;
+            document.documentElement.style.setProperty("--linea1-left", `${posXGuardada}mm`);
         }
 
         const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
