@@ -21,6 +21,8 @@
             --linea2-top: 147px;
             --linea2-left: 10mm;
 
+            --linea22-left: 78mm;
+
             --linea3-top: 185px;
             --linea3-left: 10mm;
 
@@ -35,6 +37,9 @@
             --ancho-r2-c1: 24mm;
             --ancho-r2-c2: 14mm;
             --ancho-r2-c3: 24mm;
+
+            --ancho-r22-extintor: 24mm;
+            --ancho-r22-vto-ph: 12mm;
 
             --ancho-r3-mes: 12mm;
             --ancho-r3-anio: 12mm;
@@ -275,9 +280,10 @@
             padding-bottom: 4px;
         }
 
-        /* RENGLONES 1, 2, 3 y 4: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
+        /* RENGLONES: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
         .linea-1,
         .linea-2,
+        .linea-22,
         .linea-3,
         .linea-4 {
             position: absolute;
@@ -300,6 +306,11 @@
         .linea-2 {
             top: var(--linea2-top);
             left: var(--linea2-left);
+        }
+
+        .linea-22 {
+            top: var(--linea2-top);
+            left: var(--linea22-left);
         }
 
         .linea-3 {
@@ -351,6 +362,9 @@
         .campo-r2-1 .caja-dato-guia { width: var(--ancho-r2-c1); }
         .campo-r2-2 .caja-dato-guia { width: var(--ancho-r2-c2); }
         .campo-r2-3 .caja-dato-guia { width: var(--ancho-r2-c3); }
+
+        .campo-r22-extintor .caja-dato-guia { width: var(--ancho-r22-extintor); }
+        .campo-r22-vto-ph .caja-dato-guia   { width: var(--ancho-r22-vto-ph); }
 
         .campo-r3-mes .caja-dato-guia  { width: var(--ancho-r3-mes); }
         .campo-r3-anio .caja-dato-guia { width: var(--ancho-r3-anio); }
@@ -450,6 +464,17 @@
                 padding: 0 !important;
             }
 
+            .linea-22 {
+                position: absolute !important;
+                top: var(--linea2-top) !important;
+                left: var(--linea22-left) !important;
+                box-sizing: border-box !important;
+                border-bottom: none !important;
+                gap: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .linea-3 {
                 position: absolute !important;
                 top: var(--linea3-top) !important;
@@ -525,11 +550,14 @@
             <option value="ancho_vto_ph">Renglón 1 - Ancho Vto. P.H. (mm)</option>
             <option value="ancho_capacidad">Renglón 1 - Ancho Capacidad (mm)</option>
             <option value="ancho_agente">Renglón 1 - Ancho Agente (mm)</option>
-            <option value="linea2_top">Renglón 2 - Altura vertical (px)</option>
+            <option value="linea2_top">Renglones 2 y 22 - Altura vertical (px)</option>
             <option value="linea2_left">Renglón 2 - Posición horizontal (mm)</option>
             <option value="ancho_r2_c1">Renglón 2 - Ancho Campo 1 (VIVATEC) (mm)</option>
             <option value="ancho_r2_c2">Renglón 2 - Ancho Campo 2 (382) (mm)</option>
             <option value="ancho_r2_c3">Renglón 2 - Ancho Campo 3 (Vacío) (mm)</option>
+            <option value="linea22_left">Renglón 22 - Posición horizontal (mm)</option>
+            <option value="ancho_r22_extintor">Renglón 22 - Ancho Extintor N° (mm)</option>
+            <option value="ancho_r22_vto_ph">Renglón 22 - Ancho Venc. P.H. (mm)</option>
             <option value="linea3_top">Renglones 3 y 4 - Altura vertical (px)</option>
             <option value="linea3_left">Renglón 3 - Posición horizontal (mm)</option>
             <option value="ancho_r3_mes">Renglón 3 - Ancho Mes (mm)</option>
@@ -621,6 +649,21 @@
                 <div class="campo-item campo-r2-3">
                     <div class="caja-dato-guia">
                         <span class="valor-dato"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RENGLÓN 22: misma altura que renglón 2, posición horizontal independiente (Extintor N° | Venc. P.H.) -->
+            <div id="linea22" class="linea-22">
+                <div class="campo-item campo-r22-extintor">
+                    <div class="caja-dato-guia">
+                        <span id="lblExtintorR22" class="valor-dato">-</span>
+                    </div>
+                </div>
+
+                <div class="campo-item campo-r22-vto-ph">
+                    <div class="caja-dato-guia">
+                        <span id="lblVtoPhR22" class="valor-dato">-</span>
                     </div>
                 </div>
             </div>
@@ -774,6 +817,33 @@
             defaultVal: 24,
             storageKey: "vivatec_oblea_ancho_r2_c3"
         },
+        linea22_left: {
+            cssVar: "--linea22-left",
+            unidad: "mm",
+            min: 0,
+            max: 145,
+            step: 0.5,
+            defaultVal: 78,
+            storageKey: "vivatec_oblea_pos_x_renglon_22"
+        },
+        ancho_r22_extintor: {
+            cssVar: "--ancho-r22-extintor",
+            unidad: "mm",
+            min: 5,
+            max: 60,
+            step: 0.5,
+            defaultVal: 24,
+            storageKey: "vivatec_oblea_ancho_r22_extintor"
+        },
+        ancho_r22_vto_ph: {
+            cssVar: "--ancho-r22-vto-ph",
+            unidad: "mm",
+            min: 5,
+            max: 50,
+            step: 0.5,
+            defaultVal: 12,
+            storageKey: "vivatec_oblea_ancho_r22_vto_ph"
+        },
         linea3_top: {
             cssVar: "--linea3-top",
             unidad: "px",
@@ -901,6 +971,7 @@
         const estado = document.getElementById("estadoMargen");
         const linea1 = document.getElementById("linea1");
         const linea2 = document.getElementById("linea2");
+        const linea22 = document.getElementById("linea22");
         const linea3 = document.getElementById("linea3");
         const linea4 = document.getElementById("linea4");
         if (!marco || !oblea || !estado) return;
@@ -918,7 +989,7 @@
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
         let elementoFuera = false;
-        [linea1, linea2, linea3, linea4].forEach(el => {
+        [linea1, linea2, linea22, linea3, linea4].forEach(el => {
             if (!el) return;
             const rectEl = el.getBoundingClientRect();
             const sale = (
@@ -1028,11 +1099,17 @@
                 return;
             }
 
-            document.getElementById("lblExtintor").textContent = data.extintor_numero || "-";
+            const extintorNum = data.extintor_numero || "-";
+            const vtoPhFmt = formatearFechaWeb(data.vto_prueb_hidr);
+
+            document.getElementById("lblExtintor").textContent = extintorNum;
             document.getElementById("lblAnoFab").textContent = data.ano_fab || "-";
-            document.getElementById("lblVtoPh").textContent = formatearFechaWeb(data.vto_prueb_hidr);
+            document.getElementById("lblVtoPh").textContent = vtoPhFmt;
             document.getElementById("lblCapacidad").textContent = formatearCapacidad(data.capacidad);
             document.getElementById("lblAgente").textContent = data.agente_extintor || "-";
+
+            document.getElementById("lblExtintorR22").textContent = extintorNum;
+            document.getElementById("lblVtoPhR22").textContent = vtoPhFmt;
 
             if (data.vto_carga) {
                 let partes = String(data.vto_carga).split("-");
