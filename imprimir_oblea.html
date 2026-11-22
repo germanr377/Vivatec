@@ -40,7 +40,7 @@
 
             --ancho-r2-c1: 24mm;
             --ancho-r2-c2: 14mm;
-            --ancho-r2-c3: 24mm;
+            --ancho-r2-c3: max(5mm, calc((var(--ancho-extintor) + var(--ancho-ano-fab) + var(--ancho-vto-ph) + var(--ancho-capacidad) + var(--ancho-agente)) - (var(--ancho-r2-c1) + var(--ancho-r2-c2))));
 
             --ancho-r22-extintor: 24mm;
             --ancho-r22-vto-ph: 12mm;
@@ -649,7 +649,7 @@
                 </div>
             </div>
 
-            <!-- RENGLÓN 2 -->
+            <!-- RENGLÓN 2 (mismo inicio y mismo final horizontal que Renglón 1) -->
             <div id="linea2" class="linea-2 elemento-seleccionable" data-elemento="linea2" onclick="programarSeleccionElemento('linea2', event)">
                 <div class="campo-item campo-r2-1" data-ancho-key="ancho_r2_c1" data-ancho-label="Renglón 2 - Campo 1 (VIVATEC)" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia"><span class="valor-dato">VIVATEC</span></div>
@@ -657,7 +657,7 @@
                 <div class="campo-item campo-r2-2" data-ancho-key="ancho_r2_c2" data-ancho-label="Renglón 2 - Campo 2 (382)" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia"><span class="valor-dato">382</span></div>
                 </div>
-                <div class="campo-item campo-r2-3" data-ancho-key="ancho_r2_c3" data-ancho-label="Renglón 2 - Campo 3 (Vacío)" ondblclick="seleccionarAnchoCampo(this, event)">
+                <div class="campo-item campo-r2-3" data-ancho-auto="true" ondblclick="avisarAnchoAutomaticoR2C3(event)">
                     <div class="caja-dato-guia"><span class="valor-dato"></span></div>
                 </div>
             </div>
@@ -746,7 +746,6 @@
         linea2_top: { cssVar: "--linea2-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 38.9, storageKey: "altura_renglon_2" },
         ancho_r2_c1: { cssVar: "--ancho-r2-c1", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c1" },
         ancho_r2_c2: { cssVar: "--ancho-r2-c2", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 14, storageKey: "ancho_r2_c2" },
-        ancho_r2_c3: { cssVar: "--ancho-r2-c3", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c3" },
         linea22_left: { cssVar: "--linea22-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 78, storageKey: "pos_x_renglon_22" },
         ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r22_extintor" },
         ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto_ph", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r22_vto_ph" },
@@ -769,6 +768,26 @@
     let keyVerticalActual = "linea1_top";
     let keyHorizontalActual = "linea1_left";
     let timerClicSimple = null;
+
+    function calcularAnchoR2C3() {
+        const totalR1 = obtenerValorParametro("ancho_extintor")
+            + obtenerValorParametro("ancho_ano_fab")
+            + obtenerValorParametro("ancho_vto_ph")
+            + obtenerValorParametro("ancho_capacidad")
+            + obtenerValorParametro("ancho_agente");
+        const usadoR2 = obtenerValorParametro("ancho_r2_c1") + obtenerValorParametro("ancho_r2_c2");
+        return Math.max(5, Math.round((totalR1 - usadoR2) * 10) / 10);
+    }
+
+    function avisarAnchoAutomaticoR2C3(evento) {
+        if (evento) evento.stopPropagation();
+        if (timerClicSimple) {
+            clearTimeout(timerClicSimple);
+            timerClicSimple = null;
+        }
+        const anchoAuto = calcularAnchoR2C3();
+        alert(`El 3.º campo de Renglón 2 tiene ancho automático (${anchoAuto} mm) para terminar exactamente alineado con el final del Renglón 1.`);
+    }
 
     function convertirSiEraPx(key, valorCrudo) {
         const num = parseFloat(valorCrudo);
@@ -965,6 +984,7 @@
         Object.keys(PARAMETROS).forEach(key => {
             valores[key] = obtenerValorParametro(key);
         });
+        valores.ancho_r2_c3 = calcularAnchoR2C3();
         return {
             configuracion: valores,
             rotacion: document.getElementById("selectRotacion").value || "90deg"
