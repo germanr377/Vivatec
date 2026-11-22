@@ -27,12 +27,36 @@
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
-        
-        /* Panel de control superior (solo visible en pantalla) */
-        .control-panel { max-width: 560px; margin: 0 auto 20px auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); text-align: center; }
-        .control-panel label { font-weight: bold; font-size: 12.5px; display: block; margin-bottom: 6px; color: #333; }
 
-        /* Sliders finitos y compactos */
+        /* Panel flotante compacto: siempre visible para ver la oblea en vivo al mover el único slider */
+        .control-panel {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            width: 310px;
+            max-width: calc(100vw - 24px);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.97);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+            border: 1px solid #d5dce3;
+            text-align: left;
+        }
+        .control-panel h3 {
+            margin: 0 0 8px 0;
+            font-size: 13.5px;
+            color: #1f2d3d;
+        }
+        .control-panel label {
+            font-weight: bold;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        /* Único slider finito y compacto */
         .control-panel input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -42,7 +66,7 @@
             border-radius: 999px;
             outline: none;
             cursor: pointer;
-            margin: 2px 0;
+            margin: 6px 0;
         }
         .control-panel input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -65,29 +89,40 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
-        .control-stack { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; text-align: left; }
-        .control-box { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 6px 10px; }
-        .control-box select { width: 100%; padding: 5px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; margin-bottom: 6px; }
+        .control-box {
+            background: #f8f9fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 7px 9px;
+            margin-bottom: 8px;
+        }
+        .control-box select {
+            width: 100%;
+            padding: 5px 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12.5px;
+            background: #fff;
+        }
+
         .nota-impresion {
             background: #eef6fc;
-            border-left: 4px solid #2980b9;
+            border-left: 3px solid #2980b9;
             color: #1f4e78;
-            padding: 9px 12px;
+            padding: 6px 8px;
             border-radius: 4px;
-            font-size: 12px;
-            text-align: left;
-            margin-bottom: 12px;
-            line-height: 1.45;
+            font-size: 11px;
+            margin-bottom: 8px;
+            line-height: 1.35;
         }
 
         /* Estado de desborde en pantalla */
         .estado-margen {
-            padding: 8px 12px;
+            padding: 6px 8px;
             border-radius: 5px;
-            font-size: 12.5px;
+            font-size: 11.5px;
             font-weight: bold;
-            margin-bottom: 12px;
-            text-align: left;
+            margin-bottom: 8px;
             border: 1px solid #27ae60;
             background: #eafaf1;
             color: #1e8449;
@@ -99,13 +134,34 @@
             color: #922b21;
         }
 
+        .acciones-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: space-between;
+        }
+
         /* Zona de calibración en pantalla con marco de medida real */
         .zona-calibracion {
             max-width: 760px;
-            margin: 0 auto;
+            margin: 18px auto 0 auto;
+            padding-right: 325px;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+
+        @media (max-width: 1080px) {
+            .zona-calibracion {
+                padding-right: 0;
+                margin-top: 290px;
+            }
+            .control-panel {
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: none;
+            }
         }
 
         .marco-hoja-preview {
@@ -149,7 +205,17 @@
             color: #fff;
         }
 
-        .btn-accion { background: #2980b9; color: white; border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn-accion {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 6px 9px;
+            font-size: 11.5px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            flex: 1 1 auto;
+        }
         .btn-accion:hover { background: #1f618d; }
         .btn-volver { background: #7f8c8d; }
         .btn-volver:hover { background: #626567; }
@@ -325,6 +391,7 @@
                 display: block !important;
                 max-width: none !important;
                 margin: 0 !important;
+                padding-right: 0 !important;
             }
 
             .marco-hoja-preview {
@@ -408,60 +475,50 @@
 <body>
 
 <div class="control-panel no-print">
-    <h3>🖨️ Calibración Oblea - Uso Gral (16,6 × 9,5 cm)</h3>
+    <h3>🖨️ Oblea Uso Gral (16,6 × 9,5 cm)</h3>
 
     <div class="nota-impresion">
-        <strong>Al imprimir:</strong> configurá <strong>Márgenes: Ninguno</strong> y <strong>Escala: 100%</strong>. Si la vista previa o la impresora muestran A4, revisá el tamaño de papel (<strong>16,6 × 9,5 cm</strong>) en las preferencias de la impresora. Los recuadros azules son solo guía en pantalla y no salen impresos.
+        <strong>Impresión:</strong> Márgenes <strong>Ninguno</strong> · Escala <strong>100%</strong> · Papel <strong>16,6 × 9,5 cm</strong>. Guías azules solo en pantalla.
     </div>
 
     <div id="estadoMargen" class="estado-margen">
-        ✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm).
+        ✅ Dentro de márgenes (16,6 × 9,5 cm).
     </div>
 
-    <div class="control-stack">
-        <div class="control-box">
-            <label for="selectCampoAncho">Ancho de campo en Línea 1:</label>
-            <select id="selectCampoAncho" onchange="sincronizarSliderCampo()">
-                <option value="extintor">Extintor N° (base 24 mm)</option>
-                <option value="ano_fab">Año Fab. (base 14 mm)</option>
-                <option value="vto_ph">Vto. P.H. (base 12 mm)</option>
-                <option value="capacidad">Capacidad (base 10 mm)</option>
-                <option value="agente">Agente (base 19 mm)</option>
-            </select>
-            <label for="sliderAnchoCampo" style="margin-top: 4px;">Ancho seleccionado: <span id="valAnchoCampo">24</span> mm</label>
-            <input type="range" id="sliderAnchoCampo" min="5" max="60" step="0.5" value="24" oninput="cambiarAnchoCampo(this.value)">
-        </div>
-        <div class="control-box">
-            <label for="sliderAlturaRenglon1">Altura de renglón 1 (Vertical): <span id="valAlturaRenglon1">113</span> px</label>
-            <input type="range" id="sliderAlturaRenglon1" min="0" max="280" value="113" oninput="cambiarAlturaRenglon1(this.value)">
-        </div>
-        <div class="control-box">
-            <label for="sliderPosXRenglon1">Posición horizontal de renglón 1: <span id="valPosXRenglon1">10</span> mm</label>
-            <input type="range" id="sliderPosXRenglon1" min="0" max="120" step="0.5" value="10" oninput="cambiarPosXRenglon1(this.value)">
-        </div>
-        <div class="control-box">
-            <label for="sliderVivatecX">VIVATEC 382 - Horizontal: <span id="valVivatecX">20</span> mm</label>
-            <input type="range" id="sliderVivatecX" min="0" max="140" step="0.5" value="20" oninput="cambiarVivatecPos()">
-        </div>
-        <div class="control-box">
-            <label for="sliderVivatecY">VIVATEC 382 - Vertical (desde abajo): <span id="valVivatecY">56</span> mm</label>
-            <input type="range" id="sliderVivatecY" min="0" max="90" step="0.5" value="56" oninput="cambiarVivatecPos()">
-        </div>
-        <div class="control-box">
-            <label for="selectRotacion">Rotación al imprimir:</label>
-            <select id="selectRotacion" onchange="cambiarRotacionImpresion(this.value)">
-                <option value="90deg" selected>90° (Horario)</option>
-                <option value="0deg">0° (Sin rotar)</option>
-                <option value="-90deg">-90° (Antihorario)</option>
-                <option value="180deg">180°</option>
-            </select>
-        </div>
+    <div class="control-box">
+        <label for="selectParametro">Distancia / medida a modificar:</label>
+        <select id="selectParametro" onchange="sincronizarUnicoSlider()">
+            <option value="linea1_top">Línea 1 - Altura vertical (px)</option>
+            <option value="linea1_left">Línea 1 - Posición horizontal (mm)</option>
+            <option value="vivatec_x">VIVATEC 382 - Horizontal (mm)</option>
+            <option value="vivatec_y">VIVATEC 382 - Vertical desde abajo (mm)</option>
+            <option value="ancho_extintor">Ancho: Extintor N° (mm)</option>
+            <option value="ancho_ano_fab">Ancho: Año Fab. (mm)</option>
+            <option value="ancho_vto_ph">Ancho: Vto. P.H. (mm)</option>
+            <option value="ancho_capacidad">Ancho: Capacidad (mm)</option>
+            <option value="ancho_agente">Ancho: Agente (mm)</option>
+        </select>
+
+        <label for="unicoSlider" style="margin-top: 6px;">
+            <span id="etiquetaValorSlider">Valor:</span> <span id="valUnicoSlider">113</span> <span id="unidadUnicoSlider">px</span>
+        </label>
+        <input type="range" id="unicoSlider" min="0" max="280" step="1" value="113" oninput="aplicarUnicoSlider(this.value)">
     </div>
 
-    <div>
-        <button class="btn-accion" onclick="window.print()">🖨️ Imprimir Oblea</button>
-        <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear Ajuste</button>
-        <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Volver a Gestión</button>
+    <div class="control-box">
+        <label for="selectRotacion">Rotación al imprimir:</label>
+        <select id="selectRotacion" onchange="cambiarRotacionImpresion(this.value)">
+            <option value="90deg" selected>90° (Horario)</option>
+            <option value="0deg">0° (Sin rotar)</option>
+            <option value="-90deg">-90° (Antihorario)</option>
+            <option value="180deg">180°</option>
+        </select>
+    </div>
+
+    <div class="acciones-panel">
+        <button class="btn-accion" onclick="window.print()">🖨️ Imprimir</button>
+        <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear</button>
+        <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Gestión</button>
     </div>
 </div>
 
@@ -542,18 +599,100 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const STORAGE_ALTURA_R1_KEY = "vivatec_oblea_altura_renglon_1";
-    const STORAGE_POS_X_R1_KEY = "vivatec_oblea_pos_x_renglon_1";
-    const STORAGE_VIVATEC_X_KEY = "vivatec_oblea_vivatec_x";
-    const STORAGE_VIVATEC_Y_KEY = "vivatec_oblea_vivatec_y";
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
 
-    const CAMPOS_ANCHO = {
-        extintor:  { cssVar: "--ancho-extintor",  defaultMm: 24, guiaId: "guiaExtintor",  nombre: "Extintor N°", storageKey: "vivatec_oblea_ancho_extintor" },
-        ano_fab:   { cssVar: "--ancho-ano-fab",   defaultMm: 14, guiaId: "guiaAnoFab",   nombre: "Año Fab.",    storageKey: "vivatec_oblea_ancho_ano_fab" },
-        vto_ph:    { cssVar: "--ancho-vto-ph",    defaultMm: 12, guiaId: "guiaVtoPh",    nombre: "Vto. P.H.",   storageKey: "vivatec_oblea_ancho_vto_ph" },
-        capacidad: { cssVar: "--ancho-capacidad", defaultMm: 10, guiaId: "guiaCapacidad", nombre: "Cap.",        storageKey: "vivatec_oblea_ancho_capacidad" },
-        agente:    { cssVar: "--ancho-agente",    defaultMm: 19, guiaId: "guiaAgente",    nombre: "Agente",      storageKey: "vivatec_oblea_ancho_agente" }
+    const PARAMETROS = {
+        linea1_top: {
+            cssVar: "--linea1-top",
+            unidad: "px",
+            min: 0,
+            max: 280,
+            step: 1,
+            defaultVal: 113,
+            storageKey: "vivatec_oblea_altura_renglon_1"
+        },
+        linea1_left: {
+            cssVar: "--linea1-left",
+            unidad: "mm",
+            min: 0,
+            max: 120,
+            step: 0.5,
+            defaultVal: 10,
+            storageKey: "vivatec_oblea_pos_x_renglon_1"
+        },
+        vivatec_x: {
+            cssVar: "--vivatec-left",
+            unidad: "mm",
+            min: 0,
+            max: 140,
+            step: 0.5,
+            defaultVal: 20,
+            storageKey: "vivatec_oblea_vivatec_x"
+        },
+        vivatec_y: {
+            cssVar: "--vivatec-bottom",
+            unidad: "mm",
+            min: 0,
+            max: 90,
+            step: 0.5,
+            defaultVal: 56,
+            storageKey: "vivatec_oblea_vivatec_y"
+        },
+        ancho_extintor: {
+            cssVar: "--ancho-extintor",
+            unidad: "mm",
+            min: 5,
+            max: 60,
+            step: 0.5,
+            defaultVal: 24,
+            storageKey: "vivatec_oblea_ancho_extintor",
+            guiaId: "guiaExtintor",
+            nombreGuia: "Extintor N°"
+        },
+        ancho_ano_fab: {
+            cssVar: "--ancho-ano-fab",
+            unidad: "mm",
+            min: 5,
+            max: 60,
+            step: 0.5,
+            defaultVal: 14,
+            storageKey: "vivatec_oblea_ancho_ano_fab",
+            guiaId: "guiaAnoFab",
+            nombreGuia: "Año Fab."
+        },
+        ancho_vto_ph: {
+            cssVar: "--ancho-vto-ph",
+            unidad: "mm",
+            min: 5,
+            max: 60,
+            step: 0.5,
+            defaultVal: 12,
+            storageKey: "vivatec_oblea_ancho_vto_ph",
+            guiaId: "guiaVtoPh",
+            nombreGuia: "Vto. P.H."
+        },
+        ancho_capacidad: {
+            cssVar: "--ancho-capacidad",
+            unidad: "mm",
+            min: 5,
+            max: 60,
+            step: 0.5,
+            defaultVal: 10,
+            storageKey: "vivatec_oblea_ancho_capacidad",
+            guiaId: "guiaCapacidad",
+            nombreGuia: "Cap."
+        },
+        ancho_agente: {
+            cssVar: "--ancho-agente",
+            unidad: "mm",
+            min: 5,
+            max: 60,
+            step: 0.5,
+            defaultVal: 19,
+            storageKey: "vivatec_oblea_ancho_agente",
+            guiaId: "guiaAgente",
+            nombreGuia: "Agente"
+        }
     };
 
     function guardarStorage(clave, valor) {
@@ -570,44 +709,56 @@
         }
     }
 
-    function actualizarEtiquetaGuiaCampo(campoKey, mmVal) {
-        const cfg = CAMPOS_ANCHO[campoKey];
-        if (!cfg) return;
+    function obtenerValorParametro(key) {
+        const cfg = PARAMETROS[key];
+        if (!cfg) return 0;
+        const guardado = leerStorage(cfg.storageKey);
+        if (guardado === null) return cfg.defaultVal;
+        const num = parseFloat(guardado);
+        return Number.isNaN(num) ? cfg.defaultVal : num;
+    }
+
+    function actualizarGuiaAncho(key, mmVal) {
+        const cfg = PARAMETROS[key];
+        if (!cfg || !cfg.guiaId) return;
         const guiaEl = document.getElementById(cfg.guiaId);
         if (!guiaEl) return;
         const cmStr = (mmVal / 10).toFixed(1).replace(".", ",").replace(",0", "");
-        guiaEl.textContent = `${cfg.nombre} (${cmStr}×0,5)`;
+        guiaEl.textContent = `${cfg.nombreGuia} (${cmStr}×0,5)`;
     }
 
-    function aplicarAnchoCampo(campoKey, mmVal) {
-        const cfg = CAMPOS_ANCHO[campoKey];
+    function setearValorParametro(key, valor) {
+        const cfg = PARAMETROS[key];
         if (!cfg) return;
-        const num = Math.max(5, parseFloat(mmVal) || cfg.defaultMm);
-        document.documentElement.style.setProperty(cfg.cssVar, `${num}mm`);
-        actualizarEtiquetaGuiaCampo(campoKey, num);
-        guardarStorage(cfg.storageKey, num);
+        const num = parseFloat(valor);
+        const limpio = Number.isNaN(num) ? cfg.defaultVal : num;
+        document.documentElement.style.setProperty(cfg.cssVar, `${limpio}${cfg.unidad}`);
+        guardarStorage(cfg.storageKey, limpio);
+        actualizarGuiaAncho(key, limpio);
+    }
+
+    function sincronizarUnicoSlider() {
+        const key = document.getElementById("selectParametro").value;
+        const cfg = PARAMETROS[key];
+        if (!cfg) return;
+        const val = obtenerValorParametro(key);
+        const slider = document.getElementById("unicoSlider");
+        slider.min = cfg.min;
+        slider.max = cfg.max;
+        slider.step = cfg.step;
+        slider.value = val;
+        document.getElementById("valUnicoSlider").textContent = val;
+        document.getElementById("unidadUnicoSlider").textContent = cfg.unidad;
+    }
+
+    function aplicarUnicoSlider(valor) {
+        const key = document.getElementById("selectParametro").value;
+        const cfg = PARAMETROS[key];
+        if (!cfg) return;
+        const num = parseFloat(valor) || 0;
+        document.getElementById("valUnicoSlider").textContent = num;
+        setearValorParametro(key, num);
         verificarDesbordeEnPantalla();
-    }
-
-    function obtenerAnchoActualCampo(campoKey) {
-        const cfg = CAMPOS_ANCHO[campoKey];
-        if (!cfg) return 10;
-        const guardado = leerStorage(cfg.storageKey);
-        return guardado !== null ? (parseFloat(guardado) || cfg.defaultMm) : cfg.defaultMm;
-    }
-
-    function sincronizarSliderCampo() {
-        const campoKey = document.getElementById("selectCampoAncho").value;
-        const val = obtenerAnchoActualCampo(campoKey);
-        document.getElementById("sliderAnchoCampo").value = val;
-        document.getElementById("valAnchoCampo").textContent = val;
-    }
-
-    function cambiarAnchoCampo(valor) {
-        const campoKey = document.getElementById("selectCampoAncho").value;
-        const num = parseFloat(valor) || 10;
-        document.getElementById("valAnchoCampo").textContent = num;
-        aplicarAnchoCampo(campoKey, num);
     }
 
     function verificarDesbordeEnPantalla() {
@@ -653,44 +804,10 @@
 
         if (hayDesborde) {
             const detalle = ladosFuera.length > 0 ? ladosFuera.join(", ") : "renglón/bloque interno";
-            estado.innerHTML = `⚠️ Se sale del área de impresión (16,6 × 9,5 cm) por: <strong>${detalle}</strong> · Giro impreso: <strong>${rotacion}</strong>.`;
+            estado.innerHTML = `⚠️ Se sale de 16,6 × 9,5 cm por: <strong>${detalle}</strong> (${rotacion}).`;
         } else {
-            estado.innerHTML = `✅ Todo dentro de los márgenes de impresión (16,6 × 9,5 cm) · Giro impreso: <strong>${rotacion}</strong>.`;
+            estado.innerHTML = `✅ Dentro de márgenes (16,6 × 9,5 cm · ${rotacion}).`;
         }
-    }
-
-    function cambiarAlturaRenglon1(valor) {
-        const num = parseInt(valor, 10) || 0;
-        document.getElementById("valAlturaRenglon1").textContent = num;
-        document.documentElement.style.setProperty("--linea1-top", `${num}px`);
-        guardarStorage(STORAGE_ALTURA_R1_KEY, num);
-        verificarDesbordeEnPantalla();
-    }
-
-    function cambiarPosXRenglon1(valor) {
-        const num = parseFloat(valor) || 0;
-        document.getElementById("valPosXRenglon1").textContent = num;
-        document.documentElement.style.setProperty("--linea1-left", `${num}mm`);
-        guardarStorage(STORAGE_POS_X_R1_KEY, num);
-        verificarDesbordeEnPantalla();
-    }
-
-    function aplicarVivatecPos(x, y) {
-        const numX = parseFloat(x) || 0;
-        const numY = parseFloat(y) || 0;
-        document.getElementById("valVivatecX").textContent = numX;
-        document.getElementById("valVivatecY").textContent = numY;
-        document.documentElement.style.setProperty("--vivatec-left", `${numX}mm`);
-        document.documentElement.style.setProperty("--vivatec-bottom", `${numY}mm`);
-        verificarDesbordeEnPantalla();
-    }
-
-    function cambiarVivatecPos() {
-        const x = parseFloat(document.getElementById("sliderVivatecX").value) || 0;
-        const y = parseFloat(document.getElementById("sliderVivatecY").value) || 0;
-        aplicarVivatecPos(x, y);
-        guardarStorage(STORAGE_VIVATEC_X_KEY, x);
-        guardarStorage(STORAGE_VIVATEC_Y_KEY, y);
     }
 
     function aplicarRotacion(rotacion) {
@@ -713,57 +830,22 @@
     }
 
     function resetearCalibracion() {
-        Object.keys(CAMPOS_ANCHO).forEach(key => {
-            const def = CAMPOS_ANCHO[key].defaultMm;
-            aplicarAnchoCampo(key, def);
+        Object.keys(PARAMETROS).forEach(key => {
+            setearValorParametro(key, PARAMETROS[key].defaultVal);
         });
-        sincronizarSliderCampo();
-
-        document.getElementById("sliderAlturaRenglon1").value = 113;
-        cambiarAlturaRenglon1(113);
-
-        document.getElementById("sliderPosXRenglon1").value = 10;
-        cambiarPosXRenglon1(10);
-
-        document.getElementById("sliderVivatecX").value = 20;
-        document.getElementById("sliderVivatecY").value = 56;
-        aplicarVivatecPos(20, 56);
-        guardarStorage(STORAGE_VIVATEC_X_KEY, 20);
-        guardarStorage(STORAGE_VIVATEC_Y_KEY, 56);
+        sincronizarUnicoSlider();
 
         document.getElementById("selectRotacion").value = "90deg";
         cambiarRotacionImpresion("90deg");
+        verificarDesbordeEnPantalla();
     }
 
     function cargarCalibracionGuardada() {
-        Object.keys(CAMPOS_ANCHO).forEach(key => {
-            const val = obtenerAnchoActualCampo(key);
-            document.documentElement.style.setProperty(CAMPOS_ANCHO[key].cssVar, `${val}mm`);
-            actualizarEtiquetaGuiaCampo(key, val);
+        Object.keys(PARAMETROS).forEach(key => {
+            const val = obtenerValorParametro(key);
+            setearValorParametro(key, val);
         });
-        sincronizarSliderCampo();
-
-        const alturaGuardada = leerStorage(STORAGE_ALTURA_R1_KEY);
-        if (alturaGuardada !== null) {
-            document.getElementById("sliderAlturaRenglon1").value = alturaGuardada;
-            document.getElementById("valAlturaRenglon1").textContent = alturaGuardada;
-            document.documentElement.style.setProperty("--linea1-top", `${alturaGuardada}px`);
-        }
-
-        const posXGuardada = leerStorage(STORAGE_POS_X_R1_KEY);
-        if (posXGuardada !== null) {
-            document.getElementById("sliderPosXRenglon1").value = posXGuardada;
-            document.getElementById("valPosXRenglon1").textContent = posXGuardada;
-            document.documentElement.style.setProperty("--linea1-left", `${posXGuardada}mm`);
-        }
-
-        const vivX = leerStorage(STORAGE_VIVATEC_X_KEY);
-        const vivY = leerStorage(STORAGE_VIVATEC_Y_KEY);
-        const xVal = vivX !== null ? (parseFloat(vivX) || 0) : 20;
-        const yVal = vivY !== null ? (parseFloat(vivY) || 0) : 56;
-        document.getElementById("sliderVivatecX").value = xVal;
-        document.getElementById("sliderVivatecY").value = yVal;
-        aplicarVivatecPos(xVal, yVal);
+        sincronizarUnicoSlider();
 
         const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
         document.getElementById("selectRotacion").value = rotGuardada;
