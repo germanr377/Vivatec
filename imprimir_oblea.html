@@ -15,15 +15,15 @@
             --print-rotacion: 90deg;
             --print-left: 9.5cm;
 
-            --linea1-top: 113px;
+            --linea1-top: 29.9mm;
             --linea1-left: 10mm;
 
-            --linea2-top: 147px;
+            --linea2-top: 38.9mm;
             --linea2-left: 10mm;
 
             --linea22-left: 78mm;
 
-            --linea3-top: 185px;
+            --linea3-top: 48.9mm;
             --linea3-left: 10mm;
 
             --linea4-left: 45mm;
@@ -32,7 +32,7 @@
 
             --linea6-left: 55mm;
 
-            --sello-top: 185px;
+            --sello-top: 48.9mm;
             --sello-left: 82mm;
             --ancho-sello: 52mm;
 
@@ -597,14 +597,14 @@
         </div>
 
         <label for="sliderVertical">
-            Vertical: <span id="valVertical">113</span> <span id="unidadVertical">px</span>
+            Vertical: <span id="valVertical">29.9</span> <span id="unidadVertical">mm</span>
         </label>
-        <input type="range" id="sliderVertical" min="0" max="280" step="1" value="113" oninput="aplicarSliderVertical(this.value)">
+        <input type="range" id="sliderVertical" min="0" max="95" step="0.5" value="29.9" oninput="aplicarSliderVertical(this.value)">
 
         <label for="sliderHorizontal">
             <span id="etiquetaHorizontal">Horizontal:</span> <span id="valHorizontal">10</span> <span id="unidadHorizontal">mm</span>
         </label>
-        <input type="range" id="sliderHorizontal" min="0" max="145" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
+        <input type="range" id="sliderHorizontal" min="0" max="166" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
     </div>
 
     <div class="control-box">
@@ -725,6 +725,7 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const PX_POR_MM = 96 / 25.4; // 3.7795275590551185 px por mm
     let tipoObleaActual = "general";
 
     const ELEMENTOS_CONFIG = {
@@ -739,35 +740,35 @@
     };
 
     const PARAMETROS = {
-        linea1_top: { cssVar: "--linea1-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 113, storageKey: "altura_renglon_1" },
-        linea1_left: { cssVar: "--linea1-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_1" },
-        ancho_extintor: { cssVar: "--ancho-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "ancho_extintor" },
-        ancho_ano_fab: { cssVar: "--ancho-ano-fab", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 14, storageKey: "ancho_ano_fab" },
-        ancho_vto_ph: { cssVar: "--ancho-vto-ph", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 12, storageKey: "ancho_vto_ph" },
-        ancho_capacidad: { cssVar: "--ancho-capacidad", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 10, storageKey: "ancho_capacidad" },
-        ancho_agente: { cssVar: "--ancho-agente", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 19, storageKey: "ancho_agente" },
-        linea2_top: { cssVar: "--linea2-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 147, storageKey: "altura_renglon_2" },
-        linea2_left: { cssVar: "--linea2-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_2" },
-        ancho_r2_c1: { cssVar: "--ancho-r2-c1", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c1" },
-        ancho_r2_c2: { cssVar: "--ancho-r2-c2", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 14, storageKey: "ancho_r2_c2" },
-        ancho_r2_c3: { cssVar: "--ancho-r2-c3", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c3" },
-        linea22_left: { cssVar: "--linea22-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 78, storageKey: "pos_x_renglon_22" },
-        ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "ancho_r22_extintor" },
-        ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto-ph", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r22_vto_ph" },
-        linea3_top: { cssVar: "--linea3-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "altura_renglon_3" },
-        linea3_left: { cssVar: "--linea3-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_3" },
-        ancho_r3_mes: { cssVar: "--ancho-r3-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_mes" },
-        ancho_r3_anio: { cssVar: "--ancho-r3-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_anio" },
-        linea4_left: { cssVar: "--linea4-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 45, storageKey: "pos_x_renglon_4" },
-        ancho_r4_mes: { cssVar: "--ancho-r4-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_mes" },
-        ancho_r4_anio: { cssVar: "--ancho-r4-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_anio" },
-        linea5_left: { cssVar: "--linea5-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_5" },
-        ancho_r5_ub: { cssVar: "--ancho-r5-ub", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_ub" },
-        linea6_left: { cssVar: "--linea6-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 55, storageKey: "pos_x_renglon_6" },
-        ancho_r6_ub: { cssVar: "--ancho-r6-ub", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_ub" },
-        sello_top: { cssVar: "--sello-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "altura_sello" },
-        sello_left: { cssVar: "--sello-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 82, storageKey: "pos_x_sello" },
-        ancho_sello: { cssVar: "--ancho-sello", unidad: "mm", min: 20, max: 90, step: 0.5, defaultVal: 52, storageKey: "ancho_sello" }
+        linea1_top: { cssVar: "--linea1-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 29.9, storageKey: "altura_renglon_1" },
+        linea1_left: { cssVar: "--linea1-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_1" },
+        ancho_extintor: { cssVar: "--ancho-extintor", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_extintor" },
+        ancho_ano_fab: { cssVar: "--ancho-ano-fab", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 14, storageKey: "ancho_ano_fab" },
+        ancho_vto_ph: { cssVar: "--ancho-vto-ph", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_vto_ph" },
+        ancho_capacidad: { cssVar: "--ancho-capacidad", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 10, storageKey: "ancho_capacidad" },
+        ancho_agente: { cssVar: "--ancho-agente", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 19, storageKey: "ancho_agente" },
+        linea2_top: { cssVar: "--linea2-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 38.9, storageKey: "altura_renglon_2" },
+        linea2_left: { cssVar: "--linea2-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_2" },
+        ancho_r2_c1: { cssVar: "--ancho-r2-c1", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c1" },
+        ancho_r2_c2: { cssVar: "--ancho-r2-c2", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 14, storageKey: "ancho_r2_c2" },
+        ancho_r2_c3: { cssVar: "--ancho-r2-c3", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c3" },
+        linea22_left: { cssVar: "--linea22-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 78, storageKey: "pos_x_renglon_22" },
+        ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r22_extintor" },
+        ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto_ph", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r22_vto_ph" },
+        linea3_top: { cssVar: "--linea3-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 48.9, storageKey: "altura_renglon_3" },
+        linea3_left: { cssVar: "--linea3-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_3" },
+        ancho_r3_mes: { cssVar: "--ancho-r3-mes", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_mes" },
+        ancho_r3_anio: { cssVar: "--ancho-r3-anio", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_anio" },
+        linea4_left: { cssVar: "--linea4-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 45, storageKey: "pos_x_renglon_4" },
+        ancho_r4_mes: { cssVar: "--ancho-r4-mes", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_mes" },
+        ancho_r4_anio: { cssVar: "--ancho-r4-anio", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_anio" },
+        linea5_left: { cssVar: "--linea5-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_5" },
+        ancho_r5_ub: { cssVar: "--ancho-r5-ub", esVertical: false, min: 5, max: 120, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_ub" },
+        linea6_left: { cssVar: "--linea6-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 55, storageKey: "pos_x_renglon_6" },
+        ancho_r6_ub: { cssVar: "--ancho-r6-ub", esVertical: false, min: 5, max: 120, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_ub" },
+        sello_top: { cssVar: "--sello-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 48.9, storageKey: "altura_sello" },
+        sello_left: { cssVar: "--sello-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 82, storageKey: "pos_x_sello" },
+        ancho_sello: { cssVar: "--ancho-sello", esVertical: false, min: 20, max: 120, step: 0.5, defaultVal: 52, storageKey: "ancho_sello" }
     };
 
     let elementoSeleccionadoId = "linea1";
@@ -775,6 +776,17 @@
     let keyVerticalActual = "linea1_top";
     let keyHorizontalActual = "linea1_left";
     let timerClicSimple = null;
+
+    function convertirSiEraPx(key, valorCrudo) {
+        const num = parseFloat(valorCrudo);
+        if (Number.isNaN(num)) return null;
+        const cfg = PARAMETROS[key];
+        // Si viene de una versión anterior en px (ej: 113 px en vertical), se convierte a mm
+        if (cfg && cfg.esVertical && num > 95) {
+            return Math.round((num / PX_POR_MM) * 10) / 10;
+        }
+        return Math.round(num * 10) / 10;
+    }
 
     function normalizarTipoOblea(valorCrudo) {
         if (!valorCrudo) return "general";
@@ -834,16 +846,16 @@
         if (!cfg) return 0;
         const guardado = leerStorage(cfg.storageKey);
         if (guardado === null) return cfg.defaultVal;
-        const num = parseFloat(guardado);
-        return Number.isNaN(num) ? cfg.defaultVal : num;
+        const num = convertirSiEraPx(key, guardado);
+        return num === null ? cfg.defaultVal : num;
     }
 
     function setearValorParametro(key, valor) {
         const cfg = PARAMETROS[key];
         if (!cfg) return;
-        const num = parseFloat(valor);
-        const limpio = Number.isNaN(num) ? cfg.defaultVal : num;
-        document.documentElement.style.setProperty(cfg.cssVar, `${limpio}${cfg.unidad}`);
+        const num = convertirSiEraPx(key, valor);
+        const limpio = num === null ? cfg.defaultVal : num;
+        document.documentElement.style.setProperty(cfg.cssVar, `${limpio}mm`);
         guardarStorage(cfg.storageKey, limpio);
     }
 
@@ -872,7 +884,7 @@
             sV.step = cfgV.step;
             sV.value = valV;
             document.getElementById("valVertical").textContent = valV;
-            document.getElementById("unidadVertical").textContent = cfgV.unidad;
+            document.getElementById("unidadVertical").textContent = "mm";
         }
 
         if (cfgH) {
@@ -883,7 +895,7 @@
             sH.step = cfgH.step;
             sH.value = valH;
             document.getElementById("valHorizontal").textContent = valH;
-            document.getElementById("unidadHorizontal").textContent = cfgH.unidad;
+            document.getElementById("unidadHorizontal").textContent = "mm";
         }
     }
 
@@ -974,8 +986,8 @@
             if (data.configuracion && typeof data.configuracion === "object") {
                 Object.keys(PARAMETROS).forEach(key => {
                     if (data.configuracion[key] !== undefined && data.configuracion[key] !== null) {
-                        const num = parseFloat(data.configuracion[key]);
-                        if (!Number.isNaN(num)) {
+                        const num = convertirSiEraPx(key, data.configuracion[key]);
+                        if (num !== null) {
                             setearValorParametro(key, num);
                         }
                     }
@@ -1023,7 +1035,7 @@
                 return;
             }
 
-            alert(`✅ Configuración guardada (Oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}).`);
+            alert(`✅ Configuración guardada en mm (Oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}).`);
         } catch (err) {
             console.error("Error inesperado al guardar configuración:", err);
             alert("⚠️ Ocurrió un error al guardar la configuración.");
