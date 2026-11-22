@@ -28,6 +28,10 @@
 
             --linea4-left: 45mm;
 
+            --sello-top: 185px;
+            --sello-left: 82mm;
+            --ancho-sello: 46mm;
+
             --ancho-extintor: 24mm;   /* 2,4 cm */
             --ancho-ano-fab: 14mm;    /* 1,4 cm */
             --ancho-vto-ph: 12mm;     /* 1,2 cm */
@@ -323,6 +327,48 @@
             left: var(--linea4-left);
         }
 
+        /* BLOQUE SELLO: 3 renglones centrados como un bloque cuadrado */
+        .bloque-sello {
+            position: absolute;
+            top: var(--sello-top);
+            left: var(--sello-left);
+            width: var(--ancho-sello);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 1px dashed #2980b9;
+            background: rgba(41, 128, 185, 0.04);
+            padding: 2px 4px;
+            gap: 1px;
+            color: #000;
+        }
+
+        .sello-renglon {
+            width: 100%;
+            text-align: center;
+            font-size: 8.5px;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+
+        .sello-nombre {
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        .sello-titulo {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .sello-matricula {
+            font-weight: bold;
+            font-style: normal;
+        }
+
         .campo-item {
             flex: 0 0 auto;
             box-sizing: border-box;
@@ -497,6 +543,29 @@
                 padding: 0 !important;
             }
 
+            .bloque-sello {
+                position: absolute !important;
+                top: var(--sello-top) !important;
+                left: var(--sello-left) !important;
+                width: var(--ancho-sello) !important;
+                border: none !important;
+                background: transparent !important;
+                outline: none !important;
+                padding: 0 !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+            }
+
+            .sello-renglon {
+                text-align: center !important;
+                color: #000 !important;
+            }
+
+            .sello-titulo {
+                font-style: italic !important;
+            }
+
             .campo-item,
             .campo-item + .campo-item .caja-dato-guia,
             .caja-dato-guia {
@@ -565,6 +634,9 @@
             <option value="linea4_left">Renglón 4 - Posición horizontal (mm)</option>
             <option value="ancho_r4_mes">Renglón 4 - Ancho Mes (mm)</option>
             <option value="ancho_r4_anio">Renglón 4 - Ancho Año (mm)</option>
+            <option value="sello_top">Sello - Altura vertical (px)</option>
+            <option value="sello_left">Sello - Posición horizontal (mm)</option>
+            <option value="ancho_sello">Sello - Ancho del bloque (mm)</option>
         </select>
 
         <label for="unicoSlider" style="margin-top: 6px;">
@@ -696,6 +768,13 @@
                         <span id="lblAnioVtoR4" class="valor-dato valor-vto-destacado">-</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- BLOQUE SELLO: 3 renglones centrados -->
+            <div id="bloqueSello" class="bloque-sello">
+                <div class="sello-renglon sello-nombre">IGNACIO REPETTO</div>
+                <div class="sello-renglon sello-titulo">INGENIERO INDUSTRIAL</div>
+                <div class="sello-renglon sello-matricula">C.I.P.B.A Mat 51142</div>
             </div>
         </div>
     </div>
@@ -906,6 +985,33 @@
             step: 0.5,
             defaultVal: 12,
             storageKey: "vivatec_oblea_ancho_r4_anio"
+        },
+        sello_top: {
+            cssVar: "--sello-top",
+            unidad: "px",
+            min: 0,
+            max: 280,
+            step: 1,
+            defaultVal: 185,
+            storageKey: "vivatec_oblea_altura_sello"
+        },
+        sello_left: {
+            cssVar: "--sello-left",
+            unidad: "mm",
+            min: 0,
+            max: 140,
+            step: 0.5,
+            defaultVal: 82,
+            storageKey: "vivatec_oblea_pos_x_sello"
+        },
+        ancho_sello: {
+            cssVar: "--ancho-sello",
+            unidad: "mm",
+            min: 20,
+            max: 90,
+            step: 0.5,
+            defaultVal: 46,
+            storageKey: "vivatec_oblea_ancho_sello"
         }
     };
 
@@ -974,6 +1080,7 @@
         const linea22 = document.getElementById("linea22");
         const linea3 = document.getElementById("linea3");
         const linea4 = document.getElementById("linea4");
+        const bloqueSello = document.getElementById("bloqueSello");
         if (!marco || !oblea || !estado) return;
 
         const rotacion = document.getElementById("selectRotacion").value || "90deg";
@@ -989,7 +1096,7 @@
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
         let elementoFuera = false;
-        [linea1, linea2, linea22, linea3, linea4].forEach(el => {
+        [linea1, linea2, linea22, linea3, linea4, bloqueSello].forEach(el => {
             if (!el) return;
             const rectEl = el.getBoundingClientRect();
             const sale = (
