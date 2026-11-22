@@ -28,11 +28,9 @@
 
             --linea4-left: 45mm;
 
-            --linea5-top: 215px;
             --linea5-left: 10mm;
 
-            --linea6-top: 238px;
-            --linea6-left: 10mm;
+            --linea6-left: 55mm;
 
             --sello-top: 185px;
             --sello-left: 82mm;
@@ -57,11 +55,9 @@
             --ancho-r4-mes: 12mm;
             --ancho-r4-anio: 12mm;
 
-            --ancho-r5-c1: 35mm;
-            --ancho-r5-c2: 35mm;
+            --ancho-r5-ub: 35mm;
 
-            --ancho-r6-c1: 35mm;
-            --ancho-r6-c2: 35mm;
+            --ancho-r6-ub: 35mm;
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -366,8 +362,8 @@
         .linea-22 { top: var(--linea2-top); left: var(--linea22-left); }
         .linea-3 { top: var(--linea3-top); left: var(--linea3-left); }
         .linea-4 { top: var(--linea3-top); left: var(--linea4-left); }
-        .linea-5 { top: var(--linea5-top); left: var(--linea5-left); }
-        .linea-6 { top: var(--linea6-top); left: var(--linea6-left); }
+        .linea-5 { top: var(--linea3-top); left: var(--linea5-left); }
+        .linea-6 { top: var(--linea3-top); left: var(--linea6-left); }
 
         .bloque-sello {
             position: absolute;
@@ -447,11 +443,9 @@
         .campo-r4-mes .caja-dato-guia  { width: var(--ancho-r4-mes); }
         .campo-r4-anio .caja-dato-guia { width: var(--ancho-r4-anio); }
 
-        .campo-r5-1 .caja-dato-guia { width: var(--ancho-r5-c1); }
-        .campo-r5-2 .caja-dato-guia { width: var(--ancho-r5-c2); }
+        .campo-r5-ub .caja-dato-guia { width: var(--ancho-r5-ub); }
 
-        .campo-r6-1 .caja-dato-guia { width: var(--ancho-r6-c1); }
-        .campo-r6-2 .caja-dato-guia { width: var(--ancho-r6-c2); }
+        .campo-r6-ub .caja-dato-guia { width: var(--ancho-r6-ub); }
 
         .valor-dato {
             font-size: 10px;
@@ -533,8 +527,8 @@
             .linea-22 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea22-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-3 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea3-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-4 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea4-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
-            .linea-5 { position: absolute !important; top: var(--linea5-top) !important; left: var(--linea5-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
-            .linea-6 { position: absolute !important; top: var(--linea6-top) !important; left: var(--linea6-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-5 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea5-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-6 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea6-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
 
             .bloque-sello {
                 position: absolute !important;
@@ -585,7 +579,7 @@
         <label for="selectTipoOblea">Tipo de oblea en edición:</label>
         <select id="selectTipoOblea" onchange="cambiarTipoObleaManual(this.value)">
             <option value="general">Oblea General</option>
-            <option value="vehicular">Oblea Vehicular </option>
+            <option value="vehicular">Oblea Vehicular (+2 renglones)</option>
         </select>
     </div>
 
@@ -627,7 +621,7 @@
         <button id="btnGuardarBD" class="btn-accion btn-guardar" onclick="guardarConfiguracionEnBD()">💾 Guardar Configuracion</button>
         <button class="btn-accion" onclick="window.print()">🖨️ Imprimir</button>
         <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear</button>
-        <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Gestión</button>
+        <button class="btn-accion btn-volver" onclick="window.location.href='gestionext.html'">⬅️ Gestión</button>
     </div>
 </div>
 
@@ -677,7 +671,7 @@
                 <div class="campo-item campo-r22-extintor" data-ancho-key="ancho_r22_extintor" data-ancho-label="Renglón 22 - Extintor N°" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia"><span id="lblExtintorR22" class="valor-dato">-</span></div>
                 </div>
-                <div class="campo-item campo-r22-vto-ph" data-ancho-key="ancho_r22_vto-ph" data-ancho-label="Renglón 22 - Venc. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
+                <div class="campo-item campo-r22-vto-ph" data-ancho-key="ancho_r22_vto_ph" data-ancho-label="Renglón 22 - Venc. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia"><span id="lblVtoPhR22" class="valor-dato">-</span></div>
                 </div>
             </div>
@@ -704,21 +698,15 @@
 
             <!-- RENGLÓN EXTRA VEHICULAR 1 (Renglón 5) -->
             <div id="linea5" class="linea-5 renglon-extra-vehicular elemento-seleccionable" data-elemento="linea5" onclick="programarSeleccionElemento('linea5', event)">
-                <div class="campo-item campo-r5-1" data-ancho-key="ancho_r5_c1" data-ancho-label="Renglón 5 (Vehicular) - Dominio/Ubicación" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia"><span id="lblR5Dominio" class="valor-dato">-</span></div>
-                </div>
-                <div class="campo-item campo-r5-2" data-ancho-key="ancho_r5_c2" data-ancho-label="Renglón 5 (Vehicular) - N° DPS" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia"><span id="lblR5Dps" class="valor-dato">-</span></div>
+                <div class="campo-item campo-r5-ub" data-ancho-key="ancho_r5_ub" data-ancho-label="Renglón 5 (Vehicular) - Ubicación" ondblclick="seleccionarAnchoCampo(this, event)">
+                    <div class="caja-dato-guia"><span id="lblR5Ubicacion" class="valor-dato">-</span></div>
                 </div>
             </div>
 
             <!-- RENGLÓN EXTRA VEHICULAR 2 (Renglón 6) -->
             <div id="linea6" class="linea-6 renglon-extra-vehicular elemento-seleccionable" data-elemento="linea6" onclick="programarSeleccionElemento('linea6', event)">
-                <div class="campo-item campo-r6-1" data-ancho-key="ancho_r6_c1" data-ancho-label="Renglón 6 (Vehicular) - Cliente" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia"><span id="lblR6Cliente" class="valor-dato">-</span></div>
-                </div>
-                <div class="campo-item campo-r6-2" data-ancho-key="ancho_r6_c2" data-ancho-label="Renglón 6 (Vehicular) - Marca/Capacidad" ondblclick="seleccionarAnchoCampo(this, event)">
-                    <div class="caja-dato-guia"><span id="lblR6Extra" class="valor-dato">-</span></div>
+                <div class="campo-item campo-r6-ub" data-ancho-key="ancho_r6_ub" data-ancho-label="Renglón 6 (Vehicular) - Ubicación" ondblclick="seleccionarAnchoCampo(this, event)">
+                    <div class="caja-dato-guia"><span id="lblR6Ubicacion" class="valor-dato">-</span></div>
                 </div>
             </div>
 
@@ -745,8 +733,8 @@
         linea22: { nombre: "Renglón 22", vertical: "linea2_top", horizontal: "linea22_left" },
         linea3: { nombre: "Renglón 3", vertical: "linea3_top", horizontal: "linea3_left" },
         linea4: { nombre: "Renglón 4", vertical: "linea3_top", horizontal: "linea4_left" },
-        linea5: { nombre: "Renglón 5 (Vehicular)", vertical: "linea5_top", horizontal: "linea5_left" },
-        linea6: { nombre: "Renglón 6 (Vehicular)", vertical: "linea6_top", horizontal: "linea6_left" },
+        linea5: { nombre: "Renglón 5 (Vehicular)", vertical: "linea3_top", horizontal: "linea5_left" },
+        linea6: { nombre: "Renglón 6 (Vehicular)", vertical: "linea3_top", horizontal: "linea6_left" },
         bloqueSello: { nombre: "Sello", vertical: "sello_top", horizontal: "sello_left" }
     };
 
@@ -773,14 +761,10 @@
         linea4_left: { cssVar: "--linea4-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 45, storageKey: "pos_x_renglon_4" },
         ancho_r4_mes: { cssVar: "--ancho-r4-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_mes" },
         ancho_r4_anio: { cssVar: "--ancho-r4-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_anio" },
-        linea5_top: { cssVar: "--linea5-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 215, storageKey: "altura_renglon_5" },
         linea5_left: { cssVar: "--linea5-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_5" },
-        ancho_r5_c1: { cssVar: "--ancho-r5-c1", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_c1" },
-        ancho_r5_c2: { cssVar: "--ancho-r5-c2", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_c2" },
-        linea6_top: { cssVar: "--linea6-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 238, storageKey: "altura_renglon_6" },
-        linea6_left: { cssVar: "--linea6-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_6" },
-        ancho_r6_c1: { cssVar: "--ancho-r6-c1", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_c1" },
-        ancho_r6_c2: { cssVar: "--ancho-r6-c2", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_c2" },
+        ancho_r5_ub: { cssVar: "--ancho-r5-ub", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_ub" },
+        linea6_left: { cssVar: "--linea6-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 55, storageKey: "pos_x_renglon_6" },
+        ancho_r6_ub: { cssVar: "--ancho-r6-ub", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_ub" },
         sello_top: { cssVar: "--sello-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "altura_sello" },
         sello_left: { cssVar: "--sello-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 82, storageKey: "pos_x_sello" },
         ancho_sello: { cssVar: "--ancho-sello", unidad: "mm", min: 20, max: 90, step: 0.5, defaultVal: 52, storageKey: "ancho_sello" }
@@ -821,8 +805,8 @@
         }
         if (header) {
             header.textContent = esVehicular
-                ? "OBLEA VEHICULAR"
-                : "OBLEA GENERAL";
+                ? "VIVATEC - OBLEA VEHICULAR (CON 2 RENGLONES EXTRA)"
+                : "VIVATEC - OBLEA GENERAL";
         }
         if (select) {
             select.value = tipoObleaActual;
@@ -1239,11 +1223,9 @@
                 }
             }
 
-            // Datos de los 2 renglones extra para oblea vehicular
-            document.getElementById("lblR5Dominio").textContent = data.ubicacion || "-";
-            document.getElementById("lblR5Dps").textContent = data.numero_dps || "-";
-            document.getElementById("lblR6Cliente").textContent = data.cliente || "-";
-            document.getElementById("lblR6Extra").textContent = [data.marca, capacidadFmt !== "-" ? capacidadFmt : null].filter(Boolean).join(" · ") || "-";
+            const ubicacionTexto = data.ubicacion || "-";
+            document.getElementById("lblR5Ubicacion").textContent = ubicacionTexto;
+            document.getElementById("lblR6Ubicacion").textContent = ubicacionTexto;
 
             verificarDesbordeEnPantalla();
 
