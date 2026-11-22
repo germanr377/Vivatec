@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vivatec - Imprimir Oblea (Uso Gral)</title>
+    <title>Vivatec - Imprimir Oblea</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @page {
@@ -28,6 +28,12 @@
 
             --linea4-left: 45mm;
 
+            --linea5-top: 215px;
+            --linea5-left: 10mm;
+
+            --linea6-top: 238px;
+            --linea6-left: 10mm;
+
             --sello-top: 185px;
             --sello-left: 82mm;
             --ancho-sello: 52mm;
@@ -50,6 +56,12 @@
 
             --ancho-r4-mes: 12mm;
             --ancho-r4-anio: 12mm;
+
+            --ancho-r5-c1: 35mm;
+            --ancho-r5-c2: 35mm;
+
+            --ancho-r6-c1: 35mm;
+            --ancho-r6-c2: 35mm;
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -79,6 +91,20 @@
             display: block;
             margin-bottom: 3px;
             color: #333;
+        }
+
+        .badge-tipo {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 4px;
+            background: #2980b9;
+            color: #fff;
+        }
+        .badge-tipo.vehicular {
+            background: #8e44ad;
         }
 
         .seleccion-actual {
@@ -187,7 +213,7 @@
         @media (max-width: 1080px) {
             .zona-calibracion {
                 padding-right: 0;
-                margin-top: 340px;
+                margin-top: 360px;
             }
             .control-panel {
                 left: 12px;
@@ -275,6 +301,14 @@
             background: rgba(253, 237, 236, 0.95) !important;
         }
 
+        /* Los 2 renglones extra solo se muestran en oblea vehicular */
+        .renglon-extra-vehicular {
+            display: none;
+        }
+        .oblea-container.modo-vehicular .renglon-extra-vehicular {
+            display: flex;
+        }
+
         .elemento-seleccionable,
         .campo-item {
             cursor: pointer;
@@ -312,7 +346,9 @@
         .linea-2,
         .linea-22,
         .linea-3,
-        .linea-4 {
+        .linea-4,
+        .linea-5,
+        .linea-6 {
             position: absolute;
             display: flex;
             flex-direction: row;
@@ -330,6 +366,8 @@
         .linea-22 { top: var(--linea2-top); left: var(--linea22-left); }
         .linea-3 { top: var(--linea3-top); left: var(--linea3-left); }
         .linea-4 { top: var(--linea3-top); left: var(--linea4-left); }
+        .linea-5 { top: var(--linea5-top); left: var(--linea5-left); }
+        .linea-6 { top: var(--linea6-top); left: var(--linea6-left); }
 
         .bloque-sello {
             position: absolute;
@@ -409,6 +447,12 @@
         .campo-r4-mes .caja-dato-guia  { width: var(--ancho-r4-mes); }
         .campo-r4-anio .caja-dato-guia { width: var(--ancho-r4-anio); }
 
+        .campo-r5-1 .caja-dato-guia { width: var(--ancho-r5-c1); }
+        .campo-r5-2 .caja-dato-guia { width: var(--ancho-r5-c2); }
+
+        .campo-r6-1 .caja-dato-guia { width: var(--ancho-r6-c1); }
+        .campo-r6-2 .caja-dato-guia { width: var(--ancho-r6-c2); }
+
         .valor-dato {
             font-size: 10px;
             font-weight: bold;
@@ -434,6 +478,10 @@
                 background: #fff !important;
             }
             .no-print, .etiqueta-medida-hoja, .estado-margen { display: none !important; }
+
+            .oblea-container:not(.modo-vehicular) .renglon-extra-vehicular {
+                display: none !important;
+            }
 
             .zona-calibracion {
                 display: block !important;
@@ -485,6 +533,8 @@
             .linea-22 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea22-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-3 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea3-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-4 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea4-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-5 { position: absolute !important; top: var(--linea5-top) !important; left: var(--linea5-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-6 { position: absolute !important; top: var(--linea6-top) !important; left: var(--linea6-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
 
             .bloque-sello {
                 position: absolute !important;
@@ -526,7 +576,18 @@
 <body>
 
 <div class="control-panel no-print">
-    <h3>🖨️ Oblea Uso Gral (16,6 × 9,5 cm)</h3>
+    <h3>
+        🖨️ Config. Oblea
+        <span id="badgeTipoOblea" class="badge-tipo">GENERAL</span>
+    </h3>
+
+    <div class="control-box">
+        <label for="selectTipoOblea">Tipo de oblea en edición:</label>
+        <select id="selectTipoOblea" onchange="cambiarTipoObleaManual(this.value)">
+            <option value="general">Oblea General</option>
+            <option value="vehicular">Oblea Vehicular (+2 renglones)</option>
+        </select>
+    </div>
 
     <div class="nota-impresion">
         <strong>1 clic</strong> en renglón/sello = mover · <strong>Doble clic</strong> en campo/sello = ancho en slider horizontal.
@@ -549,7 +610,7 @@
         <label for="sliderHorizontal">
             <span id="etiquetaHorizontal">Horizontal:</span> <span id="valHorizontal">10</span> <span id="unidadHorizontal">mm</span>
         </label>
-        <input type="range" id="sliderHorizontal" min="0" max="120" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
+        <input type="range" id="sliderHorizontal" min="0" max="145" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
     </div>
 
     <div class="control-box">
@@ -566,7 +627,7 @@
         <button id="btnGuardarBD" class="btn-accion btn-guardar" onclick="guardarConfiguracionEnBD()">💾 Guardar Configuracion</button>
         <button class="btn-accion" onclick="window.print()">🖨️ Imprimir</button>
         <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear</button>
-        <button class="btn-accion btn-volver" onclick="window.location.href='gestion.html'">⬅️ Gestión</button>
+        <button class="btn-accion btn-volver" onclick="window.location.href='gestionext.html'">⬅️ Gestión</button>
     </div>
 </div>
 
@@ -575,8 +636,8 @@
         <span class="etiqueta-medida-hoja">HOJA / OBLEA: 16,6 cm × 9,5 cm</span>
 
         <div class="oblea-container" id="obleaCard">
-            <div class="header-oblea no-print">
-                VIVATEC - VISTA PREVIA (USO GENERAL)
+            <div id="headerOblea" class="header-oblea no-print">
+                VIVATEC - OBLEA GENERAL
             </div>
 
             <!-- RENGLÓN 1 -->
@@ -616,7 +677,7 @@
                 <div class="campo-item campo-r22-extintor" data-ancho-key="ancho_r22_extintor" data-ancho-label="Renglón 22 - Extintor N°" ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia"><span id="lblExtintorR22" class="valor-dato">-</span></div>
                 </div>
-                <div class="campo-item campo-r22-vto-ph" data-ancho-key="ancho_r22_vto_ph" data-ancho-label="Renglón 22 - Venc. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
+                <div class="campo-item campo-r22-vto-ph" data-ancho-key="ancho_r22_vto-ph" data-ancho-label="Renglón 22 - Venc. P.H." ondblclick="seleccionarAnchoCampo(this, event)">
                     <div class="caja-dato-guia"><span id="lblVtoPhR22" class="valor-dato">-</span></div>
                 </div>
             </div>
@@ -641,6 +702,26 @@
                 </div>
             </div>
 
+            <!-- RENGLÓN EXTRA VEHICULAR 1 (Renglón 5) -->
+            <div id="linea5" class="linea-5 renglon-extra-vehicular elemento-seleccionable" data-elemento="linea5" onclick="programarSeleccionElemento('linea5', event)">
+                <div class="campo-item campo-r5-1" data-ancho-key="ancho_r5_c1" data-ancho-label="Renglón 5 (Vehicular) - Dominio/Ubicación" ondblclick="seleccionarAnchoCampo(this, event)">
+                    <div class="caja-dato-guia"><span id="lblR5Dominio" class="valor-dato">-</span></div>
+                </div>
+                <div class="campo-item campo-r5-2" data-ancho-key="ancho_r5_c2" data-ancho-label="Renglón 5 (Vehicular) - N° DPS" ondblclick="seleccionarAnchoCampo(this, event)">
+                    <div class="caja-dato-guia"><span id="lblR5Dps" class="valor-dato">-</span></div>
+                </div>
+            </div>
+
+            <!-- RENGLÓN EXTRA VEHICULAR 2 (Renglón 6) -->
+            <div id="linea6" class="linea-6 renglon-extra-vehicular elemento-seleccionable" data-elemento="linea6" onclick="programarSeleccionElemento('linea6', event)">
+                <div class="campo-item campo-r6-1" data-ancho-key="ancho_r6_c1" data-ancho-label="Renglón 6 (Vehicular) - Cliente" ondblclick="seleccionarAnchoCampo(this, event)">
+                    <div class="caja-dato-guia"><span id="lblR6Cliente" class="valor-dato">-</span></div>
+                </div>
+                <div class="campo-item campo-r6-2" data-ancho-key="ancho_r6_c2" data-ancho-label="Renglón 6 (Vehicular) - Marca/Capacidad" ondblclick="seleccionarAnchoCampo(this, event)">
+                    <div class="caja-dato-guia"><span id="lblR6Extra" class="valor-dato">-</span></div>
+                </div>
+            </div>
+
             <!-- BLOQUE SELLO -->
             <div id="bloqueSello" class="bloque-sello elemento-seleccionable" data-elemento="bloqueSello" data-ancho-key="ancho_sello" data-ancho-label="Sello" onclick="programarSeleccionElemento('bloqueSello', event)" ondblclick="seleccionarAnchoCampo(this, event)">
                 <div class="sello-renglon sello-nombre">IGNACIO REPETTO</div>
@@ -656,8 +737,7 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const TIPO_OBLEA = "uso_gral";
-    const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
+    let tipoObleaActual = "general";
 
     const ELEMENTOS_CONFIG = {
         linea1: { nombre: "Renglón 1", vertical: "linea1_top", horizontal: "linea1_left" },
@@ -665,35 +745,45 @@
         linea22: { nombre: "Renglón 22", vertical: "linea2_top", horizontal: "linea22_left" },
         linea3: { nombre: "Renglón 3", vertical: "linea3_top", horizontal: "linea3_left" },
         linea4: { nombre: "Renglón 4", vertical: "linea3_top", horizontal: "linea4_left" },
+        linea5: { nombre: "Renglón 5 (Vehicular)", vertical: "linea5_top", horizontal: "linea5_left" },
+        linea6: { nombre: "Renglón 6 (Vehicular)", vertical: "linea6_top", horizontal: "linea6_left" },
         bloqueSello: { nombre: "Sello", vertical: "sello_top", horizontal: "sello_left" }
     };
 
     const PARAMETROS = {
-        linea1_top: { cssVar: "--linea1-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 113, storageKey: "vivatec_oblea_altura_renglon_1" },
-        linea1_left: { cssVar: "--linea1-left", unidad: "mm", min: 0, max: 120, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_pos_x_renglon_1" },
-        ancho_extintor: { cssVar: "--ancho-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_extintor" },
-        ancho_ano_fab: { cssVar: "--ancho-ano-fab", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 14, storageKey: "vivatec_oblea_ancho_ano_fab" },
-        ancho_vto_ph: { cssVar: "--ancho-vto-ph", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_vto_ph" },
-        ancho_capacidad: { cssVar: "--ancho-capacidad", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_ancho_capacidad" },
-        ancho_agente: { cssVar: "--ancho-agente", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 19, storageKey: "vivatec_oblea_ancho_agente" },
-        linea2_top: { cssVar: "--linea2-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 147, storageKey: "vivatec_oblea_altura_renglon_2" },
-        linea2_left: { cssVar: "--linea2-left", unidad: "mm", min: 0, max: 120, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_pos_x_renglon_2" },
-        ancho_r2_c1: { cssVar: "--ancho-r2-c1", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_r2_c1" },
-        ancho_r2_c2: { cssVar: "--ancho-r2-c2", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 14, storageKey: "vivatec_oblea_ancho_r2_c2" },
-        ancho_r2_c3: { cssVar: "--ancho-r2-c3", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_r2_c3" },
-        linea22_left: { cssVar: "--linea22-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 78, storageKey: "vivatec_oblea_pos_x_renglon_22" },
-        ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "vivatec_oblea_ancho_r22_extintor" },
-        ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto_ph", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r22_vto_ph" },
-        linea3_top: { cssVar: "--linea3-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "vivatec_oblea_altura_renglon_3" },
-        linea3_left: { cssVar: "--linea3-left", unidad: "mm", min: 0, max: 140, step: 0.5, defaultVal: 10, storageKey: "vivatec_oblea_pos_x_renglon_3" },
-        ancho_r3_mes: { cssVar: "--ancho-r3-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r3_mes" },
-        ancho_r3_anio: { cssVar: "--ancho-r3-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r3_anio" },
-        linea4_left: { cssVar: "--linea4-left", unidad: "mm", min: 0, max: 140, step: 0.5, defaultVal: 45, storageKey: "vivatec_oblea_pos_x_renglon_4" },
-        ancho_r4_mes: { cssVar: "--ancho-r4-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r4_mes" },
-        ancho_r4_anio: { cssVar: "--ancho-r4-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "vivatec_oblea_ancho_r4_anio" },
-        sello_top: { cssVar: "--sello-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "vivatec_oblea_altura_sello" },
-        sello_left: { cssVar: "--sello-left", unidad: "mm", min: 0, max: 140, step: 0.5, defaultVal: 82, storageKey: "vivatec_oblea_pos_x_sello" },
-        ancho_sello: { cssVar: "--ancho-sello", unidad: "mm", min: 20, max: 90, step: 0.5, defaultVal: 52, storageKey: "vivatec_oblea_ancho_sello" }
+        linea1_top: { cssVar: "--linea1-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 113, storageKey: "altura_renglon_1" },
+        linea1_left: { cssVar: "--linea1-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_1" },
+        ancho_extintor: { cssVar: "--ancho-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "ancho_extintor" },
+        ancho_ano_fab: { cssVar: "--ancho-ano-fab", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 14, storageKey: "ancho_ano_fab" },
+        ancho_vto_ph: { cssVar: "--ancho-vto-ph", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 12, storageKey: "ancho_vto_ph" },
+        ancho_capacidad: { cssVar: "--ancho-capacidad", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 10, storageKey: "ancho_capacidad" },
+        ancho_agente: { cssVar: "--ancho-agente", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 19, storageKey: "ancho_agente" },
+        linea2_top: { cssVar: "--linea2-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 147, storageKey: "altura_renglon_2" },
+        linea2_left: { cssVar: "--linea2-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_2" },
+        ancho_r2_c1: { cssVar: "--ancho-r2-c1", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c1" },
+        ancho_r2_c2: { cssVar: "--ancho-r2-c2", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 14, storageKey: "ancho_r2_c2" },
+        ancho_r2_c3: { cssVar: "--ancho-r2-c3", unidad: "mm", min: 5, max: 70, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c3" },
+        linea22_left: { cssVar: "--linea22-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 78, storageKey: "pos_x_renglon_22" },
+        ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", unidad: "mm", min: 5, max: 60, step: 0.5, defaultVal: 24, storageKey: "ancho_r22_extintor" },
+        ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto-ph", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r22_vto_ph" },
+        linea3_top: { cssVar: "--linea3-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "altura_renglon_3" },
+        linea3_left: { cssVar: "--linea3-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_3" },
+        ancho_r3_mes: { cssVar: "--ancho-r3-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_mes" },
+        ancho_r3_anio: { cssVar: "--ancho-r3-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_anio" },
+        linea4_left: { cssVar: "--linea4-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 45, storageKey: "pos_x_renglon_4" },
+        ancho_r4_mes: { cssVar: "--ancho-r4-mes", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_mes" },
+        ancho_r4_anio: { cssVar: "--ancho-r4-anio", unidad: "mm", min: 5, max: 50, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_anio" },
+        linea5_top: { cssVar: "--linea5-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 215, storageKey: "altura_renglon_5" },
+        linea5_left: { cssVar: "--linea5-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_5" },
+        ancho_r5_c1: { cssVar: "--ancho-r5-c1", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_c1" },
+        ancho_r5_c2: { cssVar: "--ancho-r5-c2", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r5_c2" },
+        linea6_top: { cssVar: "--linea6-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 238, storageKey: "altura_renglon_6" },
+        linea6_left: { cssVar: "--linea6-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_6" },
+        ancho_r6_c1: { cssVar: "--ancho-r6-c1", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_c1" },
+        ancho_r6_c2: { cssVar: "--ancho-r6-c2", unidad: "mm", min: 5, max: 90, step: 0.5, defaultVal: 35, storageKey: "ancho_r6_c2" },
+        sello_top: { cssVar: "--sello-top", unidad: "px", min: 0, max: 280, step: 1, defaultVal: 185, storageKey: "altura_sello" },
+        sello_left: { cssVar: "--sello-left", unidad: "mm", min: 0, max: 145, step: 0.5, defaultVal: 82, storageKey: "pos_x_sello" },
+        ancho_sello: { cssVar: "--ancho-sello", unidad: "mm", min: 20, max: 90, step: 0.5, defaultVal: 52, storageKey: "ancho_sello" }
     };
 
     let elementoSeleccionadoId = "linea1";
@@ -702,12 +792,57 @@
     let keyHorizontalActual = "linea1_left";
     let timerClicSimple = null;
 
-    function guardarStorage(clave, valor) {
-        try { localStorage.setItem(clave, String(valor)); } catch (e) {}
+    function normalizarTipoOblea(valorCrudo) {
+        if (!valorCrudo) return "general";
+        const texto = String(valorCrudo).trim().toLowerCase();
+        if (texto.includes("vehic") || texto === "uso_vehicular") {
+            return "vehicular";
+        }
+        return "general";
     }
 
-    function leerStorage(clave) {
-        try { return localStorage.getItem(clave); } catch (e) { return null; }
+    function obtenerNombreLegibleTipo(tipo) {
+        return tipo === "vehicular" ? "Vehicular" : "General";
+    }
+
+    function actualizarUIPorTipoOblea() {
+        const esVehicular = tipoObleaActual === "vehicular";
+        const badge = document.getElementById("badgeTipoOblea");
+        const header = document.getElementById("headerOblea");
+        const select = document.getElementById("selectTipoOblea");
+        const obleaCard = document.getElementById("obleaCard");
+
+        if (obleaCard) {
+            obleaCard.classList.toggle("modo-vehicular", esVehicular);
+        }
+        if (badge) {
+            badge.textContent = esVehicular ? "VEHICULAR (+2 RENGLONES)" : "GENERAL";
+            badge.classList.toggle("vehicular", esVehicular);
+        }
+        if (header) {
+            header.textContent = esVehicular
+                ? "VIVATEC - OBLEA VEHICULAR (CON 2 RENGLONES EXTRA)"
+                : "VIVATEC - OBLEA GENERAL";
+        }
+        if (select) {
+            select.value = tipoObleaActual;
+        }
+        if (!esVehicular && (elementoSeleccionadoId === "linea5" || elementoSeleccionadoId === "linea6")) {
+            aplicarSeleccionElemento("linea1");
+        }
+        document.title = `Vivatec - Imprimir Oblea (${obtenerNombreLegibleTipo(tipoObleaActual)})`;
+    }
+
+    function claveStoragePorTipo(baseKey) {
+        return `vivatec_oblea_${tipoObleaActual}_${baseKey}`;
+    }
+
+    function guardarStorage(claveBase, valor) {
+        try { localStorage.setItem(claveStoragePorTipo(claveBase), String(valor)); } catch (e) {}
+    }
+
+    function leerStorage(claveBase) {
+        try { return localStorage.getItem(claveStoragePorTipo(claveBase)); } catch (e) { return null; }
     }
 
     function obtenerValorParametro(key) {
@@ -847,7 +982,7 @@
             const { data, error } = await _supabase
                 .from("config_oblea")
                 .select("configuracion, rotacion")
-                .eq("tipo_oblea", TIPO_OBLEA)
+                .eq("tipo_oblea", tipoObleaActual)
                 .maybeSingle();
 
             if (error || !data) return;
@@ -867,7 +1002,7 @@
             if (data.rotacion) {
                 document.getElementById("selectRotacion").value = data.rotacion;
                 aplicarRotacion(data.rotacion);
-                guardarStorage(STORAGE_ROTACION_KEY, data.rotacion);
+                guardarStorage("rotacion", data.rotacion);
             }
 
             verificarDesbordeEnPantalla();
@@ -890,7 +1025,7 @@
                 .from("config_oblea")
                 .upsert(
                     {
-                        tipo_oblea: TIPO_OBLEA,
+                        tipo_oblea: tipoObleaActual,
                         configuracion: payload.configuracion,
                         rotacion: payload.rotacion,
                         updated_at: new Date().toISOString()
@@ -904,7 +1039,7 @@
                 return;
             }
 
-            alert("✅ Configuración guardada (Oblea Uso General).");
+            alert(`✅ Configuración guardada (Oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}).`);
         } catch (err) {
             console.error("Error inesperado al guardar configuración:", err);
             alert("⚠️ Ocurrió un error al guardar la configuración.");
@@ -916,6 +1051,14 @@
         }
     }
 
+    async function cambiarTipoObleaManual(nuevoTipo) {
+        tipoObleaActual = normalizarTipoOblea(nuevoTipo);
+        actualizarUIPorTipoOblea();
+        cargarCalibracionGuardada();
+        await cargarConfiguracionDesdeBD();
+        verificarDesbordeEnPantalla();
+    }
+
     function verificarDesbordeEnPantalla() {
         const marco = document.getElementById("marcoHoja");
         const oblea = document.getElementById("obleaCard");
@@ -925,6 +1068,8 @@
         const linea22 = document.getElementById("linea22");
         const linea3 = document.getElementById("linea3");
         const linea4 = document.getElementById("linea4");
+        const linea5 = document.getElementById("linea5");
+        const linea6 = document.getElementById("linea6");
         const bloqueSello = document.getElementById("bloqueSello");
         if (!marco || !oblea || !estado) return;
 
@@ -940,8 +1085,12 @@
         if (rectOblea.top < rectMarco.top - tol) ladosFuera.push("arriba");
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
+        const elementosAVerificar = tipoObleaActual === "vehicular"
+            ? [linea1, linea2, linea22, linea3, linea4, linea5, linea6, bloqueSello]
+            : [linea1, linea2, linea22, linea3, linea4, bloqueSello];
+
         let elementoFuera = false;
-        [linea1, linea2, linea22, linea3, linea4, bloqueSello].forEach(el => {
+        elementosAVerificar.forEach(el => {
             if (!el) return;
             const rectEl = el.getBoundingClientRect();
             const sale = (
@@ -984,7 +1133,7 @@
 
     function cambiarRotacionImpresion(rotacion) {
         aplicarRotacion(rotacion);
-        guardarStorage(STORAGE_ROTACION_KEY, rotacion);
+        guardarStorage("rotacion", rotacion);
     }
 
     function resetearCalibracion() {
@@ -1005,7 +1154,7 @@
         });
         aplicarSeleccionElemento(elementoSeleccionadoId);
 
-        const rotGuardada = leerStorage(STORAGE_ROTACION_KEY) || "90deg";
+        const rotGuardada = leerStorage("rotacion") || "90deg";
         document.getElementById("selectRotacion").value = rotGuardada;
         aplicarRotacion(rotGuardada);
     }
@@ -1020,6 +1169,15 @@
     window.addEventListener("resize", verificarDesbordeEnPantalla);
 
     window.addEventListener("load", async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const idRegistro = urlParams.get('id');
+        const tipoParam = urlParams.get('tipo');
+
+        if (tipoParam) {
+            tipoObleaActual = normalizarTipoOblea(tipoParam);
+        }
+
+        actualizarUIPorTipoOblea();
         cargarCalibracionGuardada();
         verificarDesbordeEnPantalla();
 
@@ -1029,14 +1187,9 @@
             return;
         }
 
-        await cargarConfiguracionDesdeBD();
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const idRegistro = urlParams.get('id');
-
         if (!idRegistro) {
             alert("⚠️ No se especificó el ID del equipo para imprimir.");
-            window.location.href = "gestion.html";
+            window.location.href = "gestionext.html";
             return;
         }
 
@@ -1049,17 +1202,26 @@
 
             if (error || !data) {
                 alert("⚠️ No se encontró el registro en la base de datos.");
-                window.location.href = "gestion.html";
+                window.location.href = "gestionext.html";
                 return;
             }
 
+            if (!tipoParam && data.oblea) {
+                tipoObleaActual = normalizarTipoOblea(data.oblea);
+                actualizarUIPorTipoOblea();
+                cargarCalibracionGuardada();
+            }
+
+            await cargarConfiguracionDesdeBD();
+
             const extintorNum = data.extintor_numero || "-";
             const vtoPhFmt = formatearFechaWeb(data.vto_prueb_hidr);
+            const capacidadFmt = formatearCapacidad(data.capacidad);
 
             document.getElementById("lblExtintor").textContent = extintorNum;
             document.getElementById("lblAnoFab").textContent = data.ano_fab || "-";
             document.getElementById("lblVtoPh").textContent = vtoPhFmt;
-            document.getElementById("lblCapacidad").textContent = formatearCapacidad(data.capacidad);
+            document.getElementById("lblCapacidad").textContent = capacidadFmt;
             document.getElementById("lblAgente").textContent = data.agente_extintor || "-";
 
             document.getElementById("lblExtintorR22").textContent = extintorNum;
@@ -1076,6 +1238,12 @@
                     document.getElementById("lblAnioVtoR4").textContent = anio;
                 }
             }
+
+            // Datos de los 2 renglones extra para oblea vehicular
+            document.getElementById("lblR5Dominio").textContent = data.ubicacion || "-";
+            document.getElementById("lblR5Dps").textContent = data.numero_dps || "-";
+            document.getElementById("lblR6Cliente").textContent = data.cliente || "-";
+            document.getElementById("lblR6Extra").textContent = [data.marca, capacidadFmt !== "-" ? capacidadFmt : null].filter(Boolean).join(" · ") || "-";
 
             verificarDesbordeEnPantalla();
 
