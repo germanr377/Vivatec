@@ -14,16 +14,28 @@
         :root {
             --print-rotacion: 90deg;
             --print-left: 9.5cm;
+
             --linea1-top: 113px; /* ~3 cm iniciales */
             --linea1-left: 10mm; /* 1 cm inicial */
-            --vivatec-left: 20mm; /* 2 cm inicial */
-            --vivatec-bottom: 56mm; /* 5,6 cm inicial */
+
+            --linea2-top: 147px;
+            --linea2-left: 10mm;
+
+            --linea3-top: 185px;
+            --linea3-left: 10mm;
 
             --ancho-extintor: 24mm;   /* 2,4 cm */
             --ancho-ano-fab: 14mm;    /* 1,4 cm */
             --ancho-vto-ph: 12mm;     /* 1,2 cm */
             --ancho-capacidad: 10mm;  /* 1,0 cm */
             --ancho-agente: 19mm;     /* 1,9 cm */
+
+            --ancho-r2-c1: 24mm;
+            --ancho-r2-c2: 14mm;
+            --ancho-r2-c3: 24mm;
+
+            --ancho-r3-mes: 12mm;
+            --ancho-r3-anio: 12mm;
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -258,11 +270,11 @@
             padding-bottom: 4px;
         }
 
-        /* LÍNEA 1: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
-        .linea-1 {
+        /* RENGLONES 1, 2 y 3: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) */
+        .linea-1,
+        .linea-2,
+        .linea-3 {
             position: absolute;
-            top: var(--linea1-top);
-            left: var(--linea1-left);
             display: flex;
             flex-direction: row;
             justify-content: flex-start;
@@ -272,6 +284,21 @@
             padding: 0;
             font-weight: bold;
             font-size: 11px;
+        }
+
+        .linea-1 {
+            top: var(--linea1-top);
+            left: var(--linea1-left);
+        }
+
+        .linea-2 {
+            top: var(--linea2-top);
+            left: var(--linea2-left);
+        }
+
+        .linea-3 {
+            top: var(--linea3-top);
+            left: var(--linea3-left);
         }
 
         .campo-item {
@@ -289,7 +316,10 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            border: 1px dashed #2980b9;
+            border-top: 1px dashed #2980b9;
+            border-bottom: 1px dashed #2980b9;
+            border-right: 1px dashed #2980b9;
+            border-left: 1px dashed #2980b9;
             background: rgba(41, 128, 185, 0.06);
             box-sizing: border-box;
             padding: 0 2px;
@@ -307,27 +337,16 @@
         .campo-capacidad .caja-dato-guia { width: var(--ancho-capacidad); }
         .campo-agente .caja-dato-guia    { width: var(--ancho-agente); }
 
-        /* BLOQUE DE VENCIMIENTO independiente de Línea 1 */
-        .bloque-vencimiento-pos {
-            position: absolute;
-            top: calc(var(--linea1-top) + 34px);
-            left: 1cm;
-        }
+        .campo-r2-1 .caja-dato-guia { width: var(--ancho-r2-c1); }
+        .campo-r2-2 .caja-dato-guia { width: var(--ancho-r2-c2); }
+        .campo-r2-3 .caja-dato-guia { width: var(--ancho-r2-c3); }
 
-        /* RENGLÓN VIVATEC 382: ajustable horizontal y verticalmente */
-        .linea-vivatec {
-            position: absolute;
-            left: var(--vivatec-left);
-            bottom: var(--vivatec-bottom);
-            font-size: 15px;
-            font-weight: bold;
-            color: #000;
-            letter-spacing: 0.4px;
-            white-space: nowrap;
-        }
+        .campo-r3-mes .caja-dato-guia  { width: var(--ancho-r3-mes); }
+        .campo-r3-anio .caja-dato-guia { width: var(--ancho-r3-anio); }
 
         .valor-dato {
             font-size: 10px;
+            font-weight: bold;
             color: #000;
             white-space: nowrap;
             overflow: hidden;
@@ -337,38 +356,10 @@
             display: block;
         }
 
-        .bloque-vencimiento-caja {
-            border: 1.5px dashed #ccc;
-            padding: 4px;
-            background: #fafafa;
-            text-align: center;
-            display: inline-block;
-        }
-
-        .vencimiento-titulo {
-            font-size: 9px;
+        .valor-vto-destacado {
+            font-size: 11px;
             font-weight: bold;
-            margin-bottom: 2px;
-            border-bottom: 1px dashed #ccc;
-            padding-bottom: 2px;
-        }
-
-        .vencimiento-grid {
-            display: flex;
-            justify-content: center;
-            gap: 0;
-        }
-
-        .venc-caja {
-            border: 1px solid #777;
-            padding: 2px 5px;
-            background: #fff;
-            text-align: center;
-            min-width: 25px;
-        }
-
-        .venc-caja:first-child {
-            border-right: none; 
+            color: #c0392b;
         }
 
         /* CONFIGURACIÓN DE IMPRESIÓN: bloque físico fijo de 16.6 cm de largo x 9.5 cm de ancho, sin guías */
@@ -434,6 +425,28 @@
                 padding: 0 !important;
             }
 
+            .linea-2 {
+                position: absolute !important;
+                top: var(--linea2-top) !important;
+                left: var(--linea2-left) !important;
+                box-sizing: border-box !important;
+                border-bottom: none !important;
+                gap: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .linea-3 {
+                position: absolute !important;
+                top: var(--linea3-top) !important;
+                left: var(--linea3-left) !important;
+                box-sizing: border-box !important;
+                border-bottom: none !important;
+                gap: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .campo-item,
             .campo-item + .campo-item .caja-dato-guia,
             .caja-dato-guia {
@@ -449,24 +462,18 @@
                 text-align: center !important;
             }
 
-            .bloque-vencimiento-pos {
-                position: absolute !important;
-                top: calc(var(--linea1-top) + 34px) !important;
-                left: 1cm !important;
-            }
-
-            .linea-vivatec {
-                position: absolute !important;
-                left: var(--vivatec-left) !important;
-                bottom: var(--vivatec-bottom) !important;
-                font-size: 15px !important;
+            .valor-dato {
+                font-size: 10px !important;
                 font-weight: bold !important;
                 color: #000 !important;
+                text-align: center !important;
             }
-            .bloque-vencimiento-caja { border: none; background: transparent !important; padding: 0; }
-            .vencimiento-titulo { border-bottom: none; }
-            .venc-caja { border: none; background: transparent !important; padding: 0 2px; }
-            .valor-dato, .venc-caja .valor-dato { font-size: 10px; font-weight: bold; color: #000; text-align: center !important; } 
+            .valor-vto-destacado {
+                font-size: 11px !important;
+                font-weight: bold !important;
+                color: #c0392b !important;
+                text-align: center !important;
+            }
         }
     </style>
 </head>
@@ -486,15 +493,22 @@
     <div class="control-box">
         <label for="selectParametro">Distancia / medida a modificar:</label>
         <select id="selectParametro" onchange="sincronizarUnicoSlider()">
-            <option value="linea1_top">Línea 1 - Altura vertical (px)</option>
-            <option value="linea1_left">Línea 1 - Posición horizontal (mm)</option>
-            <option value="vivatec_x">VIVATEC 382 - Horizontal (mm)</option>
-            <option value="vivatec_y">VIVATEC 382 - Vertical desde abajo (mm)</option>
-            <option value="ancho_extintor">Ancho: Extintor N° (mm)</option>
-            <option value="ancho_ano_fab">Ancho: Año Fab. (mm)</option>
-            <option value="ancho_vto_ph">Ancho: Vto. P.H. (mm)</option>
-            <option value="ancho_capacidad">Ancho: Capacidad (mm)</option>
-            <option value="ancho_agente">Ancho: Agente (mm)</option>
+            <option value="linea1_top">Renglón 1 - Altura vertical (px)</option>
+            <option value="linea1_left">Renglón 1 - Posición horizontal (mm)</option>
+            <option value="ancho_extintor">Renglón 1 - Ancho Extintor N° (mm)</option>
+            <option value="ancho_ano_fab">Renglón 1 - Ancho Año Fab. (mm)</option>
+            <option value="ancho_vto_ph">Renglón 1 - Ancho Vto. P.H. (mm)</option>
+            <option value="ancho_capacidad">Renglón 1 - Ancho Capacidad (mm)</option>
+            <option value="ancho_agente">Renglón 1 - Ancho Agente (mm)</option>
+            <option value="linea2_top">Renglón 2 - Altura vertical (px)</option>
+            <option value="linea2_left">Renglón 2 - Posición horizontal (mm)</option>
+            <option value="ancho_r2_c1">Renglón 2 - Ancho Campo 1 (VIVATEC) (mm)</option>
+            <option value="ancho_r2_c2">Renglón 2 - Ancho Campo 2 (382) (mm)</option>
+            <option value="ancho_r2_c3">Renglón 2 - Ancho Campo 3 (Vacío) (mm)</option>
+            <option value="linea3_top">Renglón 3 (Venc.) - Altura vertical (px)</option>
+            <option value="linea3_left">Renglón 3 (Venc.) - Posición horizontal (mm)</option>
+            <option value="ancho_r3_mes">Renglón 3 - Ancho Mes (mm)</option>
+            <option value="ancho_r3_anio">Renglón 3 - Ancho Año (mm)</option>
         </select>
 
         <label for="unicoSlider" style="margin-top: 6px;">
@@ -529,7 +543,7 @@
                 VIVATEC - VISTA PREVIA (USO GENERAL)
             </div>
 
-            <!-- LÍNEA 1: cada campo empieza exactamente donde termina el anterior (borde compartido sin hueco) -->
+            <!-- RENGLÓN 1 -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
                     <div class="caja-dato-guia">
@@ -562,23 +576,41 @@
                 </div>
             </div>
 
-            <!-- BLOQUE DE VENCIMIENTO independiente de Línea 1 -->
-            <div id="bloqueVencimientoPos" class="bloque-vencimiento-pos">
-                <div id="bloqueVencimiento" class="bloque-vencimiento-caja">
-                    <div class="vencimiento-titulo">Vencimiento</div>
-                    <div class="vencimiento-grid">
-                        <div class="venc-caja">
-                            <span id="lblMesVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
-                        </div>
-                        <div class="venc-caja">
-                            <span id="lblAnioVto" class="valor-dato" style="font-size: 13px; color: #c0392b; font-weight: bold;">-</span>
-                        </div>
+            <!-- RENGLÓN 2: 3 campos pegados borde con borde (VIVATEC | 382 | vacío) -->
+            <div id="linea2" class="linea-2">
+                <div class="campo-item campo-r2-1">
+                    <div class="caja-dato-guia">
+                        <span class="valor-dato">VIVATEC</span>
+                    </div>
+                </div>
+
+                <div class="campo-item campo-r2-2">
+                    <div class="caja-dato-guia">
+                        <span class="valor-dato">382</span>
+                    </div>
+                </div>
+
+                <div class="campo-item campo-r2-3">
+                    <div class="caja-dato-guia">
+                        <span class="valor-dato"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- RENGLÓN VIVATEC 382: ajustable horizontal y verticalmente -->
-            <div id="lineaVivatec" class="linea-vivatec">VIVATEC 382</div>
+            <!-- RENGLÓN 3: bloque independiente de Mes y Año de vencimiento, sin etiqueta -->
+            <div id="linea3" class="linea-3">
+                <div class="campo-item campo-r3-mes">
+                    <div class="caja-dato-guia">
+                        <span id="lblMesVto" class="valor-dato valor-vto-destacado">-</span>
+                    </div>
+                </div>
+
+                <div class="campo-item campo-r3-anio">
+                    <div class="caja-dato-guia">
+                        <span id="lblAnioVto" class="valor-dato valor-vto-destacado">-</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -608,24 +640,6 @@
             step: 0.5,
             defaultVal: 10,
             storageKey: "vivatec_oblea_pos_x_renglon_1"
-        },
-        vivatec_x: {
-            cssVar: "--vivatec-left",
-            unidad: "mm",
-            min: 0,
-            max: 140,
-            step: 0.5,
-            defaultVal: 20,
-            storageKey: "vivatec_oblea_vivatec_x"
-        },
-        vivatec_y: {
-            cssVar: "--vivatec-bottom",
-            unidad: "mm",
-            min: 0,
-            max: 90,
-            step: 0.5,
-            defaultVal: 56,
-            storageKey: "vivatec_oblea_vivatec_y"
         },
         ancho_extintor: {
             cssVar: "--ancho-extintor",
@@ -671,6 +685,87 @@
             step: 0.5,
             defaultVal: 19,
             storageKey: "vivatec_oblea_ancho_agente"
+        },
+        linea2_top: {
+            cssVar: "--linea2-top",
+            unidad: "px",
+            min: 0,
+            max: 280,
+            step: 1,
+            defaultVal: 147,
+            storageKey: "vivatec_oblea_altura_renglon_2"
+        },
+        linea2_left: {
+            cssVar: "--linea2-left",
+            unidad: "mm",
+            min: 0,
+            max: 120,
+            step: 0.5,
+            defaultVal: 10,
+            storageKey: "vivatec_oblea_pos_x_renglon_2"
+        },
+        ancho_r2_c1: {
+            cssVar: "--ancho-r2-c1",
+            unidad: "mm",
+            min: 5,
+            max: 70,
+            step: 0.5,
+            defaultVal: 24,
+            storageKey: "vivatec_oblea_ancho_r2_c1"
+        },
+        ancho_r2_c2: {
+            cssVar: "--ancho-r2-c2",
+            unidad: "mm",
+            min: 5,
+            max: 70,
+            step: 0.5,
+            defaultVal: 14,
+            storageKey: "vivatec_oblea_ancho_r2_c2"
+        },
+        ancho_r2_c3: {
+            cssVar: "--ancho-r2-c3",
+            unidad: "mm",
+            min: 5,
+            max: 70,
+            step: 0.5,
+            defaultVal: 24,
+            storageKey: "vivatec_oblea_ancho_r2_c3"
+        },
+        linea3_top: {
+            cssVar: "--linea3-top",
+            unidad: "px",
+            min: 0,
+            max: 280,
+            step: 1,
+            defaultVal: 185,
+            storageKey: "vivatec_oblea_altura_renglon_3"
+        },
+        linea3_left: {
+            cssVar: "--linea3-left",
+            unidad: "mm",
+            min: 0,
+            max: 120,
+            step: 0.5,
+            defaultVal: 10,
+            storageKey: "vivatec_oblea_pos_x_renglon_3"
+        },
+        ancho_r3_mes: {
+            cssVar: "--ancho-r3-mes",
+            unidad: "mm",
+            min: 5,
+            max: 50,
+            step: 0.5,
+            defaultVal: 12,
+            storageKey: "vivatec_oblea_ancho_r3_mes"
+        },
+        ancho_r3_anio: {
+            cssVar: "--ancho-r3-anio",
+            unidad: "mm",
+            min: 5,
+            max: 50,
+            step: 0.5,
+            defaultVal: 12,
+            storageKey: "vivatec_oblea_ancho_r3_anio"
         }
     };
 
@@ -735,8 +830,8 @@
         const oblea = document.getElementById("obleaCard");
         const estado = document.getElementById("estadoMargen");
         const linea1 = document.getElementById("linea1");
-        const bloqueVto = document.getElementById("bloqueVencimiento");
-        const lineaVivatec = document.getElementById("lineaVivatec");
+        const linea2 = document.getElementById("linea2");
+        const linea3 = document.getElementById("linea3");
         if (!marco || !oblea || !estado) return;
 
         const rotacion = document.getElementById("selectRotacion").value || "90deg";
@@ -752,7 +847,7 @@
         if (rectOblea.bottom > rectMarco.bottom + tol) ladosFuera.push("abajo");
 
         let elementoFuera = false;
-        [linea1, bloqueVto, lineaVivatec].forEach(el => {
+        [linea1, linea2, linea3].forEach(el => {
             if (!el) return;
             const rectEl = el.getBoundingClientRect();
             const sale = (
