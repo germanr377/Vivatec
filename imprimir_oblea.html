@@ -270,10 +270,10 @@
         .btn-accion:hover { background: #1f618d; }
         .btn-guardar { background: #27ae60; }
         .btn-guardar:hover { background: #1e8449; }
+        .btn-cargar { background: #8e44ad; }
+        .btn-cargar:hover { background: #6c3483; }
         .btn-volver { background: #7f8c8d; }
         .btn-volver:hover { background: #626567; }
-        .btn-reset { background: #d35400; }
-        .btn-reset:hover { background: #a04000; }
 
         .oblea-container {
             width: 100%;
@@ -614,9 +614,9 @@
     </div>
 
     <div class="acciones-panel">
-        <button id="btnGuardarBD" class="btn-accion btn-guardar" onclick="guardarConfiguracionEnBD()">💾 Guardar Configuracion</button>
+        <button id="btnGuardarBD" class="btn-accion btn-guardar" onclick="guardarConfiguracionEnBD()">💾 Grabar</button>
+        <button id="btnCargarBD" class="btn-accion btn-cargar" onclick="cargarUltimoGrabado(true)">📂 Cargar</button>
         <button class="btn-accion" onclick="window.print()">🖨️ Imprimir</button>
-        <button class="btn-accion btn-reset" onclick="resetearCalibracion()">↩️ Resetear</button>
         <button class="btn-accion btn-volver" onclick="window.location.href='gestionext.html'">⬅️ Gestión</button>
     </div>
 </div>
@@ -991,7 +991,13 @@
         };
     }
 
-    async function cargarConfiguracionDesdeBD() {
+    async function cargarConfiguracionDesdeBD(mostrarAviso = false) {
+        const btn = document.getElementById("btnCargarBD");
+        if (btn && mostrarAviso) {
+            btn.disabled = true;
+            btn.textContent = "⏳ Cargando...";
+        }
+
         try {
             const { data, error } = await _supabase
                 .from("config_oblea")
@@ -999,7 +1005,14 @@
                 .eq("tipo_oblea", tipoObleaActual)
                 .maybeSingle();
 
-            if (error || !data) return;
+            if (error || !data) {
+                cargarCalibracionGuardada();
+                verificarDesbordeEnPantalla();
+                if (mostrarAviso) {
+                    alert(`ℹ️ No había grabación en la nube para oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}; se cargó lo grabado localmente.`);
+                }
+                return false;
+            }
 
             if (data.configuracion && typeof data.configuracion === "object") {
                 Object.keys(PARAMETROS).forEach(key => {
@@ -1027,18 +1040,42 @@
             }
 
             verificarDesbordeEnPantalla();
+            if (mostrarAviso) {
+                alert(`✅ Se cargó lo último grabado (Oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}).`);
+            }
+            return true;
         } catch (err) {
             console.error("Error cargando config_oblea desde BD:", err);
+            cargarCalibracionGuardada();
+            verificarDesbordeEnPantalla();
+            if (mostrarAviso) {
+                alert("⚠️ No se pudo consultar la nube; se cargó lo grabado localmente.");
+            }
+            return false;
+        } finally {
+            if (btn && mostrarAviso) {
+                btn.disabled = false;
+                btn.textContent = "📂 Cargar";
+            }
         }
+    }
+
+    async function cargarUltimoGrabado(mostrarAviso = false) {
+        return await cargarConfiguracionDesdeBD(mostrarAviso);
     }
 
     async function guardarConfiguracionEnBD() {
         const btn = document.getElementById("btnGuardarBD");
         const payload = recolectarConfiguracionActual();
 
+        Object.keys(PARAMETROS).forEach(key => {
+            setearValorParametro(key, payload.configuracion[key]);
+        });
+        guardarStorage("rotacion", payload.rotacion);
+
         if (btn) {
             btn.disabled = true;
-            btn.textContent = "⏳ Guardando...";
+            btn.textContent = "⏳ Grabando...";
         }
 
         try {
@@ -1055,19 +1092,19 @@
                 );
 
             if (error) {
-                console.error("Error guardando config_oblea en BD:", error);
-                alert("⚠️ No se pudo guardar la configuración. Verificá que exista la tabla config_oblea y las políticas.");
+                console.error("Error grabando config_oblea en BD:", error);
+                alert("⚠️ No se pudo grabar en la nube, pero quedó guardado en este navegador.");
                 return;
             }
 
-            alert(`✅ Configuración guardada en mm (Oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}).`);
+            alert(`✅ Grabado correctamente (Oblea ${obtenerNombreLegibleTipo(tipoObleaActual)}).`);
         } catch (err) {
-            console.error("Error inesperado al guardar configuración:", err);
-            alert("⚠️ Ocurrió un error al guardar la configuración.");
+            console.error("Error inesperado al grabar configuración:", err);
+            alert("⚠️ Ocurrió un error al grabar.");
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = "💾 Guardar Configuracion";
+                btn.textContent = "💾 Grabar";
             }
         }
     }
@@ -1076,7 +1113,7 @@
         tipoObleaActual = normalizarTipoOblea(nuevoTipo);
         actualizarUIPorTipoOblea();
         cargarCalibracionGuardada();
-        await cargarConfiguracionDesdeBD();
+        await cargarUltimoGrabado(false);
         verificarDesbordeEnPantalla();
     }
 
@@ -1157,17 +1194,6 @@
         guardarStorage("rotacion", rotacion);
     }
 
-    function resetearCalibracion() {
-        Object.keys(PARAMETROS).forEach(key => {
-            setearValorParametro(key, PARAMETROS[key].defaultVal);
-        });
-        aplicarSeleccionElemento(elementoSeleccionadoId);
-
-        document.getElementById("selectRotacion").value = "90deg";
-        cambiarRotacionImpresion("90deg");
-        verificarDesbordeEnPantalla();
-    }
-
     function cargarCalibracionGuardada() {
         Object.keys(PARAMETROS).forEach(key => {
             const val = obtenerValorParametro(key);
@@ -1233,7 +1259,7 @@
                 cargarCalibracionGuardada();
             }
 
-            await cargarConfiguracionDesdeBD();
+            await cargarUltimoGrabado(false);
 
             const extintorNum = data.extintor_numero || "-";
             const vtoPhFmt = formatearFechaWeb(data.vto_prueb_hidr);
