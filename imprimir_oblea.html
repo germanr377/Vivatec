@@ -152,40 +152,45 @@
             padding-bottom: 4px;
         }
 
-        /* LÍNEA 1: largo fijo de 7,8 cm acomodado para los 5 campos */
+        /* LÍNEA 1: movida de forma independiente por "Altura de renglón 1" */
         .linea-1 {
             position: absolute;
             top: var(--linea1-top);
             left: 1cm;
-            width: 7.8cm;
-            box-sizing: border-box;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: flex-start;
-            gap: 3px;
+            gap: 2px;
             font-weight: bold;
             font-size: 11px;
-            border-bottom: 1px dashed #ccc;
-            padding-bottom: 4px;
         }
 
         .campo-item {
-            text-align: center;
-            flex: 1 1 0;
-            min-width: 0;
-            padding: 0 1px;
+            flex: 0 0 auto;
+            box-sizing: border-box;
+        }
+
+        /* Recuadro guía de tamaño exacto del dato (solo en pantalla) */
+        .caja-dato-guia {
+            height: 0.5cm;
+            line-height: 0.5cm;
+            border: 1px dashed #2980b9;
+            background: rgba(41, 128, 185, 0.06);
+            box-sizing: border-box;
+            padding: 0 2px;
             overflow: hidden;
         }
 
-        .campo-extintor {
-            text-align: left;
-            padding-left: 0;
-        }
+        .campo-extintor .caja-dato-guia { width: 2.4cm; text-align: left; }
+        .campo-ano-fab .caja-dato-guia  { width: 1.4cm; text-align: center; }
+        .campo-vto-ph .caja-dato-guia   { width: 1.2cm; text-align: center; }
+        .campo-capacidad .caja-dato-guia{ width: 1cm;   text-align: center; }
+        .campo-agente .caja-dato-guia   { width: 1.9cm; text-align: center; }
 
         /* BLOQUE DE VENCIMIENTO independiente de Línea 1 */
         .bloque-vencimiento-pos {
             position: absolute;
-            top: calc(var(--linea1-top) + 30px);
+            top: calc(var(--linea1-top) + 34px);
             left: 1cm;
         }
 
@@ -204,18 +209,16 @@
         /* Etiquetas guía que SOLO se ven en pantalla para orientar */
         .etiqueta-guia {
             display: block;
-            font-size: 8px;
+            font-size: 7.5px;
             color: #d35400;
             text-transform: uppercase;
             font-weight: bold;
             margin-bottom: 2px;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .valor-dato {
-            font-size: 10.5px;
+            font-size: 10px;
             color: #000;
             white-space: nowrap;
             overflow: hidden;
@@ -257,7 +260,7 @@
             border-right: none; 
         }
 
-        /* CONFIGURACIÓN DE IMPRESIÓN: bloque físico fijo de 16.6 cm de largo x 9.5 cm de ancho */
+        /* CONFIGURACIÓN DE IMPRESIÓN: bloque físico fijo de 16.6 cm de largo x 9.5 cm de ancho, sin guías */
         @media print {
             html, body {
                 margin: 0 !important;
@@ -312,16 +315,22 @@
                 position: absolute !important;
                 top: var(--linea1-top) !important;
                 left: 1cm !important;
-                width: 7.8cm !important;
                 box-sizing: border-box !important;
-                border-bottom: none;
-                gap: 3px;
-                padding-bottom: 0;
+                border-bottom: none !important;
+                gap: 2px !important;
+                padding-bottom: 0 !important;
+            }
+
+            .caja-dato-guia {
+                border: none !important;
+                background: transparent !important;
+                outline: none !important;
+                overflow: visible !important;
             }
 
             .bloque-vencimiento-pos {
                 position: absolute !important;
-                top: calc(var(--linea1-top) + 30px) !important;
+                top: calc(var(--linea1-top) + 34px) !important;
                 left: 1cm !important;
             }
 
@@ -336,7 +345,7 @@
             .bloque-vencimiento-caja { border: none; background: transparent !important; padding: 0; }
             .vencimiento-titulo { border-bottom: none; }
             .venc-caja { border: none; background: transparent !important; padding: 0 2px; }
-            .valor-dato, .venc-caja .valor-dato { font-size: 11px; font-weight: bold; color: #000; } 
+            .valor-dato, .venc-caja .valor-dato { font-size: 10px; font-weight: bold; color: #000; } 
         }
     </style>
 </head>
@@ -346,7 +355,7 @@
     <h3>🖨️ Calibración Oblea - Uso Gral (16,6 × 9,5 cm)</h3>
 
     <div class="nota-impresion">
-        <strong>Al imprimir:</strong> configurá <strong>Márgenes: Ninguno</strong> y <strong>Escala: 100%</strong>. Si la vista previa o la impresora muestran A4, revisá el tamaño de papel (<strong>16,6 × 9,5 cm</strong>) en las preferencias de la impresora.
+        <strong>Al imprimir:</strong> configurá <strong>Márgenes: Ninguno</strong> y <strong>Escala: 100%</strong>. Si la vista previa o la impresora muestran A4, revisá el tamaño de papel (<strong>16,6 × 9,5 cm</strong>) en las preferencias de la impresora. Los recuadros azules son solo guía en pantalla y no salen impresos.
     </div>
 
     <div id="estadoMargen" class="estado-margen">
@@ -394,31 +403,41 @@
                 VIVATEC - VISTA PREVIA (USO GENERAL)
             </div>
 
-            <!-- LÍNEA 1: largo 7,8 cm, se mueve sola con "Altura de renglón 1" -->
+            <!-- LÍNEA 1: cajas con medidas exactas (alto 0,5 cm) -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
-                    <span class="etiqueta-guia">Extintor N°</span>
-                    <span id="lblExtintor" class="valor-dato">-</span>
+                    <span class="etiqueta-guia">Extintor N° (2,4×0,5 cm)</span>
+                    <div class="caja-dato-guia">
+                        <span id="lblExtintor" class="valor-dato">-</span>
+                    </div>
                 </div>
 
-                <div class="campo-item">
-                    <span class="etiqueta-guia">Año Fab.</span>
-                    <span id="lblAnoFab" class="valor-dato">-</span>
+                <div class="campo-item campo-ano-fab">
+                    <span class="etiqueta-guia">Año Fab. (1,4×0,5 cm)</span>
+                    <div class="caja-dato-guia">
+                        <span id="lblAnoFab" class="valor-dato">-</span>
+                    </div>
                 </div>
 
-                <div class="campo-item">
-                    <span class="etiqueta-guia">Vto. P.H.</span>
-                    <span id="lblVtoPh" class="valor-dato">-</span>
+                <div class="campo-item campo-vto-ph">
+                    <span class="etiqueta-guia">Vto. P.H. (1,2×0,5 cm)</span>
+                    <div class="caja-dato-guia">
+                        <span id="lblVtoPh" class="valor-dato">-</span>
+                    </div>
                 </div>
 
-                <div class="campo-item">
-                    <span class="etiqueta-guia">Capacidad</span>
-                    <span id="lblCapacidad" class="valor-dato">-</span>
+                <div class="campo-item campo-capacidad">
+                    <span class="etiqueta-guia">Cap. (1×0,5 cm)</span>
+                    <div class="caja-dato-guia">
+                        <span id="lblCapacidad" class="valor-dato">-</span>
+                    </div>
                 </div>
 
-                <div class="campo-item">
-                    <span class="etiqueta-guia">Agente</span>
-                    <span id="lblAgente" class="valor-dato">-</span>
+                <div class="campo-item campo-agente">
+                    <span class="etiqueta-guia">Agente (1,9×0,5 cm)</span>
+                    <div class="caja-dato-guia">
+                        <span id="lblAgente" class="valor-dato">-</span>
+                    </div>
                 </div>
             </div>
 
