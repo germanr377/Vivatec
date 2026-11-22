@@ -19,14 +19,10 @@
             --linea1-left: 10mm;
 
             --linea2-top: 38.9mm;
-            --linea2-left: 10mm;
 
             --linea22-left: 78mm;
 
             --linea3-top: 48.9mm;
-            --linea3-left: 10mm;
-
-            --linea4-left: 45mm;
 
             --linea5-left: 10mm;
 
@@ -358,10 +354,10 @@
         }
 
         .linea-1 { top: var(--linea1-top); left: var(--linea1-left); }
-        .linea-2 { top: var(--linea2-top); left: var(--linea2-left); }
+        .linea-2 { top: var(--linea2-top); left: var(--linea1-left); }
         .linea-22 { top: var(--linea2-top); left: var(--linea22-left); }
-        .linea-3 { top: var(--linea3-top); left: var(--linea3-left); }
-        .linea-4 { top: var(--linea3-top); left: var(--linea4-left); }
+        .linea-3 { top: var(--linea3-top); left: var(--linea1-left); }
+        .linea-4 { top: var(--linea3-top); left: var(--linea22-left); }
         .linea-5 { top: var(--linea3-top); left: var(--linea5-left); }
         .linea-6 { top: var(--linea3-top); left: var(--linea6-left); }
 
@@ -523,10 +519,10 @@
             }
             
             .linea-1 { position: absolute !important; top: var(--linea1-top) !important; left: var(--linea1-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
-            .linea-2 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea2-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-2 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea1-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-22 { position: absolute !important; top: var(--linea2-top) !important; left: var(--linea22-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
-            .linea-3 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea3-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
-            .linea-4 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea4-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-3 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea1-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
+            .linea-4 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea22-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-5 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea5-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
             .linea-6 { position: absolute !important; top: var(--linea3-top) !important; left: var(--linea6-left) !important; box-sizing: border-box !important; border-bottom: none !important; gap: 0 !important; margin: 0 !important; padding: 0 !important; }
 
@@ -725,15 +721,15 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const PX_POR_MM = 96 / 25.4; // 3.7795275590551185 px por mm
+    const PX_POR_MM = 96 / 25.4;
     let tipoObleaActual = "general";
 
     const ELEMENTOS_CONFIG = {
-        linea1: { nombre: "Renglón 1", vertical: "linea1_top", horizontal: "linea1_left" },
-        linea2: { nombre: "Renglón 2", vertical: "linea2_top", horizontal: "linea2_left" },
-        linea22: { nombre: "Renglón 22", vertical: "linea2_top", horizontal: "linea22_left" },
-        linea3: { nombre: "Renglón 3", vertical: "linea3_top", horizontal: "linea3_left" },
-        linea4: { nombre: "Renglón 4", vertical: "linea3_top", horizontal: "linea4_left" },
+        linea1: { nombre: "Renglón 1 (Horiz. R1/R2/R3)", vertical: "linea1_top", horizontal: "linea1_left" },
+        linea2: { nombre: "Renglón 2 (Horiz. R1/R2/R3)", vertical: "linea2_top", horizontal: "linea1_left" },
+        linea22: { nombre: "Renglón 22 (Horiz. R22/R4)", vertical: "linea2_top", horizontal: "linea22_left" },
+        linea3: { nombre: "Renglón 3 (Horiz. R1/R2/R3)", vertical: "linea3_top", horizontal: "linea1_left" },
+        linea4: { nombre: "Renglón 4 (Horiz. R22/R4)", vertical: "linea3_top", horizontal: "linea22_left" },
         linea5: { nombre: "Renglón 5 (Vehicular)", vertical: "linea3_top", horizontal: "linea5_left" },
         linea6: { nombre: "Renglón 6 (Vehicular)", vertical: "linea3_top", horizontal: "linea6_left" },
         bloqueSello: { nombre: "Sello", vertical: "sello_top", horizontal: "sello_left" }
@@ -748,7 +744,6 @@
         ancho_capacidad: { cssVar: "--ancho-capacidad", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 10, storageKey: "ancho_capacidad" },
         ancho_agente: { cssVar: "--ancho-agente", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 19, storageKey: "ancho_agente" },
         linea2_top: { cssVar: "--linea2-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 38.9, storageKey: "altura_renglon_2" },
-        linea2_left: { cssVar: "--linea2-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_2" },
         ancho_r2_c1: { cssVar: "--ancho-r2-c1", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c1" },
         ancho_r2_c2: { cssVar: "--ancho-r2-c2", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 14, storageKey: "ancho_r2_c2" },
         ancho_r2_c3: { cssVar: "--ancho-r2-c3", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r2_c3" },
@@ -756,10 +751,8 @@
         ancho_r22_extintor: { cssVar: "--ancho-r22-extintor", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 24, storageKey: "ancho_r22_extintor" },
         ancho_r22_vto_ph: { cssVar: "--ancho-r22-vto_ph", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r22_vto_ph" },
         linea3_top: { cssVar: "--linea3-top", esVertical: true, min: 0, max: 95, step: 0.5, defaultVal: 48.9, storageKey: "altura_renglon_3" },
-        linea3_left: { cssVar: "--linea3-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_3" },
         ancho_r3_mes: { cssVar: "--ancho-r3-mes", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_mes" },
         ancho_r3_anio: { cssVar: "--ancho-r3-anio", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r3_anio" },
-        linea4_left: { cssVar: "--linea4-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 45, storageKey: "pos_x_renglon_4" },
         ancho_r4_mes: { cssVar: "--ancho-r4-mes", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_mes" },
         ancho_r4_anio: { cssVar: "--ancho-r4-anio", esVertical: false, min: 5, max: 80, step: 0.5, defaultVal: 12, storageKey: "ancho_r4_anio" },
         linea5_left: { cssVar: "--linea5-left", esVertical: false, min: 0, max: 166, step: 0.5, defaultVal: 10, storageKey: "pos_x_renglon_5" },
@@ -781,7 +774,6 @@
         const num = parseFloat(valorCrudo);
         if (Number.isNaN(num)) return null;
         const cfg = PARAMETROS[key];
-        // Si viene de una versión anterior en px (ej: 113 px en vertical), se convierte a mm
         if (cfg && cfg.esVertical && num > 95) {
             return Math.round((num / PX_POR_MM) * 10) / 10;
         }
@@ -844,7 +836,13 @@
     function obtenerValorParametro(key) {
         const cfg = PARAMETROS[key];
         if (!cfg) return 0;
-        const guardado = leerStorage(cfg.storageKey);
+        let guardado = leerStorage(cfg.storageKey);
+        if (guardado === null && key === "linea1_left") {
+            guardado = leerStorage("pos_x_renglon_2") ?? leerStorage("pos_x_renglon_3");
+        }
+        if (guardado === null && key === "linea22_left") {
+            guardado = leerStorage("pos_x_renglon_4");
+        }
         if (guardado === null) return cfg.defaultVal;
         const num = convertirSiEraPx(key, guardado);
         return num === null ? cfg.defaultVal : num;
@@ -985,8 +983,15 @@
 
             if (data.configuracion && typeof data.configuracion === "object") {
                 Object.keys(PARAMETROS).forEach(key => {
-                    if (data.configuracion[key] !== undefined && data.configuracion[key] !== null) {
-                        const num = convertirSiEraPx(key, data.configuracion[key]);
+                    let rawVal = data.configuracion[key];
+                    if ((rawVal === undefined || rawVal === null) && key === "linea1_left") {
+                        rawVal = data.configuracion.linea2_left ?? data.configuracion.linea3_left;
+                    }
+                    if ((rawVal === undefined || rawVal === null) && key === "linea22_left") {
+                        rawVal = data.configuracion.linea4_left;
+                    }
+                    if (rawVal !== undefined && rawVal !== null) {
+                        const num = convertirSiEraPx(key, rawVal);
                         if (num !== null) {
                             setearValorParametro(key, num);
                         }
