@@ -149,9 +149,8 @@
                 <label>Tipo Oblea:</label>
                 <select id="nuevoOblea">
                     <option value="" selected></option>
-                    <option value="Uso Gral">Uso Gral</option>
-                    <option value="Vehicular 1K">Vehicular 1K</option>
-                    <option value="Vehicular">Vehicular</option>
+                    <option value="general">General</option>
+                    <option value="vehicular">Vehicular</option>
                 </select>
             </div>
             <div class="form-group" style="flex: 1;">
@@ -261,6 +260,14 @@
     let ultimaConsultaDuplicado = "";
     let registroOriginalCargado = null;
 
+    function normalizarOblea(valor) {
+        if (!valor) return null;
+        const t = String(valor).trim().toLowerCase();
+        if (t === "vehicular" || t.startsWith("vehicular")) return "vehicular";
+        if (t === "general" || t.includes("gral")) return "general";
+        return null;
+    }
+
     window.addEventListener("load", async function() {
         // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
         const { data: { session } } = await _supabase.auth.getSession();
@@ -298,7 +305,7 @@
             cliente: document.getElementById("nuevoCliente").value.trim() || null,
             extintor_numero: document.getElementById("nuevoExtintor").value.trim() || null,
             numero_dps: document.getElementById("nuevoDps").value.trim() || null,
-            oblea: document.getElementById("nuevoOblea").value || null,
+            oblea: normalizarOblea(document.getElementById("nuevoOblea").value),
             marca: document.getElementById("nuevoMarca").value.trim().toUpperCase() || null,
             tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase() || null,
             agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase() || null,
@@ -789,7 +796,7 @@
         document.getElementById("nuevoCliente").value = ex.cliente || "";
         document.getElementById("nuevoExtintor").value = ex.extintor_numero || "";
         document.getElementById("nuevoDps").value = ex.numero_dps || "";
-        document.getElementById("nuevoOblea").value = ex.oblea || "";
+        document.getElementById("nuevoOblea").value = normalizarOblea(ex.oblea) || "";
         document.getElementById("nuevoMarca").value = ex.marca || "";
         document.getElementById("nuevoTipo").value = ex.tipo || "";
         document.getElementById("nuevoAgente").value = ex.agente_extintor || "";
@@ -1141,7 +1148,7 @@
 
         const datosRegistro = {
             cliente: cliente,
-            oblea: document.getElementById("nuevoOblea").value || null,
+            oblea: normalizarOblea(document.getElementById("nuevoOblea").value),
             extintor_numero: extintorNumero,
             tipo: document.getElementById("nuevoTipo").value.trim().toUpperCase(),
             agente_extintor: document.getElementById("nuevoAgente").value.trim().toUpperCase(),
