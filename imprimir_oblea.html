@@ -110,16 +110,50 @@
             margin-bottom: 8px;
         }
 
+        .fila-slider {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0 9px 0;
+        }
+
+        .btn-paso {
+            flex: 0 0 24px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: 1px solid #b8c7d6;
+            border-radius: 4px;
+            background: #eef3f8;
+            color: #1f2d3d;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-paso:hover {
+            background: #2980b9;
+            border-color: #2980b9;
+            color: #fff;
+        }
+        .btn-paso:active {
+            transform: scale(0.95);
+        }
+
         .control-panel input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
+            flex: 1 1 auto;
             width: 100%;
             height: 6px;
             background: #dce3ea;
             border-radius: 999px;
             outline: none;
             cursor: pointer;
-            margin: 4px 0 9px 0;
+            margin: 0;
         }
         .control-panel input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -595,12 +629,20 @@
         <label for="sliderVertical">
             Vertical: <span id="valVertical">29.9</span> <span id="unidadVertical">mm</span>
         </label>
-        <input type="range" id="sliderVertical" min="0" max="95" step="0.5" value="29.9" oninput="aplicarSliderVertical(this.value)">
+        <div class="fila-slider">
+            <button type="button" class="btn-paso" title="Disminuir vertical 0.5 mm" onclick="ajustarConBoton('vertical', -0.5)">−</button>
+            <input type="range" id="sliderVertical" min="0" max="95" step="0.5" value="29.9" oninput="aplicarSliderVertical(this.value)">
+            <button type="button" class="btn-paso" title="Aumentar vertical 0.5 mm" onclick="ajustarConBoton('vertical', 0.5)">+</button>
+        </div>
 
         <label for="sliderHorizontal">
             <span id="etiquetaHorizontal">Horizontal:</span> <span id="valHorizontal">10</span> <span id="unidadHorizontal">mm</span>
         </label>
-        <input type="range" id="sliderHorizontal" min="0" max="166" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
+        <div class="fila-slider">
+            <button type="button" class="btn-paso" title="Disminuir horizontal 0.5 mm" onclick="ajustarConBoton('horizontal', -0.5)">−</button>
+            <input type="range" id="sliderHorizontal" min="0" max="166" step="0.5" value="10" oninput="aplicarSliderHorizontal(this.value)">
+            <button type="button" class="btn-paso" title="Aumentar horizontal 0.5 mm" onclick="ajustarConBoton('horizontal', 0.5)">+</button>
+        </div>
     </div>
 
     <div class="control-box">
@@ -768,6 +810,25 @@
     let keyVerticalActual = "linea1_top";
     let keyHorizontalActual = "linea1_left";
     let timerClicSimple = null;
+
+    function ajustarConBoton(eje, delta) {
+        const key = eje === "vertical" ? keyVerticalActual : keyHorizontalActual;
+        const slider = document.getElementById(eje === "vertical" ? "sliderVertical" : "sliderHorizontal");
+        const cfg = PARAMETROS[key];
+        if (!cfg || !slider) return;
+
+        const min = parseFloat(slider.min) ?? cfg.min;
+        const max = parseFloat(slider.max) ?? cfg.max;
+        const actual = obtenerValorParametro(key);
+        const nuevo = Math.min(max, Math.max(min, Math.round((actual + delta) * 10) / 10));
+
+        slider.value = nuevo;
+        if (eje === "vertical") {
+            aplicarSliderVertical(nuevo);
+        } else {
+            aplicarSliderHorizontal(nuevo);
+        }
+    }
 
     function calcularAnchoR2C3() {
         const totalR1 = obtenerValorParametro("ancho_extintor")
@@ -1236,7 +1297,7 @@
 
         if (!idRegistro) {
             alert("⚠️ No se especificó el ID del equipo para imprimir.");
-            window.location.href = "gestionext.html";
+            window.location.href = "gestion.html";
             return;
         }
 
@@ -1249,7 +1310,7 @@
 
             if (error || !data) {
                 alert("⚠️ No se encontró el registro en la base de datos.");
-                window.location.href = "gestionext.html";
+                window.location.href = "gestion.html";
                 return;
             }
 
