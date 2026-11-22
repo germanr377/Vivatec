@@ -856,7 +856,8 @@
             return;
         }
 
-        const esVehicular = /^vehicular/i.test(tipoOblea);
+        const tipoNormalizado = normalizarOblea(tipoOblea) || "general";
+        const esVehicular = tipoNormalizado === "vehicular";
         const ubicacionDominio = document.getElementById("nuevoUbicacion").value.trim();
 
         if (esVehicular && !ubicacionDominio) {
@@ -886,7 +887,7 @@
             return;
         }
 
-        window.location.href = `imprimir_oblea.html?id=${encodeURIComponent(id)}`;
+        window.location.href = `imprimir_oblea.html?id=${encodeURIComponent(id)}&tipo=${encodeURIComponent(tipoNormalizado)}`;
     }
 
     function verificarExtintorNuevo() {
