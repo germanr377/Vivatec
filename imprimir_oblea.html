@@ -18,6 +18,12 @@
             --linea1-left: 10mm; /* 1 cm inicial */
             --vivatec-left: 20mm; /* 2 cm inicial */
             --vivatec-bottom: 56mm; /* 5,6 cm inicial */
+
+            --ancho-extintor: 24mm;   /* 2,4 cm */
+            --ancho-ano-fab: 14mm;    /* 1,4 cm */
+            --ancho-vto-ph: 12mm;     /* 1,2 cm */
+            --ancho-capacidad: 10mm;  /* 1,0 cm */
+            --ancho-agente: 19mm;     /* 1,9 cm */
         }
 
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -61,7 +67,7 @@
 
         .control-stack { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 12px; text-align: left; }
         .control-box { background: #f8f9fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 6px 10px; }
-        .control-box select { width: 100%; padding: 5px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; }
+        .control-box select { width: 100%; padding: 5px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; margin-bottom: 6px; }
         .nota-impresion {
             background: #eef6fc;
             border-left: 4px solid #2980b9;
@@ -224,11 +230,11 @@
             border-right: 1px dashed #2980b9;
         }
 
-        .campo-extintor .caja-dato-guia { width: 2.4cm; }
-        .campo-ano-fab .caja-dato-guia  { width: 1.4cm; }
-        .campo-vto-ph .caja-dato-guia   { width: 1.2cm; }
-        .campo-capacidad .caja-dato-guia{ width: 1cm;   }
-        .campo-agente .caja-dato-guia   { width: 1.9cm; }
+        .campo-extintor .caja-dato-guia  { width: var(--ancho-extintor); }
+        .campo-ano-fab .caja-dato-guia   { width: var(--ancho-ano-fab); }
+        .campo-vto-ph .caja-dato-guia    { width: var(--ancho-vto-ph); }
+        .campo-capacidad .caja-dato-guia { width: var(--ancho-capacidad); }
+        .campo-agente .caja-dato-guia    { width: var(--ancho-agente); }
 
         /* BLOQUE DE VENCIMIENTO independiente de Línea 1 */
         .bloque-vencimiento-pos {
@@ -414,6 +420,18 @@
 
     <div class="control-stack">
         <div class="control-box">
+            <label for="selectCampoAncho">Ancho de campo en Línea 1:</label>
+            <select id="selectCampoAncho" onchange="sincronizarSliderCampo()">
+                <option value="extintor">Extintor N° (base 24 mm)</option>
+                <option value="ano_fab">Año Fab. (base 14 mm)</option>
+                <option value="vto_ph">Vto. P.H. (base 12 mm)</option>
+                <option value="capacidad">Capacidad (base 10 mm)</option>
+                <option value="agente">Agente (base 19 mm)</option>
+            </select>
+            <label for="sliderAnchoCampo" style="margin-top: 4px;">Ancho seleccionado: <span id="valAnchoCampo">24</span> mm</label>
+            <input type="range" id="sliderAnchoCampo" min="5" max="60" step="0.5" value="24" oninput="cambiarAnchoCampo(this.value)">
+        </div>
+        <div class="control-box">
             <label for="sliderAlturaRenglon1">Altura de renglón 1 (Vertical): <span id="valAlturaRenglon1">113</span> px</label>
             <input type="range" id="sliderAlturaRenglon1" min="0" max="280" value="113" oninput="cambiarAlturaRenglon1(this.value)">
         </div>
@@ -459,35 +477,35 @@
             <!-- LÍNEA 1: cajas pegadas por el costado (gap 0, alto 0,5 cm) y datos centrados -->
             <div id="linea1" class="linea-1">
                 <div class="campo-item campo-extintor">
-                    <span class="etiqueta-guia">Extintor N° (2,4×0,5)</span>
+                    <span class="etiqueta-guia" id="guiaExtintor">Extintor N° (2,4×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblExtintor" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-ano-fab">
-                    <span class="etiqueta-guia">Año Fab. (1,4×0,5)</span>
+                    <span class="etiqueta-guia" id="guiaAnoFab">Año Fab. (1,4×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblAnoFab" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-vto-ph">
-                    <span class="etiqueta-guia">Vto. P.H. (1,2×0,5)</span>
+                    <span class="etiqueta-guia" id="guiaVtoPh">Vto. P.H. (1,2×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblVtoPh" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-capacidad">
-                    <span class="etiqueta-guia">Cap. (1×0,5)</span>
+                    <span class="etiqueta-guia" id="guiaCapacidad">Cap. (1×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblCapacidad" class="valor-dato">-</span>
                     </div>
                 </div>
 
                 <div class="campo-item campo-agente">
-                    <span class="etiqueta-guia">Agente (1,9×0,5)</span>
+                    <span class="etiqueta-guia" id="guiaAgente">Agente (1,9×0,5)</span>
                     <div class="caja-dato-guia">
                         <span id="lblAgente" class="valor-dato">-</span>
                     </div>
@@ -530,6 +548,14 @@
     const STORAGE_VIVATEC_Y_KEY = "vivatec_oblea_vivatec_y";
     const STORAGE_ROTACION_KEY = "vivatec_oblea_rotacion";
 
+    const CAMPOS_ANCHO = {
+        extintor:  { cssVar: "--ancho-extintor",  defaultMm: 24, guiaId: "guiaExtintor",  nombre: "Extintor N°", storageKey: "vivatec_oblea_ancho_extintor" },
+        ano_fab:   { cssVar: "--ancho-ano-fab",   defaultMm: 14, guiaId: "guiaAnoFab",   nombre: "Año Fab.",    storageKey: "vivatec_oblea_ancho_ano_fab" },
+        vto_ph:    { cssVar: "--ancho-vto-ph",    defaultMm: 12, guiaId: "guiaVtoPh",    nombre: "Vto. P.H.",   storageKey: "vivatec_oblea_ancho_vto_ph" },
+        capacidad: { cssVar: "--ancho-capacidad", defaultMm: 10, guiaId: "guiaCapacidad", nombre: "Cap.",        storageKey: "vivatec_oblea_ancho_capacidad" },
+        agente:    { cssVar: "--ancho-agente",    defaultMm: 19, guiaId: "guiaAgente",    nombre: "Agente",      storageKey: "vivatec_oblea_ancho_agente" }
+    };
+
     function guardarStorage(clave, valor) {
         try {
             localStorage.setItem(clave, String(valor));
@@ -542,6 +568,46 @@
         } catch (e) {
             return null;
         }
+    }
+
+    function actualizarEtiquetaGuiaCampo(campoKey, mmVal) {
+        const cfg = CAMPOS_ANCHO[campoKey];
+        if (!cfg) return;
+        const guiaEl = document.getElementById(cfg.guiaId);
+        if (!guiaEl) return;
+        const cmStr = (mmVal / 10).toFixed(1).replace(".", ",").replace(",0", "");
+        guiaEl.textContent = `${cfg.nombre} (${cmStr}×0,5)`;
+    }
+
+    function aplicarAnchoCampo(campoKey, mmVal) {
+        const cfg = CAMPOS_ANCHO[campoKey];
+        if (!cfg) return;
+        const num = Math.max(5, parseFloat(mmVal) || cfg.defaultMm);
+        document.documentElement.style.setProperty(cfg.cssVar, `${num}mm`);
+        actualizarEtiquetaGuiaCampo(campoKey, num);
+        guardarStorage(cfg.storageKey, num);
+        verificarDesbordeEnPantalla();
+    }
+
+    function obtenerAnchoActualCampo(campoKey) {
+        const cfg = CAMPOS_ANCHO[campoKey];
+        if (!cfg) return 10;
+        const guardado = leerStorage(cfg.storageKey);
+        return guardado !== null ? (parseFloat(guardado) || cfg.defaultMm) : cfg.defaultMm;
+    }
+
+    function sincronizarSliderCampo() {
+        const campoKey = document.getElementById("selectCampoAncho").value;
+        const val = obtenerAnchoActualCampo(campoKey);
+        document.getElementById("sliderAnchoCampo").value = val;
+        document.getElementById("valAnchoCampo").textContent = val;
+    }
+
+    function cambiarAnchoCampo(valor) {
+        const campoKey = document.getElementById("selectCampoAncho").value;
+        const num = parseFloat(valor) || 10;
+        document.getElementById("valAnchoCampo").textContent = num;
+        aplicarAnchoCampo(campoKey, num);
     }
 
     function verificarDesbordeEnPantalla() {
@@ -647,6 +713,12 @@
     }
 
     function resetearCalibracion() {
+        Object.keys(CAMPOS_ANCHO).forEach(key => {
+            const def = CAMPOS_ANCHO[key].defaultMm;
+            aplicarAnchoCampo(key, def);
+        });
+        sincronizarSliderCampo();
+
         document.getElementById("sliderAlturaRenglon1").value = 113;
         cambiarAlturaRenglon1(113);
 
@@ -664,6 +736,13 @@
     }
 
     function cargarCalibracionGuardada() {
+        Object.keys(CAMPOS_ANCHO).forEach(key => {
+            const val = obtenerAnchoActualCampo(key);
+            document.documentElement.style.setProperty(CAMPOS_ANCHO[key].cssVar, `${val}mm`);
+            actualizarEtiquetaGuiaCampo(key, val);
+        });
+        sincronizarSliderCampo();
+
         const alturaGuardada = leerStorage(STORAGE_ALTURA_R1_KEY);
         if (alturaGuardada !== null) {
             document.getElementById("sliderAlturaRenglon1").value = alturaGuardada;
