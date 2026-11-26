@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivatec - Consultas</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Menú Compartido -->
+    <script src="menu.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1400px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+
+        .modo-consulta-bar {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: #eef3f8;
+            border: 1px solid #d5e0eb;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .modo-titulo { font-weight: bold; font-size: 13px; color: #2c3e50; }
+        .modo-opcion {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #34495e;
+        }
+        .modo-opcion input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 4px; color: #555; font-size: 12px; }
+        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; transition: background 0.3s, border-color 0.3s; background: #fff; height: 38px; }
+
+        /* AMARILLO MÁS INTENSO Y VISIBLE PARA CAMPOS ACTIVOS */
+        .filtro-activo { background-color: #fff176 !important; border-color: #fbc02d !important; font-weight: bold; }
+
+        .botones-grid { display: flex; gap: 8px; grid-column: span 2; }
+        .btn-consultar { background: #2980b9; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; flex: 1; }
+        .btn-consultar:hover { background: #1f618d; }
+
+        .btn-limpiar { background: #7f8c8d; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; flex: 1; }
+        .btn-limpiar:hover { background: #626567; }
+
+        .acciones-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .badge-total { background: #2980b9; color: white; padding: 5px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+
+        .btn-eliminar { background: #c0392b; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
+        .btn-eliminar:hover { background: #962d22; }
+
+        .table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #ddd; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: center; font-size: 12px; }
+        th { background-color: #2c3e50; color: white; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 1; }
+        th:hover { background-color: #34495e; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .sin-resultados { text-align: center; color: #7f8c8d; font-style: italic; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Consultas</h2>
+
+    <!-- SELECTOR DE MODO DE INFORME / CONSULTA -->
+    <div class="modo-consulta-bar">
+        <span class="modo-titulo">Ver informe por:</span>
+        <label class="modo-opcion">
+            <input type="radio" name="modoConsulta" id="modoExtintor" value="extintor" checked onchange="cambiarModoConsulta()">
+            <span>Extintor</span>
+        </label>
+        <label class="modo-opcion">
+            <input type="radio" name="modoConsulta" id="modoCliente" value="cliente" onchange="cambiarModoConsulta()">
+            <span>Cliente</span>
+        </label>
+    </div>
+
+    <!-- FILTROS DE BÚSQUEDA -->
+    <div class="filtros-grid">
+        <div class="form-group">
+            <label>Cliente:</label>
+            <input type="text" id="filtroCliente" list="listaClientes" placeholder="Escribí o seleccioná..." autocomplete="off" oninput="verificarCampo(this)">
+            <datalist id="listaClientes"></datalist>
+        </div>
+        <div class="form-group">
+            <label>N° Extintor:</label>
+            <input type="text" id="filtroExtintor" placeholder="Ej: 6389130" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>N° DPS:</label>
+            <input type="text" id="filtroDps" placeholder="Ej: 5503020" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Tipo:</label>
+            <input type="text" id="filtroTipo" placeholder="Ej: ABC" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Capacidad:</label>
+            <input type="text" id="filtroCapacidad" placeholder="Ej: 10" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Marca:</label>
+            <input type="text" id="filtroMarca" placeholder="Ej: Horizonte" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Año Fab.:</label>
+            <input type="text" id="filtroAnioFab" placeholder="Ej: 2024" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Puesto:</label>
+            <input type="text" id="filtroPuesto" placeholder="Ej: 1" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Ubicación:</label>
+            <input type="text" id="filtroUbicacion" placeholder="Ej: Pasillo" oninput="verificarCampo(this)">
+        </div>
+        <div class="form-group">
+            <label>Vto. P.H. Desde:</label>
+            <input type="text" id="ph-desde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+        </div>
+        <div class="form-group">
+            <label>Vto. P.H. Hasta:</label>
+            <input type="text" id="ph-hasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+        </div>
+        <div class="form-group">
+            <label>Vto. Carga Desde:</label>
+            <input type="text" id="carga-desde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+        </div>
+        <div class="form-group">
+            <label>Vto. Carga Hasta:</label>
+            <input type="text" id="carga-hasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+        </div>
+
+        <!-- BOTONES DE ACCIÓN DE FILTRO -->
+        <div class="botones-grid">
+            <button class="btn-consultar" onclick="realizarConsulta()">🔍 Buscar</button>
+            <button class="btn-limpiar" onclick="limpiarFiltros()">🧹 Limpiar</button>
+        </div>
+    </div>
+
+    <!-- BARRA DE ACCIONES (Contador de registros y Borrado masivo) -->
+    <div class="acciones-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span id="badgeTotal" class="badge-total">0 registros encontrados</span>
+            <span id="contadorSeleccionados" style="font-weight: bold; color: #555; font-size: 13px;"></span>
+        </div>
+        <button id="btnEliminarSeleccionados" class="btn-eliminar" onclick="eliminarSeleccionados()">🗑️ Eliminar Registros Tildados</button>
+    </div>
+
+    <!-- TABLA DE RESULTADOS -->
+    <div class="table-container">
+        <table id="tabla-resultados">
+            <thead>
+                <tr>
+                    <th style="width: 30px;"><input type="checkbox" id="checkTodos" onclick="toggleSeleccionarTodos(this)"></th>
+                    <th onclick="ordenarTabla('cliente')">Cliente ↕</th>
+                    <th onclick="ordenarTabla('oblea')">Oblea ↕</th>
+                    <th onclick="ordenarTabla('extintor_numero')">Extintor N° ↕</th>
+                    <th onclick="ordenarTabla('tipo')">Tipo ↕</th>
+                    <th onclick="ordenarTabla('capacidad')">Capacidad ↕</th>
+                    <th onclick="ordenarTabla('ano_fab')">A. Fab ↕</th>
+                    <th onclick="ordenarTabla('marca')">Marca ↕</th>
+                    <th onclick="ordenarTabla('vto_prueb_hidr')">Vto. P.H. ↕</th>
+                    <th onclick="ordenarTabla('vto_carga')">Vto. Carga ↕</th>
+                    <th onclick="ordenarTabla('numero_dps')">DPS ↕</th>
+                    <th onclick="ordenarTabla('identificacion_puesto')">Puesto ↕</th>
+                    <th onclick="ordenarTabla('ubicacion')">Ubicación ↕</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="13" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const CAMPOS_HISTORIAL = [
+        "cliente",
+        "extintor_numero",
+        "numero_dps",
+        "oblea",
+        "marca",
+        "tipo",
+        "agente_extintor",
+        "capacidad",
+        "ano_fab",
+        "vto_prueb_hidr",
+        "vto_carga",
+        "identificacion_puesto",
+        "ubicacion"
+    ];
+
+    let resultadosGlobales = [];
+    let clientesInfoPorNombre = {};
+    let resumenClientesGlobal = [];
+    let agentesDetectadosGlobal = [];
+    let ordenActual = { columna: 'vto_carga', ascendente: true };
+    let ordenClienteActual = { columna: 'cliente', ascendente: true };
+    let consultaEjecutada = false;
+
+    function obtenerModoActual() {
+        const marcado = document.querySelector('input[name="modoConsulta"]:checked');
+        return marcado ? marcado.value : 'extintor';
+    }
+
+    function escaparTexto(valor) {
+        return String(valor ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (DD/MM/AAAA)
+    function formatearFechaWeb(fechaSQL) {
+        if (!fechaSQL) return "-";
+        let partes = String(fechaSQL).split("T")[0].split("-");
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return fechaSQL;
+    }
+
+    // AUTOFORMATO DD/MM/AAAA MIENTRAS SE TIPEA Y PINTADO AMARILLO
+    function formatearInputFecha(input) {
+        let val = input.value.replace(/\D/g, '');
+        if (val.length > 8) val = val.substring(0, 8);
+
+        let formatted = '';
+        if (val.length > 4) {
+            formatted = `${val.substring(0, 2)}/${val.substring(2, 4)}/${val.substring(4, 8)}`;
+        } else if (val.length > 2) {
+            formatted = `${val.substring(0, 2)}/${val.substring(2)}`;
+        } else {
+            formatted = val;
+        }
+        input.value = formatted;
+        verificarCampo(input);
+    }
+
+    // CONVERTIR DD/MM/AAAA A AAAA-MM-DD PARA CONSULTAR EN SUPABASE
+    function convertirFechaParaSQL(fechaWeb) {
+        if (!fechaWeb || fechaWeb.trim() === "") return null;
+        let partes = fechaWeb.trim().split("/");
+        if (partes.length === 3) {
+            let dia = partes[0].padStart(2, '0');
+            let mes = partes[1].padStart(2, '0');
+            let anio = partes[2];
+            if (anio.length === 4) {
+                return `${anio}-${mes}-${dia}`;
+            }
+        }
+        return null;
+    }
+
+    function normalizarFechaSQL(valor) {
+        if (!valor) return null;
+        return String(valor).split("T")[0];
+    }
+
+    function estaEnRango(fechaSQL, desdeSQL, hastaSQL) {
+        const f = normalizarFechaSQL(fechaSQL);
+        if (desdeSQL && hastaSQL) {
+            return Boolean(f && f >= desdeSQL && f <= hastaSQL);
+        }
+        if (desdeSQL) {
+            return Boolean(f && f >= desdeSQL);
+        }
+        if (hastaSQL) {
+            return Boolean(f && f <= hastaSQL);
+        }
+        // Si no se especificó rango en ese vencimiento, cuenta si tiene fecha cargada
+        return Boolean(f);
+    }
+
+    async function registrarEliminacionEnHistorial(registroExtintor) {
+        const payloadHistorial = {
+            extintor_id: registroExtintor.id,
+            fecha_revision: new Date().toISOString(),
+            accion: "ELIMINADO"
+        };
+
+        CAMPOS_HISTORIAL.forEach(campo => {
+            payloadHistorial[campo] = registroExtintor[campo] ?? null;
+        });
+
+        let { error } = await _supabase
+            .from('historial_revisiones')
+            .insert([payloadHistorial]);
+
+        if (error && /accion/i.test(error.message || "")) {
+            delete payloadHistorial.accion;
+            const retry = await _supabase
+                .from('historial_revisiones')
+                .insert([payloadHistorial]);
+            error = retry.error;
+        }
+
+        return { error };
+    }
+
+    window.addEventListener("load", async function() {
+        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        // CARGAR CLIENTES DESDE LA TABLA MAESTRA "clientes" PARA EL PREDICTIVO Y DIRECCIÓN
+        const { data, error } = await _supabase
+            .from('clientes')
+            .select('*')
+            .order('nombre_cliente', { ascending: true });
+
+        if (!error && data) {
+            let datalist = document.getElementById("listaClientes");
+            datalist.innerHTML = "";
+            clientesInfoPorNombre = {};
+
+            data.forEach(c => {
+                if (!c.nombre_cliente) return;
+                const clave = String(c.nombre_cliente).trim().toLowerCase();
+                const direccion = c.direccion || c.domicilio || "-";
+                clientesInfoPorNombre[clave] = {
+                    nombre_cliente: c.nombre_cliente,
+                    razon_social: c.razon_social || "",
+                    direccion
+                };
+
+                let opt = document.createElement("option");
+                opt.value = c.nombre_cliente;
+                if (c.razon_social) {
+                    opt.textContent = c.razon_social;
+                }
+                datalist.appendChild(opt);
+            });
+        }
+    });
+
+    function verificarCampo(input) {
+        if (input.value && input.value.trim() !== "") {
+            input.classList.add("filtro-activo");
+        } else {
+            input.classList.remove("filtro-activo");
+        }
+    }
+
+    function cambiarModoConsulta() {
+        if (!consultaEjecutada) {
+            renderizarEncabezadoInicial();
+            return;
+        }
+        renderizarSegunModo();
+    }
+
+    function renderizarEncabezadoInicial() {
+        const modo = obtenerModoActual();
+        const thead = document.querySelector('#tabla-resultados thead');
+        const tbody = document.querySelector('#tabla-resultados tbody');
+
+        if (modo === 'cliente') {
+            thead.innerHTML = `
+                <tr>
+                    <th>Cliente</th>
+                    <th>Dirección</th>
+                    <th>Recargas</th>
+                    <th>Pruebas Hidráulicas</th>
+                </tr>
+            `;
+            tbody.innerHTML = `<tr><td colspan="4" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td></tr>`;
+            document.getElementById('btnEliminarSeleccionados').style.display = 'none';
+            document.getElementById('contadorSeleccionados').textContent = '';
+        } else {
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 30px;"><input type="checkbox" id="checkTodos" onclick="toggleSeleccionarTodos(this)"></th>
+                    <th onclick="ordenarTabla('cliente')">Cliente ↕</th>
+                    <th onclick="ordenarTabla('oblea')">Oblea ↕</th>
+                    <th onclick="ordenarTabla('extintor_numero')">Extintor N° ↕</th>
+                    <th onclick="ordenarTabla('tipo')">Tipo ↕</th>
+                    <th onclick="ordenarTabla('capacidad')">Capacidad ↕</th>
+                    <th onclick="ordenarTabla('ano_fab')">A. Fab ↕</th>
+                    <th onclick="ordenarTabla('marca')">Marca ↕</th>
+                    <th onclick="ordenarTabla('vto_prueb_hidr')">Vto. P.H. ↕</th>
+                    <th onclick="ordenarTabla('vto_carga')">Vto. Carga ↕</th>
+                    <th onclick="ordenarTabla('numero_dps')">DPS ↕</th>
+                    <th onclick="ordenarTabla('identificacion_puesto')">Puesto ↕</th>
+                    <th onclick="ordenarTabla('ubicacion')">Ubicación ↕</th>
+                </tr>
+            `;
+            tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">Seleccioná los filtros y hacé clic en Buscar.</td></tr>`;
+        }
+    }
+
+    function limpiarFiltros() {
+        const inputs = document.querySelectorAll('.filtros-grid input, .filtros-grid select');
+        inputs.forEach(el => {
+            el.value = "";
+            el.classList.remove("filtro-activo");
+        });
+
+        resultadosGlobales = [];
+        resumenClientesGlobal = [];
+        agentesDetectadosGlobal = [];
+        consultaEjecutada = false;
+
+        document.getElementById('badgeTotal').textContent = "0 registros encontrados";
+        const checkTodos = document.getElementById('checkTodos');
+        if (checkTodos) checkTodos.checked = false;
+        actualizarContadorSeleccionados();
+        renderizarEncabezadoInicial();
+    }
+
+    async function realizarConsulta() {
+        let cliente = document.getElementById('filtroCliente').value.trim();
+        let extintor = document.getElementById('filtroExtintor').value.trim();
+        let dps = document.getElementById('filtroDps').value.trim();
+        let tipo = document.getElementById('filtroTipo').value.trim();
+        let capacidad = document.getElementById('filtroCapacidad').value.trim();
+        let marca = document.getElementById('filtroMarca').value.trim();
+        let anioFab = document.getElementById('filtroAnioFab').value.trim();
+        let puesto = document.getElementById('filtroPuesto').value.trim();
+        let ubicacion = document.getElementById('filtroUbicacion').value.trim();
+
+        let phDesdeRaw = document.getElementById('ph-desde').value.trim();
+        let phHastaRaw = document.getElementById('ph-hasta').value.trim();
+        let cargaDesdeRaw = document.getElementById('carga-desde').value.trim();
+        let cargaHastaRaw = document.getElementById('carga-hasta').value.trim();
+
+        let phDesde = convertirFechaParaSQL(phDesdeRaw);
+        let phHasta = convertirFechaParaSQL(phHastaRaw);
+        let cargaDesde = convertirFechaParaSQL(cargaDesdeRaw);
+        let cargaHasta = convertirFechaParaSQL(cargaHastaRaw);
+
+        const modo = obtenerModoActual();
+        const colspanActual = modo === 'cliente' ? 6 : 13;
+        let tbody = document.querySelector('#tabla-resultados tbody');
+        tbody.innerHTML = `<tr><td colspan="${colspanActual}" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
+
+        try {
+            let query = _supabase.from('extintores').select('*');
+
+            if (cliente) query = query.ilike('cliente', `%${cliente}%`);
+            if (extintor) query = query.eq('extintor_numero', extintor);
+            if (dps) query = query.eq('numero_dps', dps);
+            if (tipo) query = query.ilike('tipo', `%${tipo}%`);
+            if (capacidad) query = query.eq('capacidad', capacidad);
+            if (marca) query = query.ilike('marca', `%${marca}%`);
+            if (anioFab) query = query.eq('ano_fab', parseInt(anioFab));
+            if (puesto) query = query.eq('identificacion_puesto', puesto);
+            if (ubicacion) query = query.ilike('ubicacion', `%${ubicacion}%`);
+
+            if (phDesde) query = query.gte('vto_prueb_hidr', phDesde);
+            if (phHasta) query = query.lte('vto_prueb_hidr', phHasta);
+            if (cargaDesde) query = query.gte('vto_carga', cargaDesde);
+            if (cargaHasta) query = query.lte('vto_carga', cargaHasta);
+
+            const { data, error } = await query.order('vto_carga', { ascending: true });
+
+            if (error) throw error;
+
+            resultadosGlobales = data || [];
+            consultaEjecutada = true;
+            construirResumenClientes(resultadosGlobales, { phDesde, phHasta, cargaDesde, cargaHasta });
+            renderizarSegunModo();
+
+        } catch (error) {
+            console.error("Error al consultar Supabase:", error);
+            tbody.innerHTML = `<tr><td colspan="${colspanActual}" class="sin-resultados">Error al conectar con la base de datos.</td></tr>`;
+            document.getElementById('badgeTotal').textContent = "0 registros encontrados";
+        }
+    }
+
+    function construirResumenClientes(datos, rangos) {
+        const mapaClientes = new Map();
+        const setAgentes = new Set();
+
+        datos.forEach(fila => {
+            const nombreCliente = (fila.cliente || "Sin cliente").trim();
+            const claveCliente = nombreCliente.toLowerCase();
+            const agente = (fila.agente_extintor || fila.tipo || "Sin especificar").toString().trim() || "Sin especificar";
+
+            if (!mapaClientes.has(claveCliente)) {
+                const infoMaestro = clientesInfoPorNombre[claveCliente];
+                mapaClientes.set(claveCliente, {
+                    cliente: nombreCliente,
+                    direccion: infoMaestro ? infoMaestro.direccion : "-",
+                    recargas: 0,
+                    pruebas_hidraulicas: 0,
+                    porAgente: {}
+                });
+            }
+
+            const item = mapaClientes.get(claveCliente);
+            const necesitaRecarga = estaEnRango(fila.vto_carga, rangos.cargaDesde, rangos.cargaHasta);
+            const necesitaPH = estaEnRango(fila.vto_prueb_hidr, rangos.phDesde, rangos.phHasta);
+
+            if (necesitaRecarga) {
+                item.recargas += 1;
+                setAgentes.add(agente);
+                item.porAgente[agente] = (item.porAgente[agente] || 0) + 1;
+            }
+
+            if (necesitaPH) {
+                item.pruebas_hidraulicas += 1;
+            }
+        });
+
+        agentesDetectadosGlobal = Array.from(setAgentes).sort((a, b) => a.localeCompare(b, 'es'));
+        resumenClientesGlobal = Array.from(mapaClientes.values());
+
+        // Asegurar que todos los clientes tengan inicializados todos los agentes detectados
+        resumenClientesGlobal.forEach(item => {
+            agentesDetectadosGlobal.forEach(ag => {
+                if (typeof item.porAgente[ag] !== "number") {
+                    item.porAgente[ag] = 0;
+                }
+            });
+        });
+
+        ordenarArrayClientes(resumenClientesGlobal, ordenClienteActual.columna, ordenClienteActual.ascendente);
+    }
+
+    function renderizarSegunModo() {
+        const modo = obtenerModoActual();
+        if (modo === 'cliente') {
+            mostrarResultadosPorCliente(resumenClientesGlobal, agentesDetectadosGlobal);
+        } else {
+            mostrarResultados(resultadosGlobales);
+        }
+    }
+
+    function mostrarResultadosPorCliente(filasCliente, agentes) {
+        const thead = document.querySelector('#tabla-resultados thead');
+        const tbody = document.querySelector('#tabla-resultados tbody');
+
+        document.getElementById('btnEliminarSeleccionados').style.display = 'none';
+        document.getElementById('contadorSeleccionados').textContent = '';
+        document.getElementById('badgeTotal').textContent = `${filasCliente.length} cliente(s) encontrado(s)`;
+
+        let thAgentes = agentes.map(ag =>
+            `<th onclick="ordenarClientes('agente:${escaparTexto(ag)}')">Agente: ${escaparTexto(ag)} ↕</th>`
+        ).join("");
+
+        thead.innerHTML = `
+            <tr>
+                <th onclick="ordenarClientes('cliente')">Cliente ↕</th>
+                <th onclick="ordenarClientes('direccion')">Dirección ↕</th>
+                <th onclick="ordenarClientes('recargas')">Recargas ↕</th>
+                <th onclick="ordenarClientes('pruebas_hidraulicas')">Pruebas Hidráulicas ↕</th>
+                ${thAgentes}
+            </tr>
+        `;
+
+        const totalColumnas = 4 + agentes.length;
+        tbody.innerHTML = "";
+
+        if (!filasCliente || filasCliente.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${totalColumnas}" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
+            return;
+        }
+
+        filasCliente.forEach(fila => {
+            const celdasAgentes = agentes.map(ag => `<td>${fila.porAgente[ag] || 0}</td>`).join("");
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${escaparTexto(fila.cliente)}</td>
+                <td>${escaparTexto(fila.direccion)}</td>
+                <td><strong>${fila.recargas}</strong></td>
+                <td><strong>${fila.pruebas_hidraulicas}</strong></td>
+                ${celdasAgentes}
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function ordenarArrayClientes(lista, columna, ascendente) {
+        lista.sort((a, b) => {
+            let valA, valB;
+
+            if (columna.startsWith("agente:")) {
+                const ag = columna.replace("agente:", "");
+                valA = a.porAgente[ag] || 0;
+                valB = b.porAgente[ag] || 0;
+                return ascendente ? valA - valB : valB - valA;
+            }
+
+            if (columna === "recargas" || columna === "pruebas_hidraulicas") {
+                valA = Number(a[columna] || 0);
+                valB = Number(b[columna] || 0);
+                return ascendente ? valA - valB : valB - valA;
+            }
+
+            valA = String(a[columna] ?? "").toLowerCase();
+            valB = String(b[columna] ?? "").toLowerCase();
+            if (valA < valB) return ascendente ? -1 : 1;
+            if (valA > valB) return ascendente ? 1 : -1;
+            return 0;
+        });
+    }
+
+    function ordenarClientes(columna) {
+        if (ordenClienteActual.columna === columna) {
+            ordenClienteActual.ascendente = !ordenClienteActual.ascendente;
+        } else {
+            ordenClienteActual.columna = columna;
+            ordenClienteActual.ascendente = true;
+        }
+        ordenarArrayClientes(resumenClientesGlobal, ordenClienteActual.columna, ordenClienteActual.ascendente);
+        mostrarResultadosPorCliente(resumenClientesGlobal, agentesDetectadosGlobal);
+    }
+
+    function mostrarResultados(datos) {
+        const thead = document.querySelector('#tabla-resultados thead');
+        thead.innerHTML = `
+            <tr>
+                <th style="width: 30px;"><input type="checkbox" id="checkTodos" onclick="toggleSeleccionarTodos(this)"></th>
+                <th onclick="ordenarTabla('cliente')">Cliente ↕</th>
+                <th onclick="ordenarTabla('oblea')">Oblea ↕</th>
+                <th onclick="ordenarTabla('extintor_numero')">Extintor N° ↕</th>
+                <th onclick="ordenarTabla('tipo')">Tipo ↕</th>
+                <th onclick="ordenarTabla('capacidad')">Capacidad ↕</th>
+                <th onclick="ordenarTabla('ano_fab')">A. Fab ↕</th>
+                <th onclick="ordenarTabla('marca')">Marca ↕</th>
+                <th onclick="ordenarTabla('vto_prueb_hidr')">Vto. P.H. ↕</th>
+                <th onclick="ordenarTabla('vto_carga')">Vto. Carga ↕</th>
+                <th onclick="ordenarTabla('numero_dps')">DPS ↕</th>
+                <th onclick="ordenarTabla('identificacion_puesto')">Puesto ↕</th>
+                <th onclick="ordenarTabla('ubicacion')">Ubicación ↕</th>
+            </tr>
+        `;
+
+        let tbody = document.querySelector('#tabla-resultados tbody');
+        tbody.innerHTML = "";
+        document.getElementById('checkTodos').checked = false;
+        actualizarContadorSeleccionados();
+
+        document.getElementById('badgeTotal').textContent = `${datos.length} registro(s) encontrado(s)`;
+
+        if (datos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="13" class="sin-resultados">No se encontraron registros con los filtros seleccionados.</td></tr>`;
+            return;
+        }
+
+        datos.forEach(fila => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="checkbox" class="check-registro" value="${escaparTexto(fila.id)}" onclick="actualizarContadorSeleccionados()"></td>
+                <td>${escaparTexto(fila.cliente || "-")}</td>
+                <td>${escaparTexto(fila.oblea || "-")}</td>
+                <td>${escaparTexto(fila.extintor_numero || "-")}</td>
+                <td>${escaparTexto(fila.tipo || "-")}</td>
+                <td>${escaparTexto(fila.capacidad || "-")}</td>
+                <td>${escaparTexto(fila.ano_fab || "-")}</td>
+                <td>${escaparTexto(fila.marca || "-")}</td>
+                <td>${escaparTexto(formatearFechaWeb(fila.vto_prueb_hidr))}</td>
+                <td>${escaparTexto(formatearFechaWeb(fila.vto_carga))}</td>
+                <td>${escaparTexto(fila.numero_dps || "-")}</td>
+                <td>${escaparTexto(fila.identificacion_puesto !== null && fila.identificacion_puesto !== undefined ? fila.identificacion_puesto : "-")}</td>
+                <td>${escaparTexto(fila.ubicacion || "-")}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function toggleSeleccionarTodos(source) {
+        const checkboxes = document.querySelectorAll('.check-registro');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+        actualizarContadorSeleccionados();
+    }
+
+    function actualizarContadorSeleccionados() {
+        let seleccionados = document.querySelectorAll('.check-registro:checked');
+        let btnEliminar = document.getElementById('btnEliminarSeleccionados');
+        let spanContador = document.getElementById('contadorSeleccionados');
+
+        if (seleccionados.length > 0 && obtenerModoActual() === 'extintor') {
+            btnEliminar.style.display = 'block';
+            spanContador.textContent = `${seleccionados.length} registro(s) tildado(s)`;
+        } else {
+            btnEliminar.style.display = 'none';
+            spanContador.textContent = '';
+        }
+    }
+
+    async function eliminarSeleccionados() {
+        let seleccionados = document.querySelectorAll('.check-registro:checked');
+        if (seleccionados.length === 0) return;
+
+        let idsAEliminar = Array.from(seleccionados).map(cb => String(cb.value));
+
+        let confirmar = confirm(`⚠️ ¿Estás 100% seguro de que querés ELIMINAR los ${idsAEliminar.length} registros seleccionados de la base de datos?\n\nEsta acción no se puede deshacer.`);
+        if (!confirmar) return;
+
+        try {
+            const registrosAEliminar = resultadosGlobales.filter(r => idsAEliminar.includes(String(r.id)));
+            let fallosHistorial = 0;
+
+            for (const reg of registrosAEliminar) {
+                const resHist = await registrarEliminacionEnHistorial(reg);
+                if (resHist.error) {
+                    console.error("Error al registrar eliminación en historial_revisiones:", resHist.error);
+                    fallosHistorial++;
+                }
+            }
+
+            const { error } = await _supabase
+                .from('extintores')
+                .delete()
+                .in('id', idsAEliminar);
+
+            if (error) throw error;
+
+            if (fallosHistorial > 0) {
+                alert(`🗑️ Los registros seleccionados fueron eliminados, aunque hubo ${fallosHistorial} aviso(s) al registrar en el historial.`);
+            } else {
+                alert("🗑️ Los registros seleccionados fueron eliminados y registrados en el historial correctamente.");
+            }
+            realizarConsulta();
+
+        } catch (err) {
+            console.error("Error al eliminar registros:", err);
+            alert("Hubo un error al intentar eliminar los registros en Supabase.");
+        }
+    }
+
+    function ordenarTabla(columna) {
+        if (ordenActual.columna === columna) {
+            ordenActual.ascendente = !ordenActual.ascendente;
+        } else {
+            ordenActual.columna = columna;
+            ordenActual.ascendente = true;
+        }
+
+        resultadosGlobales.sort((a, b) => {
+            let valA = a[columna] !== null && a[columna] !== undefined ? String(a[columna]).toLowerCase() : "";
+            let valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna]).toLowerCase() : "";
+
+            let numA = parseFloat(valA);
+            let numB = parseFloat(valB);
+
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return ordenActual.ascendente ? numA - numB : numB - numA;
+            }
+
+            if (valA < valB) return ordenActual.ascendente ? -1 : 1;
+            if (valA > valB) return ordenActual.ascendente ? 1 : -1;
+            return 0;
+        });
+
+        mostrarResultados(resultadosGlobales);
+    }
+</script>
+
+</body>
+</html>
