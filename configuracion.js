@@ -1,7 +1,7 @@
 const Configuracion = (() => {
   const rutaActual = (window.location.pathname.split("/").pop() || "").toLowerCase();
   const esAltaCliente = rutaActual === "clientes.html" || rutaActual.startsWith("clientes");
-  const esGestion = rutaActual.startsWith("gestion");
+  const esGestion = rutaActual.includes("gestion");
 
   function inyectarEstilos() {
     if (document.getElementById("vivatec-estilos-reglas")) return;
