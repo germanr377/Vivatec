@@ -1,6 +1,6 @@
 const Configuracion = (() => {
   const rutaActual = (window.location.pathname.split("/").pop() || "").toLowerCase();
-  const esAltaCliente = rutaActual === "clientes.html";
+  const esAltaCliente = rutaActual === "clientes.html" || rutaActual.startsWith("clientes");
   const esGestion = rutaActual.startsWith("gestion");
 
   function inyectarEstilos() {
@@ -10,6 +10,7 @@ const Configuracion = (() => {
     style.textContent = `
       .vivatec-filtro-activo {
         background-color: #fff59d !important;
+        transition: background-color 0.15s ease;
       }
       .vivatec-lista-predictiva {
         position: absolute;
@@ -19,19 +20,35 @@ const Configuracion = (() => {
         z-index: 9999;
         background: #fff;
         border: 1px solid #cbd5e1;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
         list-style: none;
         margin: 0;
         padding: 0;
-        max-height: 200px;
+        max-height: 210px;
         overflow-y: auto;
+        display: none;
       }
       .vivatec-item-predictivo {
-        padding: 6px 10px;
+        padding: 8px 12px;
         cursor: pointer;
+        font-size: 14px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .vivatec-item-predictivo:last-child {
+        border-bottom: none;
       }
       .vivatec-item-predictivo:first-child,
-      .vivatec-item-predictivo:hover {
+      .vivatec-item-predictivo:hover,
+      .vivatec-item-predictivo.activo {
         background-color: #e2e8f0;
+        font-weight: 600;
+      }
+      .vivatec-sub-predictivo {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: normal;
       }
     `;
     document.head.appendChild(style);
@@ -50,9 +67,10 @@ const Configuracion = (() => {
   }
 
   function formatearFechaAuto(input) {
+    if (!input) return;
     const patron = obtenerPatronFecha();
     const maxDigitos = patron === "mm/aa" ? 4 : 6;
-    const digitos = input.value.replace(/\D/g, "").slice(0, maxDigitos);
+    const digitos = String(input.value || "").replace(/\D/g, "").slice(0, maxDigitos);
 
     if (patron === "mm/aa") {
       input.value = digitos.length > 2 ? `${digitos.slice(0, 2)}/${digitos.slice(2)}` : digitos;
@@ -65,14 +83,22 @@ const Configuracion = (() => {
     }
   }
 
-  function activarFechas(selector) {
-    document.querySelectorAll(selector).forEach((input) => {
-      input.placeholder = obtenerPatronFecha();
+  function activarFechas(selectorOElementos) {
+    const elementos = typeof selectorOElementos === "string"
+      ? Array.from(document.querySelectorAll(selectorOElementos))
+      : Array.from(selectorOElementos || []);
+
+    const patron = obtenerPatronFecha();
+    elementos.forEach((input) => {
+      if (!input) return;
+      input.placeholder = patron.toUpperCase();
+      input.maxLength = patron.length;
       input.addEventListener("input", () => formatearFechaAuto(input));
     });
   }
 
-  function aplicarEstiloFiltro(elemento, columnaElemento) {
+  function aplicarEstiloFiltro(elemento, columnaElemento = null) {
+    if (!elemento) return;
     const activo = String(elemento.value || "").trim().length > 0;
     elemento.classList.toggle("vivatec-filtro-activo", activo);
     if (columnaElemento) {
@@ -81,13 +107,19 @@ const Configuracion = (() => {
   }
 
   function activarFiltros(selector, tabla = null) {
-    document.querySelectorAll(selector).forEach((input) => {
+    const elementos = typeof selector === "string"
+      ? Array.from(document.querySelectorAll(selector))
+      : Array.from(selector || []);
+
+    elementos.forEach((input) => {
+      if (!input) return;
       const actualizar = () => {
         const colIdx = input.dataset.colIndex;
         const columna = tabla && colIdx !== undefined
           ? tabla.querySelector(`th:nth-child(${Number(colIdx) + 1})`)
           : null;
         aplicarEstiloFiltro(input, columna);
+
         if (tabla && colIdx !== undefined) {
           const activo = String(input.value || "").trim().length > 0;
           tabla.querySelectorAll(`td:nth-child(${Number(colIdx) + 1})`).forEach((td) => {
@@ -95,16 +127,26 @@ const Configuracion = (() => {
           });
         }
       };
-      input.addEventListener("input", actualizar);
-      input.addEventListener("change", actualizar);
+
+      if (!input.dataset.vivatecFiltroBind) {
+        input.dataset.vivatecFiltroBind = "1";
+        input.addEventListener("input", actualizar);
+        input.addEventListener("change", actualizar);
+      }
       actualizar();
     });
   }
 
-  function configurarBuscadorCliente({ input, clientes, onSeleccionar, onRechazarNoRegistrado }) {
-    if (!input) return;
+  function configurarBuscadorCliente({
+    input,
+    clientes = [],
+    onSeleccionar,
+    onRechazarNoRegistrado
+  }) {
+    if (!input) return { actualizarClientes: () => {} };
     inyectarEstilos();
 
+    let listaClientes = Array.isArray(clientes) ? clientes : [];
     const padre = input.parentElement;
     if (padre && getComputedStyle(padre).position === "static") {
       padre.style.position = "relative";
@@ -112,57 +154,101 @@ const Configuracion = (() => {
 
     const listaUl = document.createElement("ul");
     listaUl.className = "vivatec-lista-predictiva";
-    listaUl.style.display = "none";
     padre?.appendChild(listaUl);
 
     let coincidenciasActuales = [];
+    let indiceActivo = 0;
+
+    function obtenerNombre(c) {
+      return typeof c === "string" ? c : String(c?.nombre || c?.nombre_cliente || "");
+    }
+
+    function obtenerRazon(c) {
+      return typeof c === "string" ? "" : String(c?.razon || c?.razon_social || "");
+    }
 
     function ocultarLista() {
       listaUl.style.display = "none";
       listaUl.innerHTML = "";
+      coincidenciasActuales = [];
+      indiceActivo = 0;
+    }
+
+    function resaltarItem() {
+      const nodos = listaUl.querySelectorAll(".vivatec-item-predictivo");
+      nodos.forEach((li, idx) => {
+        li.classList.toggle("activo", idx === indiceActivo);
+        if (idx === indiceActivo) li.scrollIntoView({ block: "nearest" });
+      });
     }
 
     function elegir(cliente) {
-      input.value = cliente.nombre;
+      input.value = obtenerNombre(cliente);
       ocultarLista();
       onSeleccionar?.(cliente);
     }
 
+    function buscarCoincidencias(texto) {
+      const consulta = normalizar(texto);
+      if (!consulta) return [];
+      const empieza = listaClientes.filter((c) => normalizar(obtenerNombre(c)).startsWith(consulta));
+      const incluye = listaClientes.filter((c) => {
+        const nom = normalizar(obtenerNombre(c));
+        const raz = normalizar(obtenerRazon(c));
+        return !nom.startsWith(consulta) && (nom.includes(consulta) || raz.includes(consulta));
+      });
+      return [...empieza, ...incluye];
+    }
+
     function actualizarLista() {
-      const consulta = normalizar(input.value);
-      if (!consulta) {
-        coincidenciasActuales = [];
-        ocultarLista();
+      coincidenciasActuales = buscarCoincidencias(input.value);
+      indiceActivo = 0;
+      listaUl.innerHTML = "";
+
+      if (coincidenciasActuales.length === 0) {
+        listaUl.style.display = "none";
         return coincidenciasActuales;
       }
 
-      coincidenciasActuales = clientes.filter((c) => normalizar(c.nombre).includes(consulta));
-      listaUl.innerHTML = "";
-
-      coincidenciasActuales.slice(0, 12).forEach((cliente) => {
+      coincidenciasActuales.slice(0, 15).forEach((cliente, idx) => {
         const li = document.createElement("li");
-        li.className = "vivatec-item-predictivo";
-        li.textContent = cliente.nombre;
+        li.className = "vivatec-item-predictivo" + (idx === 0 ? " activo" : "");
+        const razon = obtenerRazon(cliente);
+        li.innerHTML = obtenerNombre(cliente) + (razon ? ` <span class="vivatec-sub-predictivo">(${razon})</span>` : "");
         li.addEventListener("mousedown", (e) => {
           e.preventDefault();
           elegir(cliente);
         });
+        li.addEventListener("mouseenter", () => {
+          indiceActivo = idx;
+          resaltarItem();
+        });
         listaUl.appendChild(li);
       });
 
-      listaUl.style.display = coincidenciasActuales.length ? "block" : "none";
+      listaUl.style.display = "block";
       return coincidenciasActuales;
     }
 
     input.addEventListener("input", actualizarLista);
 
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const lista = actualizarLista();
+      const visible = listaUl.style.display === "block";
+
+      if (e.key === "ArrowDown" && visible && coincidenciasActuales.length > 0) {
+        e.preventDefault();
+        indiceActivo = (indiceActivo + 1) % Math.min(coincidenciasActuales.length, 15);
+        resaltarItem();
+      } else if (e.key === "ArrowUp" && visible && coincidenciasActuales.length > 0) {
+        e.preventDefault();
+        indiceActivo = (indiceActivo - 1 + Math.min(coincidenciasActuales.length, 15)) % Math.min(coincidenciasActuales.length, 15);
+        resaltarItem();
+      } else if (e.key === "Enter") {
+        const lista = visible && coincidenciasActuales.length > 0 ? coincidenciasActuales : actualizarLista();
         if (lista.length > 0) {
           e.preventDefault();
-          elegir(lista[0]);
-        } else if (!esAltaCliente) {
+          elegir(lista[indiceActivo] || lista[0]);
+        } else if (!esAltaCliente && String(input.value || "").trim() !== "") {
           e.preventDefault();
           onRechazarNoRegistrado?.(input.value);
         }
@@ -172,18 +258,31 @@ const Configuracion = (() => {
     });
 
     input.addEventListener("blur", () => {
-      setTimeout(ocultarLista, 120);
-      if (esAltaCliente) return;
+      setTimeout(() => {
+        ocultarLista();
+        if (esAltaCliente) return;
 
-      const exacta = clientes.find((c) => normalizar(c.nombre) === normalizar(input.value));
-      if (exacta) {
-        input.value = exacta.nombre;
-        onSeleccionar?.(exacta);
-      } else if (String(input.value || "").trim() !== "") {
-        onRechazarNoRegistrado?.(input.value);
-      }
+        const valorNorm = normalizar(input.value);
+        if (!valorNorm) return;
+
+        const exacta = listaClientes.find((c) => normalizar(obtenerNombre(c)) === valorNorm);
+        if (exacta) {
+          input.value = obtenerNombre(exacta);
+          onSeleccionar?.(exacta);
+        } else {
+          onRechazarNoRegistrado?.(input.value);
+        }
+      }, 140);
     });
+
+    return {
+      actualizarClientes(nuevosClientes) {
+        listaClientes = Array.isArray(nuevosClientes) ? nuevosClientes : [];
+      }
+    };
   }
+
+  document.addEventListener("DOMContentLoaded", inyectarEstilos);
 
   return {
     esAltaCliente,
