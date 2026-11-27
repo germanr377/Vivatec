@@ -265,6 +265,7 @@
     let snapshotExtintorAReemplazar = null;
     let timerPredictivoUbicacion = null;
     let controladorCliente = null;
+    let uiInicializada = false;
 
     const controladoresPredictivos = {};
 
@@ -294,6 +295,20 @@
         });
     }
 
+    function inicializarInterfazBase() {
+        if (uiInicializada) return;
+        uiInicializada = true;
+
+        if (typeof Configuracion !== "undefined") {
+            Configuracion.activarFechas(["#nuevoVencPH", "#nuevoVencCarga"]);
+            Configuracion.activarFiltros(CAMPOS_FILTRO_RESALTABLES.map(id => `#${id}`).join(", "));
+        }
+
+        inicializarPredictivos();
+        configurarBusquedaPorEnter();
+        configurarAvisoCambiosSinGrabar();
+    }
+
     window.addEventListener("load", async function() {
         // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
         const { data: { session } } = await _supabase.auth.getSession();
@@ -302,14 +317,7 @@
             return;
         }
 
-        if (window.Configuracion) {
-            Configuracion.activarFechas(["#nuevoVencPH", "#nuevoVencCarga"]);
-            Configuracion.activarFiltros(CAMPOS_FILTRO_RESALTABLES.map(id => `#${id}`).join(", "));
-        }
-
-        inicializarPredictivos();
-        configurarBusquedaPorEnter();
-        configurarAvisoCambiosSinGrabar();
+        inicializarInterfazBase();
         await cargarClientesEnPredictivo();
         await cargarListasGlobales();
     });
@@ -630,7 +638,7 @@
             ultimaConsultaDuplicado = "";
         });
 
-        if (window.Configuracion) {
+        if (typeof Configuracion !== "undefined" && typeof Configuracion.configurarBuscadorCliente === "function") {
             controladorCliente = Configuracion.configurarBuscadorCliente({
                 input: inputCliente,
                 clientes: listaClientesOficiales,
@@ -649,6 +657,8 @@
                     inputCliente.focus();
                 }
             });
+        } else {
+            console.error("Configuracion.configurarBuscadorCliente no está disponible.");
         }
 
         configurarListaPredictiva({
