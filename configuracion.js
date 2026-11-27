@@ -67,10 +67,10 @@ const Configuracion = (() => {
   }
 
   function formatearFechaAuto(input) {
-    if (!input) return;
+    if (!input || typeof input.value !== "string") return;
     const patron = obtenerPatronFecha();
     const maxDigitos = patron === "mm/aa" ? 4 : 6;
-    const digitos = String(input.value || "").replace(/\D/g, "").slice(0, maxDigitos);
+    const digitos = input.value.replace(/\D/g, "").slice(0, maxDigitos);
 
     if (patron === "mm/aa") {
       input.value = digitos.length > 2 ? `${digitos.slice(0, 2)}/${digitos.slice(2)}` : digitos;
@@ -83,14 +83,23 @@ const Configuracion = (() => {
     }
   }
 
-  function activarFechas(selectorOElementos) {
-    const elementos = typeof selectorOElementos === "string"
+  function aListaElementos(selectorOElementos) {
+    const raw = typeof selectorOElementos === "string"
       ? Array.from(document.querySelectorAll(selectorOElementos))
-      : Array.from(selectorOElementos || []);
+      : Array.isArray(selectorOElementos)
+        ? selectorOElementos
+        : selectorOElementos
+          ? [selectorOElementos]
+          : [];
 
+    return raw.filter((el) => el && typeof el === "object" && el.dataset);
+  }
+
+  function activarFechas(selectorOElementos) {
+    const elementos = aListaElementos(selectorOElementos);
     const patron = obtenerPatronFecha();
+
     elementos.forEach((input) => {
-      if (!input) return;
       input.placeholder = patron.toUpperCase();
       input.maxLength = patron.length;
       if (!input.dataset.vivatecFechaBind) {
@@ -102,21 +111,18 @@ const Configuracion = (() => {
   }
 
   function aplicarEstiloFiltro(elemento, columnaElemento = null) {
-    if (!elemento) return;
+    if (!elemento || !elemento.classList) return;
     const activo = String(elemento.value || "").trim().length > 0;
     elemento.classList.toggle("vivatec-filtro-activo", activo);
-    if (columnaElemento) {
+    if (columnaElemento && columnaElemento.classList) {
       columnaElemento.classList.toggle("vivatec-filtro-activo", activo);
     }
   }
 
   function activarFiltros(selector, tabla = null) {
-    const elementos = typeof selector === "string"
-      ? Array.from(document.querySelectorAll(selector))
-      : Array.from(selector || []);
+    const elementos = aListaElementos(selector);
 
     elementos.forEach((input) => {
-      if (!input) return;
       const actualizar = () => {
         const colIdx = input.dataset.colIndex;
         const columna = tabla && colIdx !== undefined
