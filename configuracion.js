@@ -93,7 +93,11 @@ const Configuracion = (() => {
       if (!input) return;
       input.placeholder = patron.toUpperCase();
       input.maxLength = patron.length;
-      input.addEventListener("input", () => formatearFechaAuto(input));
+      if (!input.dataset.vivatecFechaBind) {
+        input.dataset.vivatecFechaBind = "1";
+        input.addEventListener("input", () => formatearFechaAuto(input));
+      }
+      formatearFechaAuto(input);
     });
   }
 
@@ -143,7 +147,7 @@ const Configuracion = (() => {
     onSeleccionar,
     onRechazarNoRegistrado
   }) {
-    if (!input) return { actualizarClientes: () => {} };
+    if (!input) return { actualizarClientes: () => {}, cerrar: () => {} };
     inyectarEstilos();
 
     let listaClientes = Array.isArray(clientes) ? clientes : [];
@@ -158,6 +162,7 @@ const Configuracion = (() => {
 
     let coincidenciasActuales = [];
     let indiceActivo = 0;
+    let validandoBlur = false;
 
     function obtenerNombre(c) {
       return typeof c === "string" ? c : String(c?.nombre || c?.nombre_cliente || "");
@@ -231,6 +236,9 @@ const Configuracion = (() => {
     }
 
     input.addEventListener("input", actualizarLista);
+    input.addEventListener("focus", () => {
+      if (normalizar(input.value)) actualizarLista();
+    });
 
     input.addEventListener("keydown", (e) => {
       const visible = listaUl.style.display === "block";
@@ -258,9 +266,10 @@ const Configuracion = (() => {
     });
 
     input.addEventListener("blur", () => {
+      if (validandoBlur) return;
       setTimeout(() => {
         ocultarLista();
-        if (esAltaCliente) return;
+        if (esAltaCliente || validandoBlur) return;
 
         const valorNorm = normalizar(input.value);
         if (!valorNorm) return;
@@ -270,15 +279,24 @@ const Configuracion = (() => {
           input.value = obtenerNombre(exacta);
           onSeleccionar?.(exacta);
         } else {
-          onRechazarNoRegistrado?.(input.value);
+          validandoBlur = true;
+          try {
+            onRechazarNoRegistrado?.(input.value);
+          } finally {
+            setTimeout(() => { validandoBlur = false; }, 200);
+          }
         }
-      }, 140);
+      }, 150);
     });
 
     return {
       actualizarClientes(nuevosClientes) {
         listaClientes = Array.isArray(nuevosClientes) ? nuevosClientes : [];
-      }
+        if (normalizar(input.value) && document.activeElement === input) {
+          actualizarLista();
+        }
+      },
+      cerrar: ocultarLista
     };
   }
 
