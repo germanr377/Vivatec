@@ -6,8 +6,9 @@
     <title>Vivatec - Consultas</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Menú Compartido -->
+    <!-- Menú y Configuración Compartida -->
     <script src="menu.js"></script>
+    <script src="configuracion.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1400px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
@@ -42,12 +43,9 @@
         }
 
         .filtros-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; align-items: flex-end; }
-        .form-group { display: flex; flex-direction: column; }
+        .form-group { display: flex; flex-direction: column; position: relative; }
         label { font-weight: bold; margin-bottom: 4px; color: #555; font-size: 12px; }
         input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; box-sizing: border-box; transition: background 0.3s, border-color 0.3s; background: #fff; height: 38px; }
-
-        /* AMARILLO MÁS INTENSO Y VISIBLE PARA CAMPOS ACTIVOS */
-        .filtro-activo { background-color: #fff176 !important; border-color: #fbc02d !important; font-weight: bold; }
 
         .botones-grid { display: flex; gap: 8px; grid-column: span 2; }
         .btn-consultar { background: #2980b9; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 38px; flex: 1; }
@@ -79,9 +77,7 @@
             padding: 3px 6px;
             letter-spacing: 0.4px;
         }
-        .th-grupo-agente:hover {
-            background-color: #1f3a52 !important;
-        }
+        .th-grupo-agente:hover { background-color: #1f3a52 !important; }
 
         .th-grupo-cap {
             background-color: #24473b !important;
@@ -90,9 +86,7 @@
             padding: 3px 6px;
             letter-spacing: 0.4px;
         }
-        .th-grupo-cap:hover {
-            background-color: #24473b !important;
-        }
+        .th-grupo-cap:hover { background-color: #24473b !important; }
 
         /* Columnas bien compactas */
         .col-mini { width: 1%; white-space: nowrap; padding-left: 5px; padding-right: 5px; }
@@ -123,60 +117,59 @@
     <div class="filtros-grid">
         <div class="form-group">
             <label>Cliente:</label>
-            <input type="text" id="filtroCliente" list="listaClientes" placeholder="Escribí o seleccioná..." autocomplete="off" oninput="verificarCampo(this)">
-            <datalist id="listaClientes"></datalist>
+            <input type="text" id="filtroCliente" autocomplete="off">
         </div>
         <div class="form-group">
             <label>N° Extintor:</label>
-            <input type="text" id="filtroExtintor" placeholder="Ej: 6389130" oninput="verificarCampo(this)">
+            <input type="text" id="filtroExtintor">
         </div>
         <div class="form-group">
             <label>N° DPS:</label>
-            <input type="text" id="filtroDps" placeholder="Ej: 5503020" oninput="verificarCampo(this)">
+            <input type="text" id="filtroDps">
         </div>
         <div class="form-group">
             <label>Tipo:</label>
-            <input type="text" id="filtroTipo" placeholder="Ej: ABC" oninput="verificarCampo(this)">
+            <input type="text" id="filtroTipo">
         </div>
         <div class="form-group">
             <label>Ag. Extin.:</label>
-            <input type="text" id="filtroAgente" placeholder="Ej: FFFA" oninput="verificarCampo(this)">
+            <input type="text" id="filtroAgente">
         </div>
         <div class="form-group">
             <label>Capacidad:</label>
-            <input type="text" id="filtroCapacidad" placeholder="Ej: 10" oninput="verificarCampo(this)">
+            <input type="text" id="filtroCapacidad">
         </div>
         <div class="form-group">
             <label>Marca:</label>
-            <input type="text" id="filtroMarca" placeholder="Ej: Horizonte" oninput="verificarCampo(this)">
+            <input type="text" id="filtroMarca">
         </div>
         <div class="form-group">
             <label>Año Fab.:</label>
-            <input type="text" id="filtroAnioFab" placeholder="Ej: 2024" oninput="verificarCampo(this)">
+            <input type="text" id="filtroAnioFab">
         </div>
         <div class="form-group">
             <label>Puesto:</label>
-            <input type="text" id="filtroPuesto" placeholder="Ej: 1" oninput="verificarCampo(this)">
+            <input type="text" id="filtroPuesto">
         </div>
         <div class="form-group">
             <label>Ubicación:</label>
-            <input type="text" id="filtroUbicacion" placeholder="Ej: Pasillo" oninput="verificarCampo(this)">
+            <input type="text" id="filtroUbicacion">
         </div>
         <div class="form-group">
             <label>Vto. P.H. Desde:</label>
-            <input type="text" id="ph-desde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+            <input type="text" id="ph-desde">
         </div>
         <div class="form-group">
             <label>Vto. P.H. Hasta:</label>
-            <input type="text" id="ph-hasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+            <input type="text" id="ph-hasta">
         </div>
         <div class="form-group">
             <label>Vto. Carga Desde:</label>
-            <input type="text" id="carga-desde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+            <input type="text" id="carga-desde">
         </div>
         <div class="form-group">
             <label>Vto. Carga Hasta:</label>
-            <input type="text" id="carga-hasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearInputFecha(this)">
+            <input type="text" id="carga-hasta">
         </div>
 
         <!-- BOTONES DE ACCIÓN DE FILTRO -->
@@ -246,6 +239,8 @@
         "ubicacion"
     ];
 
+    const SELECTOR_FILTROS = ".filtros-grid input, .filtros-grid select";
+
     let resultadosGlobales = [];
     let clientesInfoPorNombre = {};
     let resumenClientesGlobal = [];
@@ -254,6 +249,7 @@
     let ordenActual = { columna: 'vto_carga', ascendente: true };
     let ordenClienteActual = { columna: 'cliente', ascendente: true };
     let consultaEjecutada = false;
+    let controladorCliente = null;
 
     function obtenerModoActual() {
         const marcado = document.querySelector('input[name="modoConsulta"]:checked');
@@ -269,43 +265,32 @@
             .replace(/'/g, "&#39;");
     }
 
+    function sincronizarEstilosFiltros() {
+        document.querySelectorAll(SELECTOR_FILTROS).forEach(el => {
+            Configuracion.aplicarEstiloFiltro(el);
+        });
+    }
+
     // TRADUCTOR DE FECHAS: Supabase (AAAA-MM-DD) -> Pantalla (DD/MM/AAAA)
     function formatearFechaWeb(fechaSQL) {
         if (!fechaSQL) return "-";
-        let partes = String(fechaSQL).split("T")[0].split("-");
-        if (partes.length === 3) {
-            return `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
-        return fechaSQL;
+        const partes = String(fechaSQL).split("T")[0].split("-");
+        return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : fechaSQL;
     }
 
-    // AUTOFORMATO DD/MM/AAAA MIENTRAS SE TIPEA Y PINTADO AMARILLO
-    function formatearInputFecha(input) {
-        let val = input.value.replace(/\D/g, '');
-        if (val.length > 8) val = val.substring(0, 8);
-
-        let formatted = '';
-        if (val.length > 4) {
-            formatted = `${val.substring(0, 2)}/${val.substring(2, 4)}/${val.substring(4, 8)}`;
-        } else if (val.length > 2) {
-            formatted = `${val.substring(0, 2)}/${val.substring(2)}`;
-        } else {
-            formatted = val;
-        }
-        input.value = formatted;
-        verificarCampo(input);
-    }
-
-    // CONVERTIR DD/MM/AAAA A AAAA-MM-DD PARA CONSULTAR EN SUPABASE
+    // CONVERTIR DD/MM/AA o DD/MM/AAAA A AAAA-MM-DD PARA CONSULTAR EN SUPABASE
     function convertirFechaParaSQL(fechaWeb) {
         if (!fechaWeb || fechaWeb.trim() === "") return null;
-        let partes = fechaWeb.trim().split("/");
+        const partes = fechaWeb.trim().split("/");
         if (partes.length === 3) {
-            let dia = partes[0].padStart(2, '0');
-            let mes = partes[1].padStart(2, '0');
-            let anio = partes[2];
-            if (anio.length === 4) {
-                return `${anio}-${mes}-${dia}`;
+            const dia = partes[0].padStart(2, '0');
+            const mes = partes[1].padStart(2, '0');
+            const anioRaw = partes[2].trim();
+            if (anioRaw.length === 2 && !isNaN(anioRaw)) {
+                return `20${anioRaw}-${mes}-${dia}`;
+            }
+            if (anioRaw.length === 4 && !isNaN(anioRaw)) {
+                return `${anioRaw}-${mes}-${dia}`;
             }
         }
         return null;
@@ -318,15 +303,9 @@
 
     function estaEnRango(fechaSQL, desdeSQL, hastaSQL) {
         const f = normalizarFechaSQL(fechaSQL);
-        if (desdeSQL && hastaSQL) {
-            return Boolean(f && f >= desdeSQL && f <= hastaSQL);
-        }
-        if (desdeSQL) {
-            return Boolean(f && f >= desdeSQL);
-        }
-        if (hastaSQL) {
-            return Boolean(f && f <= hastaSQL);
-        }
+        if (desdeSQL && hastaSQL) return Boolean(f && f >= desdeSQL && f <= hastaSQL);
+        if (desdeSQL) return Boolean(f && f >= desdeSQL);
+        if (hastaSQL) return Boolean(f && f <= hastaSQL);
         return Boolean(f);
     }
 
@@ -356,52 +335,68 @@
         return { error };
     }
 
-    window.addEventListener("load", async function() {
-        // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
+    window.addEventListener("load", async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
             window.location.href = "login.html";
             return;
         }
 
-        // CARGAR CLIENTES DESDE LA TABLA MAESTRA "clientes" PARA EL PREDICTIVO Y DIRECCIÓN
+        Configuracion.activarFechas("#ph-desde, #ph-hasta, #carga-desde, #carga-hasta");
+        Configuracion.activarFiltros(SELECTOR_FILTROS);
+
+        const inputCliente = document.getElementById("filtroCliente");
+        controladorCliente = Configuracion.configurarBuscadorCliente({
+            input: inputCliente,
+            clientes: [],
+            onSeleccionar: (c) => {
+                inputCliente.value = c.nombre;
+                sincronizarEstilosFiltros();
+            },
+            onRechazarNoRegistrado: () => {
+                // En consultas se permite búsqueda parcial sin borrar el texto
+            }
+        });
+
+        // Permitir disparar búsqueda con Enter en los filtros
+        document.querySelectorAll(".filtros-grid input").forEach(input => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.defaultPrevented) {
+                    e.preventDefault();
+                    realizarConsulta();
+                }
+            });
+        });
+
+        // Cargar clientes desde la tabla maestra para el predictivo y dirección
         const { data, error } = await _supabase
             .from('clientes')
             .select('*')
             .order('nombre_cliente', { ascending: true });
 
         if (!error && data) {
-            let datalist = document.getElementById("listaClientes");
-            datalist.innerHTML = "";
             clientesInfoPorNombre = {};
+            const listaClientes = [];
 
             data.forEach(c => {
                 if (!c.nombre_cliente) return;
-                const clave = String(c.nombre_cliente).trim().toLowerCase();
+                const nombre = c.nombre_cliente.trim();
+                const razon = c.razon_social ? c.razon_social.trim() : "";
+                const clave = Configuracion.normalizar(nombre);
                 const direccion = c.direccion || c.domicilio || "-";
+
                 clientesInfoPorNombre[clave] = {
-                    nombre_cliente: c.nombre_cliente,
-                    razon_social: c.razon_social || "",
+                    nombre_cliente: nombre,
+                    razon_social: razon,
                     direccion
                 };
 
-                let opt = document.createElement("option");
-                opt.value = c.nombre_cliente;
-                if (c.razon_social) {
-                    opt.textContent = c.razon_social;
-                }
-                datalist.appendChild(opt);
+                listaClientes.push({ nombre, razon });
             });
+
+            controladorCliente.actualizarClientes(listaClientes);
         }
     });
-
-    function verificarCampo(input) {
-        if (input.value && input.value.trim() !== "") {
-            input.classList.add("filtro-activo");
-        } else {
-            input.classList.remove("filtro-activo");
-        }
-    }
 
     function cambiarModoConsulta() {
         if (!consultaEjecutada) {
@@ -458,11 +453,11 @@
     }
 
     function limpiarFiltros() {
-        const inputs = document.querySelectorAll('.filtros-grid input, .filtros-grid select');
-        inputs.forEach(el => {
+        document.querySelectorAll(SELECTOR_FILTROS).forEach(el => {
             el.value = "";
-            el.classList.remove("filtro-activo");
         });
+        sincronizarEstilosFiltros();
+        controladorCliente?.cerrar();
 
         resultadosGlobales = [];
         resumenClientesGlobal = [];
@@ -478,30 +473,27 @@
     }
 
     async function realizarConsulta() {
-        let cliente = document.getElementById('filtroCliente').value.trim();
-        let extintor = document.getElementById('filtroExtintor').value.trim();
-        let dps = document.getElementById('filtroDps').value.trim();
-        let tipo = document.getElementById('filtroTipo').value.trim();
-        let agente = document.getElementById('filtroAgente').value.trim();
-        let capacidad = document.getElementById('filtroCapacidad').value.trim();
-        let marca = document.getElementById('filtroMarca').value.trim();
-        let anioFab = document.getElementById('filtroAnioFab').value.trim();
-        let puesto = document.getElementById('filtroPuesto').value.trim();
-        let ubicacion = document.getElementById('filtroUbicacion').value.trim();
+        controladorCliente?.cerrar();
 
-        let phDesdeRaw = document.getElementById('ph-desde').value.trim();
-        let phHastaRaw = document.getElementById('ph-hasta').value.trim();
-        let cargaDesdeRaw = document.getElementById('carga-desde').value.trim();
-        let cargaHastaRaw = document.getElementById('carga-hasta').value.trim();
+        const cliente = document.getElementById('filtroCliente').value.trim();
+        const extintor = document.getElementById('filtroExtintor').value.trim();
+        const dps = document.getElementById('filtroDps').value.trim();
+        const tipo = document.getElementById('filtroTipo').value.trim();
+        const agente = document.getElementById('filtroAgente').value.trim();
+        const capacidad = document.getElementById('filtroCapacidad').value.trim();
+        const marca = document.getElementById('filtroMarca').value.trim();
+        const anioFab = document.getElementById('filtroAnioFab').value.trim();
+        const puesto = document.getElementById('filtroPuesto').value.trim();
+        const ubicacion = document.getElementById('filtroUbicacion').value.trim();
 
-        let phDesde = convertirFechaParaSQL(phDesdeRaw);
-        let phHasta = convertirFechaParaSQL(phHastaRaw);
-        let cargaDesde = convertirFechaParaSQL(cargaDesdeRaw);
-        let cargaHasta = convertirFechaParaSQL(cargaHastaRaw);
+        const phDesde = convertirFechaParaSQL(document.getElementById('ph-desde').value);
+        const phHasta = convertirFechaParaSQL(document.getElementById('ph-hasta').value);
+        const cargaDesde = convertirFechaParaSQL(document.getElementById('carga-desde').value);
+        const cargaHasta = convertirFechaParaSQL(document.getElementById('carga-hasta').value);
 
         const modo = obtenerModoActual();
         const colspanActual = modo === 'cliente' ? 6 : 14;
-        let tbody = document.querySelector('#tabla-resultados tbody');
+        const tbody = document.querySelector('#tabla-resultados tbody');
         tbody.innerHTML = `<tr><td colspan="${colspanActual}" class="sin-resultados">Buscando datos en Supabase...</td></tr>`;
 
         try {
@@ -514,7 +506,7 @@
             if (agente) query = query.ilike('agente_extintor', `%${agente}%`);
             if (capacidad) query = query.eq('capacidad', capacidad);
             if (marca) query = query.ilike('marca', `%${marca}%`);
-            if (anioFab) query = query.eq('ano_fab', parseInt(anioFab));
+            if (anioFab) query = query.eq('ano_fab', parseInt(anioFab, 10));
             if (puesto) query = query.eq('identificacion_puesto', puesto);
             if (ubicacion) query = query.ilike('ubicacion', `%${ubicacion}%`);
 
@@ -555,8 +547,7 @@
 
         datos.forEach(fila => {
             const nombreCliente = (fila.cliente || "Sin cliente").trim();
-            const claveCliente = nombreCliente.toLowerCase();
-            // Usar exclusivamente el campo agente_extintor de la tabla (no confundir con tipo)
+            const claveCliente = Configuracion.normalizar(nombreCliente);
             const agenteRaw = fila.agente_extintor !== null && fila.agente_extintor !== undefined
                 ? String(fila.agente_extintor).trim()
                 : "";
@@ -604,14 +595,10 @@
 
         resumenClientesGlobal.forEach(item => {
             agentesDetectadosGlobal.forEach(ag => {
-                if (typeof item.porAgente[ag] !== "number") {
-                    item.porAgente[ag] = 0;
-                }
+                if (typeof item.porAgente[ag] !== "number") item.porAgente[ag] = 0;
             });
             capacidadesDetectadasGlobal.forEach(cap => {
-                if (typeof item.porCapacidad[cap] !== "number") {
-                    item.porCapacidad[cap] = 0;
-                }
+                if (typeof item.porCapacidad[cap] !== "number") item.porCapacidad[cap] = 0;
             });
         });
 
@@ -759,7 +746,7 @@
             </tr>
         `;
 
-        let tbody = document.querySelector('#tabla-resultados tbody');
+        const tbody = document.querySelector('#tabla-resultados tbody');
         tbody.innerHTML = "";
         document.getElementById('checkTodos').checked = false;
         actualizarContadorSeleccionados();
@@ -772,7 +759,7 @@
         }
 
         datos.forEach(fila => {
-            let tr = document.createElement('tr');
+            const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="col-mini"><input type="checkbox" class="check-registro" value="${escaparTexto(fila.id)}" onclick="actualizarContadorSeleccionados()"></td>
                 <td class="col-texto">${escaparTexto(fila.cliente || "-")}</td>
@@ -794,15 +781,14 @@
     }
 
     function toggleSeleccionarTodos(source) {
-        const checkboxes = document.querySelectorAll('.check-registro');
-        checkboxes.forEach(cb => cb.checked = source.checked);
+        document.querySelectorAll('.check-registro').forEach(cb => cb.checked = source.checked);
         actualizarContadorSeleccionados();
     }
 
     function actualizarContadorSeleccionados() {
-        let seleccionados = document.querySelectorAll('.check-registro:checked');
-        let btnEliminar = document.getElementById('btnEliminarSeleccionados');
-        let spanContador = document.getElementById('contadorSeleccionados');
+        const seleccionados = document.querySelectorAll('.check-registro:checked');
+        const btnEliminar = document.getElementById('btnEliminarSeleccionados');
+        const spanContador = document.getElementById('contadorSeleccionados');
 
         if (seleccionados.length > 0 && obtenerModoActual() === 'extintor') {
             btnEliminar.style.display = 'block';
@@ -814,12 +800,12 @@
     }
 
     async function eliminarSeleccionados() {
-        let seleccionados = document.querySelectorAll('.check-registro:checked');
+        const seleccionados = document.querySelectorAll('.check-registro:checked');
         if (seleccionados.length === 0) return;
 
-        let idsAEliminar = Array.from(seleccionados).map(cb => String(cb.value));
+        const idsAEliminar = Array.from(seleccionados).map(cb => String(cb.value));
 
-        let confirmar = confirm(`⚠️ ¿Estás 100% seguro de que querés ELIMINAR los ${idsAEliminar.length} registros seleccionados de la base de datos?\n\nEsta acción no se puede deshacer.`);
+        const confirmar = confirm(`⚠️ ¿Estás 100% seguro de que querés ELIMINAR los ${idsAEliminar.length} registros seleccionados de la base de datos?\n\nEsta acción no se puede deshacer.`);
         if (!confirmar) return;
 
         try {
@@ -863,11 +849,11 @@
         }
 
         resultadosGlobales.sort((a, b) => {
-            let valA = a[columna] !== null && a[columna] !== undefined ? String(a[columna]).toLowerCase() : "";
-            let valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna]).toLowerCase() : "";
+            const valA = a[columna] !== null && a[columna] !== undefined ? String(a[columna]).toLowerCase() : "";
+            const valB = b[columna] !== null && b[columna] !== undefined ? String(b[columna]).toLowerCase() : "";
 
-            let numA = parseFloat(valA);
-            let numB = parseFloat(valB);
+            const numA = parseFloat(valA);
+            const numB = parseFloat(valB);
 
             if (!isNaN(numA) && !isNaN(numB)) {
                 return ordenActual.ascendente ? numA - numB : numB - numA;
