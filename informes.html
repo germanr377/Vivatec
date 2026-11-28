@@ -6,6 +6,7 @@
     <title>Vivatec - Planilla de Control de Extintores</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="menu.js"></script>
+    <script src="configuracion.js"></script>
 
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
@@ -14,9 +15,9 @@
         
         /* Panel de filtros */
         .filtros-panel { background: #ecf0f1; padding: 20px; border-radius: 6px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
-        .form-group { flex: 1; min-width: 210px; }
+        .form-group { flex: 1; min-width: 210px; position: relative; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
-        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; height: 42px; background: #fff; }
+        select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 15px; box-sizing: border-box; height: 42px; background: #fff; transition: background 0.3s, border-color 0.3s; }
 
         .btn-search { background: #2980b9; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; height: 42px; }
         .btn-search:hover { background: #1f618d; }
@@ -171,8 +172,7 @@
         <!-- CAMPO PREDICTIVO DE CLIENTES -->
         <div class="form-group">
             <label for="filtroCliente">Cliente:</label>
-            <input type="text" id="filtroCliente" list="listaClientes" placeholder="Escribí o seleccioná cliente..." autocomplete="off">
-            <datalist id="listaClientes"></datalist>
+            <input type="text" id="filtroCliente" autocomplete="off">
         </div>
         <div class="form-group">
             <label for="tipoFecha">Tipo de Vencimiento:</label>
@@ -187,11 +187,11 @@
         </div>
         <div class="form-group">
             <label for="fechaDesde">Desde (DD/MM/AAAA):</label>
-            <input type="text" id="fechaDesde" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearEntradaFecha(this)">
+            <input type="text" id="fechaDesde" placeholder="DD/MM/AAAA">
         </div>
         <div class="form-group">
             <label for="fechaHasta">Hasta (DD/MM/AAAA):</label>
-            <input type="text" id="fechaHasta" placeholder="DD/MM/AAAA" maxlength="10" oninput="formatearEntradaFecha(this)">
+            <input type="text" id="fechaHasta" placeholder="DD/MM/AAAA">
         </div>
         
         <button class="btn-search" onclick="generarInforme()">📊 Actualizar Vista</button>
@@ -209,19 +209,17 @@
     const SUPABASE_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const SELECTOR_FILTROS = ".filtros-panel input, .filtros-panel select";
+
     let datosGlobales = []; 
     let columnaOrdenActual = 'extintor_numero';
     let ascendenteActual = true;
+    let controladorCliente = null;
 
-    // AUTO-FORMATO MIENTRAS SE ESCRIBE PARA DD/MM/AAAA (Inserta barras automáticamente)
-    function formatearEntradaFecha(input) {
-        let valor = input.value.replace(/\D/g, ''); // Deja solo números
-        if (valor.length > 2 && valor.length <= 4) {
-            valor = valor.substring(0, 2) + '/' + valor.substring(2);
-        } else if (valor.length > 4) {
-            valor = valor.substring(0, 2) + '/' + valor.substring(2, 4) + '/' + valor.substring(4, 8);
-        }
-        input.value = valor;
+    function sincronizarEstilosFiltros() {
+        document.querySelectorAll(SELECTOR_FILTROS).forEach(el => {
+            Configuracion.aplicarEstiloFiltro(el);
+        });
     }
 
     // BOTÓN LIMPIAR: Resetea todos los campos y oculta los resultados
@@ -231,6 +229,8 @@
         document.getElementById("frecuenciaDias").value = "30";
         document.getElementById("fechaDesde").value = "";
         document.getElementById("fechaHasta").value = "";
+        sincronizarEstilosFiltros();
+        controladorCliente?.cerrar();
         document.getElementById("mensajeEstado").textContent = "Por favor, seleccioná un cliente para ver la planilla.";
         document.getElementById("planillaWrapper").style.display = "none";
         datosGlobales = [];
@@ -286,7 +286,33 @@
         return valor === true || valor === "true" || valor === 1 ? "X" : "";
     }
 
-    window.addEventListener("load", async function() {
+    window.addEventListener("load", async () => {
+        Configuracion.activarFechas("#fechaDesde, #fechaHasta");
+        Configuracion.activarFiltros(SELECTOR_FILTROS);
+
+        const inputCliente = document.getElementById("filtroCliente");
+        controladorCliente = Configuracion.configurarBuscadorCliente({
+            input: inputCliente,
+            clientes: [],
+            onSeleccionar: (c) => {
+                inputCliente.value = c.nombre;
+                sincronizarEstilosFiltros();
+            },
+            onRechazarNoRegistrado: (inputEl) => {
+                inputEl.value = "";
+                sincronizarEstilosFiltros();
+            }
+        });
+
+        document.querySelectorAll(".filtros-panel input").forEach(input => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.defaultPrevented) {
+                    e.preventDefault();
+                    generarInforme();
+                }
+            });
+        });
+
         // 🔒 CONTROL DE SEGURIDAD: Validación de sesión activa
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
@@ -294,23 +320,20 @@
             return;
         }
 
-        // LLENAR EL DATALIST PREDICTIVO DESDE LA TABLA MAESTRA "clientes"
+        // CARGAR CLIENTES DESDE LA TABLA MAESTRA "clientes"
         const { data, error } = await _supabase
             .from('clientes')
             .select('nombre_cliente, razon_social')
             .order('nombre_cliente', { ascending: true });
 
         if (!error && data) {
-            let datalist = document.getElementById("listaClientes");
-            datalist.innerHTML = "";
-            data.forEach(c => {
-                let opt = document.createElement("option");
-                opt.value = c.nombre_cliente;
-                if (c.razon_social) {
-                    opt.textContent = c.razon_social;
-                }
-                datalist.appendChild(opt);
-            });
+            const listaClientes = data
+                .filter(c => c.nombre_cliente)
+                .map(c => ({
+                    nombre: c.nombre_cliente.trim(),
+                    razon: c.razon_social ? c.razon_social.trim() : ""
+                }));
+            controladorCliente.actualizarClientes(listaClientes);
         }
         
         const hoy = new Date();
@@ -318,6 +341,8 @@
     });
 
     async function generarInforme() {
+        controladorCliente?.cerrar();
+
         const cliente = document.getElementById("filtroCliente").value.trim();
         const campoFecha = document.getElementById("tipoFecha").value;
         const inputDesde = document.getElementById("fechaDesde").value.trim();
