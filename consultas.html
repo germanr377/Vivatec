@@ -55,10 +55,25 @@
         .btn-limpiar:hover { background: #626567; }
 
         .acciones-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .acciones-derecha { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .badge-total { background: #2980b9; color: white; padding: 5px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; }
+
+        .btn-imprimir { background: #27ae60; color: white; border: none; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .btn-imprimir:hover { background: #219653; }
 
         .btn-eliminar { background: #c0392b; color: white; border: none; padding: 9px 15px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
         .btn-eliminar:hover { background: #962d22; }
+
+        .resumen-impresion {
+            display: none;
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border: 1px solid #000;
+            background: #f9fbfd;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+        }
 
         .table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #ddd; border-radius: 4px; }
         table { width: auto; min-width: 100%; border-collapse: collapse; }
@@ -93,6 +108,17 @@
         .col-fecha { width: 1%; white-space: nowrap; padding-left: 5px; padding-right: 5px; }
         .col-texto { text-align: left; max-width: 210px; white-space: normal; word-break: break-word; }
         .col-texto-corto { white-space: nowrap; }
+
+        @media print {
+            @page { size: A4 landscape; margin: 1cm; }
+            body { background: #fff; padding: 0; color: #000; }
+            .container { max-width: 100%; box-shadow: none; padding: 0; border-radius: 0; }
+            .modo-consulta-bar, .filtros-grid, .acciones-bar, nav, header, [id*="menu"], [class*="menu"] { display: none !important; }
+            .resumen-impresion { display: block !important; }
+            .table-container { max-height: none; overflow: visible; border: none; }
+            th { position: static; background-color: #e9ecef !important; color: #000 !important; }
+            .col-check, th.col-mini:first-child, td.col-mini:first-child { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -179,14 +205,20 @@
         </div>
     </div>
 
-    <!-- BARRA DE ACCIONES (Contador de registros y Borrado masivo) -->
+    <!-- BARRA DE ACCIONES (Contador de registros, Impresión y Borrado masivo) -->
     <div class="acciones-bar">
         <div style="display: flex; align-items: center; gap: 15px;">
             <span id="badgeTotal" class="badge-total">0 registros encontrados</span>
             <span id="contadorSeleccionados" style="font-weight: bold; color: #555; font-size: 13px;"></span>
         </div>
-        <button id="btnEliminarSeleccionados" class="btn-eliminar" onclick="eliminarSeleccionados()">🗑️ Eliminar Registros Tildados</button>
+        <div class="acciones-derecha">
+            <button type="button" class="btn-imprimir" onclick="imprimirResultados()">🖨️ Imprimir</button>
+            <button id="btnEliminarSeleccionados" class="btn-eliminar" onclick="eliminarSeleccionados()">🗑️ Eliminar Registros Tildados</button>
+        </div>
     </div>
+
+    <!-- ENCABEZADO VISIBLE SOLO AL IMPRIMIR -->
+    <div id="resumenImpresion" class="resumen-impresion"></div>
 
     <!-- TABLA DE RESULTADOS -->
     <div class="table-container">
@@ -250,6 +282,30 @@
     let ordenClienteActual = { columna: 'cliente', ascendente: true };
     let consultaEjecutada = false;
     let controladorCliente = null;
+
+    function formatearIntervaloImpresion(desdeId, hastaId) {
+        const desde = document.getElementById(desdeId).value.trim();
+        const hasta = document.getElementById(hastaId).value.trim();
+
+        if (!desde && !hasta) return "Todos";
+        if (desde && hasta) return `${desde} al ${hasta}`;
+        if (desde) return `Desde ${desde}`;
+        return `Hasta ${hasta}`;
+    }
+
+    function actualizarResumenImpresion() {
+        const resumenEl = document.getElementById("resumenImpresion");
+        const intervaloCarga = formatearIntervaloImpresion("carga-desde", "carga-hasta");
+        const intervaloPh = formatearIntervaloImpresion("ph-desde", "ph-hasta");
+        const modoTexto = obtenerModoActual() === "cliente" ? "Cliente" : "Extintor";
+
+        resumenEl.textContent = `Informe por: ${modoTexto} | Vto. Carga: ${intervaloCarga} | Vto. PH: ${intervaloPh}`;
+    }
+
+    function imprimirResultados() {
+        actualizarResumenImpresion();
+        window.print();
+    }
 
     function obtenerModoActual() {
         const marcado = document.querySelector('input[name="modoConsulta"]:checked');
@@ -368,6 +424,8 @@
             });
         });
 
+        actualizarResumenImpresion();
+
         // Cargar clientes desde la tabla maestra para el predictivo y dirección
         const { data, error } = await _supabase
             .from('clientes')
@@ -399,6 +457,7 @@
     });
 
     function cambiarModoConsulta() {
+        actualizarResumenImpresion();
         if (!consultaEjecutada) {
             renderizarEncabezadoInicial();
             return;
@@ -469,11 +528,13 @@
         const checkTodos = document.getElementById('checkTodos');
         if (checkTodos) checkTodos.checked = false;
         actualizarContadorSeleccionados();
+        actualizarResumenImpresion();
         renderizarEncabezadoInicial();
     }
 
     async function realizarConsulta() {
         controladorCliente?.cerrar();
+        actualizarResumenImpresion();
 
         const cliente = document.getElementById('filtroCliente').value.trim();
         const extintor = document.getElementById('filtroExtintor').value.trim();
