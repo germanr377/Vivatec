@@ -6,20 +6,19 @@
     <title>Vivatec - Carga Masiva por Copiar y Pegar</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="menu.js"></script>
+    <script src="configuracion.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1200px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
         h2 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
         p.instruction { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
 
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; position: relative; }
         .row-controls { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
         .row-controls .form-group { flex: 1; min-width: 240px; margin-bottom: 0; }
 
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; font-size: 14px; }
-        input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; background: #fff; }
-
-        .aviso-nuevo { font-size: 12px; font-weight: bold; color: #e67e22; margin-top: 5px; display: none; }
+        input[type="text"], select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; background: #fff; transition: background 0.3s, border-color 0.3s; }
 
         textarea { width: 100%; height: 110px; padding: 10px; border: 2px dashed #27ae60; border-radius: 4px; font-family: monospace; font-size: 13px; box-sizing: border-box; background: #f9fff9; margin-bottom: 15px; }
 
@@ -57,14 +56,12 @@
 
 <div class="container">
     <h2>Vivatec - Importación Masiva (Excel ➔ Base de Datos)</h2>
-    <p class="instruction">Seleccioná o escribí el cliente, copiá las filas de tu Excel en el orden indicado y pegalas abajo.</p>
+    <p class="instruction">Seleccioná o escribí un cliente existente, copiá las filas de tu Excel en el orden indicado y pegalas abajo.</p>
 
     <div class="row-controls">
         <div class="form-group">
             <label for="clienteGlobal">Cliente para todos los registros a importar:</label>
-            <input type="text" id="clienteGlobal" list="listaClientes" placeholder="Escribí o seleccioná cliente..." oninput="verificarClienteNuevo()">
-            <datalist id="listaClientes"></datalist>
-            <div id="lblNuevoCliente" class="aviso-nuevo">✨ Nuevo Cliente (Verificá que esté dado de alta en la sección Clientes)</div>
+            <input type="text" id="clienteGlobal" autocomplete="off">
         </div>
 
         <div class="form-group">
@@ -117,7 +114,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td colspan="11" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Completá el cliente, pegá los datos y procesalos.</td>
+                    <td colspan="11" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Seleccioná el cliente, pegá los datos y procesalos.</td>
                 </tr>
             </tbody>
         </table>
@@ -146,14 +143,51 @@
         "ubicacion"
     ];
 
+    const SELECTOR_CONTROLES = ".row-controls input[type='text'], .row-controls select";
+
     let _supabase = null;
     let listaClientesExistentes = [];
     let datosProcesados = [];
+    let controladorCliente = null;
+
+    function sincronizarEstilosControles() {
+        document.querySelectorAll(SELECTOR_CONTROLES).forEach(el => {
+            Configuracion.aplicarEstiloFiltro(el);
+        });
+    }
 
     function mostrarEstado(texto, tipo = "ok") {
         const el = document.getElementById("estadoMsg");
         el.textContent = texto;
         el.className = `estado-msg estado-${tipo}`;
+    }
+
+    function buscarClienteRegistrado(valor) {
+        const clave = Configuracion.normalizar(valor);
+        if (!clave) return null;
+        return listaClientesExistentes.find(c => Configuracion.normalizar(c.nombre) === clave) || null;
+    }
+
+    function validarClienteExistente(enfocarSiFalla = true) {
+        const inputCliente = document.getElementById("clienteGlobal");
+        const raw = inputCliente.value.trim();
+
+        if (!raw) {
+            mostrarEstado("Seleccioná o escribí un cliente existente registrado antes de continuar.", "warn");
+            if (enfocarSiFalla) inputCliente.focus();
+            return null;
+        }
+
+        const encontrado = buscarClienteRegistrado(raw);
+        if (!encontrado) {
+            mostrarEstado(`El cliente "${raw}" no existe en la base de datos. Seleccioná uno registrado o dalo de alta primero.`, "err");
+            if (enfocarSiFalla) inputCliente.focus();
+            return null;
+        }
+
+        inputCliente.value = encontrado.nombre;
+        sincronizarEstilosControles();
+        return encontrado.nombre;
     }
 
     function limpiarCeldaExcel(val) {
@@ -193,7 +227,28 @@
             .insert([payloadHistorial]);
     }
 
-    window.addEventListener("load", async function() {
+    function inicializarBuscadorCliente() {
+        const inputCliente = document.getElementById("clienteGlobal");
+
+        controladorCliente = Configuracion.configurarBuscadorCliente({
+            input: inputCliente,
+            clientes: listaClientesExistentes,
+            onSeleccionar: (c) => {
+                inputCliente.value = c.nombre;
+                sincronizarEstilosControles();
+                document.getElementById("txtPegar").focus();
+            },
+            onRechazarNoRegistrado: (inputEl) => {
+                inputEl.value = "";
+                sincronizarEstilosControles();
+            }
+        });
+    }
+
+    window.addEventListener("load", async () => {
+        Configuracion.activarFiltros(SELECTOR_CONTROLES);
+        inicializarBuscadorCliente();
+
         try {
             if (typeof supabase !== "undefined") {
                 _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -220,34 +275,15 @@
             .order("nombre_cliente", { ascending: true });
 
         if (!error && data) {
-            listaClientesExistentes = data.map(item => item.nombre_cliente?.trim()).filter(Boolean);
+            listaClientesExistentes = data
+                .filter(item => item.nombre_cliente)
+                .map(item => ({
+                    nombre: item.nombre_cliente.trim(),
+                    razon: item.razon_social ? item.razon_social.trim() : ""
+                }));
 
-            const datalist = document.getElementById("listaClientes");
-            datalist.innerHTML = "";
-            data.forEach(c => {
-                if (!c.nombre_cliente) return;
-                const opt = document.createElement("option");
-                opt.value = c.nombre_cliente;
-                if (c.razon_social) {
-                    opt.textContent = c.razon_social;
-                }
-                datalist.appendChild(opt);
-            });
-            verificarClienteNuevo();
+            controladorCliente?.actualizarClientes(listaClientesExistentes);
         }
-    }
-
-    function verificarClienteNuevo() {
-        const val = document.getElementById("clienteGlobal").value.trim();
-        const aviso = document.getElementById("lblNuevoCliente");
-
-        if (!val) {
-            aviso.style.display = "none";
-            return;
-        }
-
-        const encontrado = listaClientesExistentes.some(c => c.toLowerCase() === val.toLowerCase());
-        aviso.style.display = !encontrado ? "block" : "none";
     }
 
     function formatearFechaSQL(fechaWeb) {
@@ -305,12 +341,10 @@
     }
 
     function procesarPegado() {
-        const cliente = document.getElementById("clienteGlobal").value.trim();
-        if (!cliente) {
-            mostrarEstado("Ingresá primero el nombre del cliente arriba.", "warn");
-            document.getElementById("clienteGlobal").focus();
-            return;
-        }
+        controladorCliente?.cerrar();
+
+        const cliente = validarClienteExistente(true);
+        if (!cliente) return;
 
         const texto = document.getElementById("txtPegar").value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
         if (!texto) {
@@ -330,7 +364,7 @@
             const extNum = limpiarCeldaExcel(columnas[0]);
 
             if (extNum) {
-                const claveExt = extNum.toLowerCase();
+                const claveExt = Configuracion.normalizar(extNum);
                 if (vistosEnPegado.has(claveExt)) {
                     duplicadosEnPegado.push(extNum);
                     return;
@@ -404,11 +438,14 @@
         document.getElementById("estadoMsg").style.display = "none";
         datosProcesados = [];
         document.getElementById("contadorRegistros").textContent = "0 registros";
-        document.querySelector("#tablaPreview tbody").innerHTML = `<tr><td colspan="11" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Completá el cliente, pegá los datos y procesalos.</td></tr>`;
+        document.querySelector("#tablaPreview tbody").innerHTML = `<tr><td colspan="11" style="text-align: center; color: #888; padding: 20px;">Aún no hay datos cargados. Seleccioná el cliente, pegá los datos y procesalos.</td></tr>`;
     }
 
     async function subirASupabase() {
         if (datosProcesados.length === 0) return;
+
+        const cliente = validarClienteExistente(true);
+        if (!cliente) return;
 
         if (!_supabase) {
             mostrarEstado("No hay conexión con Supabase. Verificá tu conexión a internet.", "err");
@@ -416,7 +453,7 @@
         }
 
         const politica = document.getElementById("politicaDuplicados").value;
-        const confirmar = confirm(`¿Confirmás la subida de ${datosProcesados.length} extintores para "${datosProcesados[0].cliente}"?`);
+        const confirmar = confirm(`¿Confirmás la subida de ${datosProcesados.length} extintores para "${cliente}"?`);
         if (!confirmar) return;
 
         const progresoContainer = document.getElementById("progresoContainer");
@@ -438,7 +475,7 @@
 
         try {
             for (let i = 0; i < total; i++) {
-                const item = datosProcesados[i];
+                const item = { ...datosProcesados[i], cliente };
                 const actual = i + 1;
                 const porcentaje = Math.round((actual / total) * 100);
                 textoProgreso.textContent = `Procesando registro ${actual} de ${total} (${porcentaje}%)`;
@@ -525,7 +562,7 @@
             );
 
             document.getElementById("clienteGlobal").value = "";
-            document.getElementById("lblNuevoCliente").style.display = "none";
+            sincronizarEstilosControles();
             limpiarTodo();
             await cargarClientesGlobales();
             document.getElementById("clienteGlobal").focus();
