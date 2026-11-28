@@ -1133,7 +1133,6 @@
         const cliente = obtenerClienteOficialValido(clienteIngresado);
         const extintorNumero = document.getElementById("nuevoExtintor").value.trim();
         const idExistente = document.getElementById("registroId").value.trim();
-        const esAltaNueva = !idExistente;
         const esReemplazo = Boolean(idExtintorAReemplazar);
 
         if (!cliente || !extintorNumero) {
@@ -1235,9 +1234,10 @@
 
             const btn = document.getElementById("btnGuardar");
 
-            if (esAltaNueva && !opciones.mantenerEnPantalla) {
+            if (!opciones.mantenerEnPantalla) {
                 limpiarFormulario();
-                btn.innerHTML = "✅ ¡Grabado!";
+                btn.innerHTML = eraRecarga ? "⚡ ¡Recarga Guardada!" : "✅ ¡Grabado!";
+                btn.classList.remove("existente-btn");
                 btn.classList.add("success");
                 setTimeout(() => {
                     btn.classList.remove("success");
@@ -1336,6 +1336,7 @@
         });
 
         const inputExt = document.getElementById("nuevoExtintor");
+        inputExt.value = "";
         inputExt.disabled = false;
 
         ultimaConsultaDuplicado = "";
