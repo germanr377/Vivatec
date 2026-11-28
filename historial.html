@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historial - VIVATEC</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="menu.js"></script>
+    <script src="configuracion.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -76,6 +78,7 @@
             border-radius: 4px;
             font-size: 13px;
             width: 100%;
+            transition: background 0.3s, border-color 0.3s;
         }
         input[type="text"]:focus {
             outline: none;
@@ -129,34 +132,6 @@
         .btn-quitar:hover {
             background-color: #e74c3c;
             color: #fff;
-        }
-        .sugerencias-lista {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 36px;
-            background: #fff;
-            border: 1px solid #2980b9;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            max-height: 160px;
-            overflow-y: auto;
-            z-index: 30;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-            display: none;
-        }
-        .sugerencia-item {
-            padding: 6px 9px;
-            font-size: 13px;
-            cursor: pointer;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .sugerencia-item:first-child {
-            background-color: #ebf5fb;
-            font-weight: bold;
-        }
-        .sugerencia-item:hover {
-            background-color: #d6eaf8;
         }
         .acciones-filtro {
             display: flex;
@@ -319,19 +294,18 @@
                 <div class="fila-con-mas">
                     <input type="text" id="clientePrincipal" class="input-cliente" autocomplete="off">
                     <button type="button" id="btnMasCliente" class="btn-mas" title="Agregar otro cliente">+</button>
-                    <div class="sugerencias-lista"></div>
                 </div>
                 <div id="clientesExtras" class="extras-vertical"></div>
             </div>
 
             <div class="campo-grupo col-compacta">
                 <label for="fechaDesde">Desde (dd/mm/aaaa)</label>
-                <input type="text" id="fechaDesde" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
+                <input type="text" id="fechaDesde" class="input-fecha-ddmmaaaa" autocomplete="off">
             </div>
 
             <div class="campo-grupo col-compacta">
                 <label for="fechaHasta">Hasta (dd/mm/aaaa)</label>
-                <input type="text" id="fechaHasta" class="input-fecha-ddmmaaaa" inputmode="numeric" maxlength="10" autocomplete="off">
+                <input type="text" id="fechaHasta" class="input-fecha-ddmmaaaa" autocomplete="off">
             </div>
 
             <div class="campo-grupo col-compacta">
@@ -404,16 +378,18 @@
         </div>
     </div>
 
-    <script src="menu.js"></script>
     <script>
         const SUPABASE_URL = "https://cpgdqzrvtensoruahgxn.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_o529qydnYQpc1UBoqttXpQ_hfdLAWb9";
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        const SELECTOR_FILTROS = ".filtros-grid input[type='text']";
+
         let seriesPorExtintor = [];
         let extintoresActivosSinHistorial = [];
         let listaClientesUnicos = [];
         let huboBusquedaActiva = false;
+        const controladoresCliente = [];
 
         const CAMPOS_COMPARABLES = [
             "cliente",
@@ -430,6 +406,12 @@
             "identificacion_puesto",
             "ubicacion"
         ];
+
+        function sincronizarEstilosFiltros() {
+            document.querySelectorAll(SELECTOR_FILTROS).forEach(el => {
+                Configuracion.aplicarEstiloFiltro(el);
+            });
+        }
 
         function obtenerValorFechaCruda(reg) {
             return reg.fecha_revision || reg.fecha || reg.fecha_movimiento || reg.fecha_registro || null;
@@ -451,11 +433,12 @@
                 return isNaN(dt.getTime()) ? null : dt;
             }
 
-            const matchDDMM = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(str);
+            const matchDDMM = /^(\d{2})\/(\d{2})\/(\d{2,4})$/.exec(str);
             if (matchDDMM) {
                 const d = parseInt(matchDDMM[1], 10);
                 const m = parseInt(matchDDMM[2], 10) - 1;
-                const a = parseInt(matchDDMM[3], 10);
+                const anioRaw = parseInt(matchDDMM[3], 10);
+                const a = matchDDMM[3].length === 2 ? 2000 + anioRaw : anioRaw;
                 const dt = new Date(a, m, d, 0, 0, 0, 0);
                 return isNaN(dt.getTime()) ? null : dt;
             }
@@ -493,32 +476,14 @@
             return `${dia}/${mes}/${anio} ${horas}:${minutos}`;
         }
 
-        function aplicarMascaraFecha(input) {
-            input.addEventListener("input", function() {
-                let soloDigitos = this.value.replace(/\D/g, "").slice(0, 8);
-                let formateada = "";
-
-                if (soloDigitos.length > 0) {
-                    formateada = soloDigitos.slice(0, 2);
-                }
-                if (soloDigitos.length >= 3) {
-                    formateada += "/" + soloDigitos.slice(2, 4);
-                }
-                if (soloDigitos.length >= 5) {
-                    formateada += "/" + soloDigitos.slice(4, 8);
-                }
-
-                this.value = formateada;
-            });
-        }
-
         function parsearFechaDDMMAAAA(texto, finDeDia = false) {
-            const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto.trim());
+            const match = /^(\d{2})\/(\d{2})\/(\d{2,4})$/.exec(texto.trim());
             if (!match) return null;
 
             const dia = parseInt(match[1], 10);
             const mes = parseInt(match[2], 10) - 1;
-            const anio = parseInt(match[3], 10);
+            const anioRaw = parseInt(match[3], 10);
+            const anio = match[3].length === 2 ? 2000 + anioRaw : anioRaw;
 
             const fecha = finDeDia
                 ? new Date(anio, mes, dia, 23, 59, 59, 999)
@@ -534,65 +499,23 @@
             return fecha;
         }
 
-        function configurarPredictivoCliente(input, contenedorLista) {
-            let sugerenciasActuales = [];
-
-            function mostrarSugerencias() {
-                const texto = input.value.trim().toLowerCase();
-                contenedorLista.innerHTML = "";
-
-                if (!texto) {
-                    sugerenciasActuales = [];
-                    contenedorLista.style.display = "none";
-                    return;
-                }
-
-                sugerenciasActuales = listaClientesUnicos.filter(c =>
-                    c.toLowerCase().includes(texto)
-                );
-
-                if (sugerenciasActuales.length === 0) {
-                    contenedorLista.style.display = "none";
-                    return;
-                }
-
-                sugerenciasActuales.forEach(cli => {
-                    const item = document.createElement("div");
-                    item.className = "sugerencia-item";
-                    item.textContent = cli;
-                    item.addEventListener("mousedown", function(e) {
-                        e.preventDefault();
-                        input.value = cli;
-                        contenedorLista.style.display = "none";
-                    });
-                    contenedorLista.appendChild(item);
-                });
-
-                contenedorLista.style.display = "block";
-            }
-
-            input.addEventListener("input", mostrarSugerencias);
-            input.addEventListener("focus", mostrarSugerencias);
-
-            input.addEventListener("keydown", function(e) {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (sugerenciasActuales.length > 0 && contenedorLista.style.display === "block") {
-                        input.value = sugerenciasActuales[0];
-                        contenedorLista.style.display = "none";
-                    } else {
-                        aplicarFiltros();
-                    }
-                } else if (e.key === "Escape") {
-                    contenedorLista.style.display = "none";
+        function registrarBuscadorCliente(input) {
+            const ctrl = Configuracion.configurarBuscadorCliente({
+                input,
+                clientes: listaClientesUnicos,
+                onSeleccionar: (c) => {
+                    input.value = c.nombre;
+                    Configuracion.aplicarEstiloFiltro(input);
+                },
+                onRechazarNoRegistrado: () => {
+                    // En historial se permite filtrar por coincidencia parcial sin borrar el texto
                 }
             });
+            controladoresCliente.push(ctrl);
+        }
 
-            input.addEventListener("blur", function() {
-                setTimeout(() => {
-                    contenedorLista.style.display = "none";
-                }, 150);
-            });
+        function cerrarTodosLosClientes() {
+            controladoresCliente.forEach(ctrl => ctrl?.cerrar());
         }
 
         function agregarCuadritoExtra(contenedorId, claseInput, conPredictivo = false) {
@@ -610,7 +533,7 @@
             btnQuitar.className = "btn-quitar";
             btnQuitar.textContent = "×";
             btnQuitar.title = "Quitar";
-            btnQuitar.addEventListener("click", function() {
+            btnQuitar.addEventListener("click", () => {
                 fila.remove();
             });
 
@@ -618,12 +541,9 @@
             fila.appendChild(btnQuitar);
 
             if (conPredictivo) {
-                const listaDiv = document.createElement("div");
-                listaDiv.className = "sugerencias-lista";
-                fila.appendChild(listaDiv);
-                configurarPredictivoCliente(input, listaDiv);
+                registrarBuscadorCliente(input);
             } else {
-                input.addEventListener("keydown", function(e) {
+                input.addEventListener("keydown", (e) => {
                     if (e.key === "Enter") {
                         e.preventDefault();
                         aplicarFiltros();
@@ -638,7 +558,7 @@
         function obtenerValoresMultiples(selector) {
             const valores = [];
             document.querySelectorAll(selector).forEach(inp => {
-                const limpio = inp.value.trim().toLowerCase();
+                const limpio = Configuracion.normalizar(inp.value);
                 if (limpio !== "") {
                     valores.push(limpio);
                 }
@@ -682,9 +602,9 @@
 
         function claveNaturalExtintor(reg) {
             const ext = valorNormalizadoCampo(reg, "extintor_numero");
-            const cli = valorNormalizadoCampo(reg, "cliente").toLowerCase();
+            const cli = Configuracion.normalizar(valorNormalizadoCampo(reg, "cliente"));
             if (ext !== "-") {
-                return "ext:" + cli + "|" + ext.toLowerCase();
+                return "ext:" + cli + "|" + Configuracion.normalizar(ext);
             }
             return null;
         }
@@ -794,7 +714,6 @@
                 return b.idxUltimaOriginal - a.idxUltimaOriginal;
             });
 
-            // Extintores cargados en la tabla maestra que nunca tuvieron registros en historial_revisiones
             const sinHist = [];
             (registrosExtintores || []).forEach(ex => {
                 const idStr = ex.id !== undefined && ex.id !== null ? String(ex.id).trim() : "";
@@ -858,7 +777,6 @@
                 };
             }
 
-            // Con filtro de rango de fechas
             const indicesEnRango = [];
             serie.eventos.forEach((ev, idx) => {
                 if (dentroDeRangoFecha(ev.fechaObj, fechaDesde, fechaHasta)) {
@@ -945,10 +863,11 @@
 
             if (error || !Array.isArray(data)) {
                 listaClientesUnicos = [];
+                controladoresCliente.forEach(ctrl => ctrl?.actualizarClientes([]));
                 return;
             }
 
-            const setCli = new Set();
+            const mapaClientes = new Map();
             data.forEach(cli => {
                 const nombre = (
                     cli.cliente ||
@@ -957,10 +876,18 @@
                     cli.razon_social ||
                     ""
                 ).trim();
-                if (nombre) setCli.add(nombre);
+                const razon = cli.razon_social ? String(cli.razon_social).trim() : "";
+                if (!nombre) return;
+                const clave = Configuracion.normalizar(nombre);
+                if (!mapaClientes.has(clave)) {
+                    mapaClientes.set(clave, { nombre, razon });
+                }
             });
 
-            listaClientesUnicos = Array.from(setCli).sort((a, b) => a.localeCompare(b));
+            listaClientesUnicos = Array.from(mapaClientes.values())
+                .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
+            controladoresCliente.forEach(ctrl => ctrl?.actualizarClientes(listaClientesUnicos));
         }
 
         async function cargarDatosIniciales() {
@@ -1002,9 +929,9 @@
         }
 
         function cumpleFiltrosTexto(reg, clientesFiltro, extintoresFiltro, dpsFiltro) {
-            const clienteReg = valorNormalizadoCampo(reg, "cliente").toLowerCase();
-            const extReg = valorNormalizadoCampo(reg, "extintor_numero").toLowerCase();
-            const dpsReg = valorNormalizadoCampo(reg, "numero_dps").toLowerCase();
+            const clienteReg = Configuracion.normalizar(valorNormalizadoCampo(reg, "cliente"));
+            const extReg = Configuracion.normalizar(valorNormalizadoCampo(reg, "extintor_numero"));
+            const dpsReg = Configuracion.normalizar(valorNormalizadoCampo(reg, "numero_dps"));
 
             if (clientesFiltro.length > 0 && !clientesFiltro.some(c => clienteReg.includes(c))) {
                 return false;
@@ -1019,6 +946,8 @@
         }
 
         function aplicarFiltros() {
+            cerrarTodosLosClientes();
+
             const clientesFiltro = obtenerValoresMultiples(".input-cliente");
             const desdeTexto = document.getElementById("fechaDesde").value.trim();
             const hastaTexto = document.getElementById("fechaHasta").value.trim();
@@ -1026,15 +955,6 @@
             const dpsFiltro = obtenerValoresMultiples(".input-dps");
             const incluirSinCambios = document.getElementById("chkIncluirSinCambios").checked;
             const estado = document.getElementById("estadoConsulta");
-
-            if (desdeTexto !== "" && desdeTexto.length < 10) {
-                estado.textContent = "Completá la fecha 'Desde' en formato dd/mm/aaaa.";
-                return;
-            }
-            if (hastaTexto !== "" && hastaTexto.length < 10) {
-                estado.textContent = "Completá la fecha 'Hasta' en formato dd/mm/aaaa.";
-                return;
-            }
 
             const fechaDesde = desdeTexto ? parsearFechaDDMMAAAA(desdeTexto, false) : null;
             const fechaHasta = hastaTexto ? parsearFechaDDMMAAAA(hastaTexto, true) : null;
@@ -1154,33 +1074,33 @@
             });
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".input-fecha-ddmmaaaa").forEach(aplicarMascaraFecha);
+        document.addEventListener("DOMContentLoaded", () => {
+            Configuracion.activarFechas("#fechaDesde, #fechaHasta");
+            Configuracion.activarFiltros(SELECTOR_FILTROS);
 
             const cliPrincipal = document.getElementById("clientePrincipal");
-            const listaPrincipal = cliPrincipal.parentElement.querySelector(".sugerencias-lista");
-            configurarPredictivoCliente(cliPrincipal, listaPrincipal);
+            registrarBuscadorCliente(cliPrincipal);
 
-            document.getElementById("btnMasCliente").addEventListener("click", function() {
+            document.getElementById("btnMasCliente").addEventListener("click", () => {
                 agregarCuadritoExtra("clientesExtras", "input-cliente", true);
             });
-            document.getElementById("btnMasExtintor").addEventListener("click", function() {
+            document.getElementById("btnMasExtintor").addEventListener("click", () => {
                 agregarCuadritoExtra("extintoresExtras", "input-extintor", false);
             });
-            document.getElementById("btnMasDps").addEventListener("click", function() {
+            document.getElementById("btnMasDps").addEventListener("click", () => {
                 agregarCuadritoExtra("dpsExtras", "input-dps", false);
             });
 
             document.getElementById("btnFiltrar").addEventListener("click", aplicarFiltros);
 
-            document.getElementById("chkIncluirSinCambios").addEventListener("change", function() {
+            document.getElementById("chkIncluirSinCambios").addEventListener("change", () => {
                 if (huboBusquedaActiva) {
                     aplicarFiltros();
                 }
             });
 
             ["fechaDesde", "fechaHasta", "extintorPrincipal", "dpsPrincipal"].forEach(id => {
-                document.getElementById(id).addEventListener("keydown", function(e) {
+                document.getElementById(id).addEventListener("keydown", (e) => {
                     if (e.key === "Enter") {
                         e.preventDefault();
                         aplicarFiltros();
@@ -1188,17 +1108,18 @@
                 });
             });
 
-            document.getElementById("btnLimpiar").addEventListener("click", function() {
+            document.getElementById("btnLimpiar").addEventListener("click", () => {
                 huboBusquedaActiva = false;
-                document.getElementById("clientePrincipal").value = "";
-                document.getElementById("fechaDesde").value = "";
-                document.getElementById("fechaHasta").value = "";
-                document.getElementById("extintorPrincipal").value = "";
-                document.getElementById("dpsPrincipal").value = "";
+                document.querySelectorAll(SELECTOR_FILTROS).forEach(el => {
+                    el.value = "";
+                });
                 document.getElementById("chkIncluirSinCambios").checked = false;
                 document.getElementById("clientesExtras").innerHTML = "";
                 document.getElementById("extintoresExtras").innerHTML = "";
                 document.getElementById("dpsExtras").innerHTML = "";
+                controladoresCliente.length = 1;
+                sincronizarEstilosFiltros();
+                cerrarTodosLosClientes();
                 document.getElementById("cuerpoHistorial").innerHTML = "";
                 document.getElementById("panelEstadisticas").style.display = "none";
                 document.getElementById("estadoConsulta").textContent = "Filtros limpios. Presioná Buscar para consultar.";
